@@ -2,7 +2,7 @@
 
 ## Status
 
-Active - 2026-11-06. This plan binds nothing. musicindex ADR 0049 owns the rules of the
+Active - 2026-11-07. This plan binds nothing. musicindex ADR 0049 owns the rules of the
 query text. The research is
 `research_notes/search/shared-query-text.md` in `../musicindex-research`.
 
@@ -29,7 +29,7 @@ and Studio has 9.
 | v4vmm | `search_query.rs` has the parser. `search_run.rs` has the Index plan. `release_kind.rs` has the kind rule. It sends `kind=single`, so `kind:single` finds no Index rows. A text search found no code that sends `sort` or `reverse` on a search. |
 | Studio | The pickers send text to `/musicindex/search`. Core sends `q`, `type=feed` and `limit=25`. The route holds the workspace lock during the request. |
 | Website | The toolbar field sends a plain query (musicindex ADR 0047). Shell packet 002, the toolbar, is in commit `531716c`. |
-| Stophammer | Release 0.18.1 is live, and its capabilities do not list `sort`. ADR 0084 is built in commits that are not deployed. ADR 0085 §6 gives the kind requests. The index has no prefix match. |
+| Stophammer | Release 0.19.0 is live, and on 2026-11-07 its capabilities list `sort` (ADR 0084 §11). ADR 0085 §6 gives the kind requests. The index has no prefix match, and Stophammer has no ADR for one. |
 
 ## Target State
 
@@ -95,6 +95,19 @@ Each correction changes the case file in the same commit. Stophammer changes in 
 - Mechanical: the round trip test of `tools/query-text` in the research repository gives no difference for `q`.
 - Visual: in v4vmm, `kind:single` shows Index rows, and each row has the label "Single".
 
+### Phase 3a: Sort And Reverse
+
+The crate gives `sort` and `reverse`, because the live node lists `sort` in its capabilities. Stophammer ADR 0084 owns these parameters.
+
+1. A node that does not list `sort` gets no `sort` and no `reverse` (Stophammer ADR 0084 §11).
+2. A live search keeps `relevance`, and it sends no `sort` and no `reverse` (Stophammer ADR 0084, Consequences).
+3. `relevance` sends no `sort` and no `reverse`, so the crate cannot cause `relevance_needs_word` or `relevance_cannot_reverse` (Stophammer ADR 0084 §4 and §5).
+4. The case file holds each result, so the module of Phase 5 passes the same tests.
+
+- Mechanical: the case file gives no parameter for a node with no `sort`.
+- Mechanical: the case file gives no parameter for a live search.
+- Mechanical: the case file gives `sort=date&reverse=true` when a person selects Oldest.
+
 ### Phase 4: Studio Pickers
 
 1. The search route sends its request with no lock of the workspace, as `nostr_profiles` does.
@@ -109,7 +122,7 @@ This phase can start after Phase 1, if Studio needs it before v4vmm is ready.
 
 ### Phase 5: Website Module
 
-1. Move the prototype to `search/web/query-text.mjs`, with the two corrections of Phase 3.
+1. Move the prototype to `search/web/query-text.mjs`, with the two corrections of Phase 3 and the parameters of Phase 3a.
 2. The website keeps a copy of the module and the case file. `tools/check-site.sh` finds a copy with other bytes.
 3. The toolbar field sends the output of the module.
 
@@ -119,11 +132,10 @@ This phase can start after Phase 1, if Studio needs it before v4vmm is ready.
 
 The field list and `cursor_term` are not in this phase. The case file has no cursor cases.
 
-### Phase 6: Sort And Prefix
+### Phase 6: Prefix
 
-Start when Stophammer deploys each one. The crate follows the deployed contract, not a contract in work.
+Start when Stophammer deploys a prefix match. Stophammer has no ADR for it. The crate follows the deployed contract, not a contract in work.
 
-- Add `sort` and `reverse` to the request when a node states the capability `sort` (Stophammer ADR 0084 §11).
 - When Stophammer accepts a prefix match, the crate needs no change unless the contract gives a new parameter.
 
 ## Risks
