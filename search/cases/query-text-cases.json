@@ -15,7 +15,11 @@
             ],
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ],
             [
               "after",
@@ -37,7 +41,11 @@
             ],
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ],
             [
               "after",
@@ -1234,7 +1242,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": null
@@ -1244,7 +1256,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": null
@@ -1777,7 +1793,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": null
@@ -1787,7 +1807,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": null
@@ -1929,7 +1953,11 @@
           "params": [
             [
               "kind",
-              "album,ep"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -1939,7 +1967,11 @@
           "params": [
             [
               "kind",
-              "album,ep"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -1972,7 +2004,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": null
@@ -1982,7 +2018,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": null
@@ -3341,7 +3381,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -3351,7 +3395,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -3720,7 +3768,11 @@
             ],
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": "haleen"
@@ -3734,7 +3786,11 @@
             ],
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": "haleen"
@@ -4031,7 +4087,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -4041,7 +4101,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -5778,7 +5842,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -5788,7 +5856,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -8918,7 +8990,11 @@
           "params": [
             [
               "kind",
-              "album,single"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "1"
             ]
           ],
           "q": null
@@ -8928,7 +9004,11 @@
           "params": [
             [
               "kind",
-              "album,single"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "1"
             ]
           ],
           "q": null
@@ -8961,7 +9041,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -8971,7 +9055,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -9089,7 +9177,11 @@
           "params": [
             [
               "kind",
-              "album,ep"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -9099,7 +9191,11 @@
           "params": [
             [
               "kind",
-              "album,ep"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -9165,25 +9261,7 @@
     {
       "index_q": null,
       "plan": {
-        "feed": {
-          "params": [
-            [
-              "kind",
-              "ep"
-            ]
-          ],
-          "q": null
-        },
-        "publisher": null,
-        "track": {
-          "params": [
-            [
-              "kind",
-              "ep"
-            ]
-          ],
-          "q": null
-        }
+        "skip": "no_index_part"
       },
       "runnable": true,
       "scope": "everything",
@@ -9253,7 +9331,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -9263,7 +9345,11 @@
           "params": [
             [
               "kind",
-              "album"
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
             ]
           ],
           "q": null
@@ -9947,7 +10033,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": "x"
@@ -9957,7 +10047,11 @@
           "params": [
             [
               "kind",
-              "single"
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
             ]
           ],
           "q": "x"
@@ -10292,6 +10386,281 @@
         }
       ],
       "text": "-remix kind:single kind:ep"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": null,
+        "track": {
+          "params": [
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "2"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:album",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "album"
+            ]
+          }
+        }
+      ],
+      "text": "kind:album"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:ep",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "ep"
+            ]
+          }
+        }
+      ],
+      "text": "kind:ep"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "1"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": null,
+        "track": {
+          "params": [
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "min_tracks",
+              "1"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:album,ep,single",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "album",
+              "ep",
+              "single"
+            ]
+          }
+        }
+      ],
+      "text": "kind:album,ep,single"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": null,
+        "track": {
+          "params": [
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:ep,single",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "ep",
+              "single"
+            ]
+          }
+        }
+      ],
+      "text": "kind:ep,single"
+    },
+    {
+      "index_q": "haleen",
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "haleen",
+          "text": "haleen"
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:ep",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "ep"
+            ]
+          }
+        }
+      ],
+      "text": "haleen kind:ep"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:album,ep",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "album",
+              "ep"
+            ]
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:ep",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "ep"
+            ]
+          }
+        }
+      ],
+      "text": "kind:album,ep kind:ep"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:ep",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "ep"
+            ]
+          }
+        },
+        {
+          "excluded": true,
+          "kind": "word",
+          "raw": "-remix",
+          "text": "remix"
+        }
+      ],
+      "text": "kind:ep -remix"
     }
   ]
 }

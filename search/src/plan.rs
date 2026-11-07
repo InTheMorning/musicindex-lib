@@ -12,6 +12,7 @@
 
 use chrono::NaiveDate;
 
+use crate::kind::index_kind_pairs;
 use crate::query::{
     FieldValue, FieldValueState, KindValue, QueryFieldName, QueryScope, SearchQuery, TermKind,
     quote_phrase,
@@ -165,7 +166,8 @@ impl IndexFilters {
     /// fields and an excluded `kind:`, `after:`, `before:` or `duration:`.
     /// [`IndexSearchPlan::for_query`] gives `Skip` for the last ones before
     /// this function runs. The result is `None` when the `kind:` terms share
-    /// no kind, because no row can match them.
+    /// no kind, or when their kinds send no Index request (musicindex ADR 0049
+    /// R-QUERY-6), because no row can match them.
     #[must_use]
     pub fn from_query(query: &SearchQuery) -> Option<IndexFilters> {
         let mut filters = IndexFilters::default();
@@ -185,6 +187,9 @@ impl IndexFilters {
                     }
                 }
             }
+        }
+        if !filters.kinds.is_empty() && index_kind_pairs(&filters.kinds).is_none() {
+            return None;
         }
         Some(filters)
     }
@@ -290,7 +295,7 @@ fn index_text(text: &str) -> String {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum IndexSkip {
     /// The Index has nothing to search. The query has no word, no phrase, no
-    /// positive field and no exclusion, or its `kind:` terms share no kind.
+    /// positive field and no exclusion, or its `kind:` terms give no request.
     NoIndexPart,
     /// The query has exclusions and no positive term. Stophammer needs a
     /// positive term. An app can show a note for this cause.
@@ -607,8 +612,16 @@ mod tests {
             (Some(301), Some(599))
         );
         assert_eq!(
-            request("kind:album,ep kind:ep").filters.kinds,
-            vec![KindValue::Ep]
+            request("kind:album,ep kind:album").filters.kinds,
+            vec![KindValue::Album]
+        );
+        assert_eq!(
+            plan("kind:album,ep kind:ep"),
+            IndexSearchPlan::Skip(IndexSkip::NoIndexPart)
+        );
+        assert_eq!(
+            plan("haleen kind:ep"),
+            IndexSearchPlan::Skip(IndexSkip::NoIndexPart)
         );
         assert_eq!(
             plan("kind:single kind:ep"),

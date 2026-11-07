@@ -3,6 +3,7 @@
 //! The source is `index_filter_pairs` of `src/application/queries/search.rs` of
 //! v4vmm. An app sends these parameters with its own HTTP code.
 
+use crate::kind::index_kind_pairs;
 use crate::plan::IndexFilters;
 
 /// The `GET /v1/search` filter parameters of one request (v4vmm ADR 0087
@@ -29,10 +30,7 @@ pub fn index_filter_pairs(filters: &IndexFilters) -> Vec<(&'static str, String)>
     ] {
         pairs.extend(values.iter().map(|value| (name, value.clone())));
     }
-    if !filters.kinds.is_empty() {
-        let words: Vec<&str> = filters.kinds.iter().map(|kind| kind.word()).collect();
-        pairs.push(("kind", words.join(",")));
-    }
+    pairs.extend(index_kind_pairs(&filters.kinds).into_iter().flatten());
     if let Some(day) = filters.after {
         pairs.push(("after", day.format("%Y-%m-%d").to_string()));
     }
