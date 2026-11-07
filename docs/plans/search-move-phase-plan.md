@@ -27,7 +27,7 @@ These facts come from the repositories and the live node on 2026-11-07.
 | --- | --- |
 | v4vmm | It pins the crate at commit `7cfc4e7` (v4vmm ADR 0091, steps 1 and 2). `search_query.rs` keeps the two scope functions. |
 | Studio | It pins the crate at commit `7cfc4e7` (Studio ADR 0151). `studio-core` reads each typed search text with the crate. |
-| Website | The toolbar field sends a plain query (musicindex ADR 0047). The website has no copy of the module. |
+| Website | The toolbar field sends the output of the module (musicindex commit `465b9af`). The live page loads the module. `query/` holds copies of the module and the case file, and they have the same bytes as the files here. |
 | Stophammer | The capabilities of the live node list `sort` (ADR 0084 §11). ADR 0085 §6 gives the kind requests. The live node has the prefix match of ADR 0086. |
 
 | Phase | State |
@@ -37,10 +37,10 @@ These facts come from the repositories and the live node on 2026-11-07.
 | 2 | Complete: v4vmm commits `bebfe97` and `c433582` |
 | 3 | Mechanical checks complete. The visual check is open in `docs/pending-human-checks.md` of v4vmm. |
 | 4 | Complete: Studio commit `2ecd7e9`. Studio records that the visual checks passed. |
-| 5 | Item 1 is complete. Items 2 and 3 are open, and they need the website. |
+| 5 | Items 1, 2 and 3 and the mechanical checks are complete. The visual gate of musicindex ADR 0049 is open for a person, and it has not passed. |
 | 6 | Complete, with no change to the crate |
 
-The commits of this repository after `7cfc4e7` change no compiled code of the crate. An app needs no new pin for them.
+The commits of this repository after `7cfc4e7` change no behavior of the crate. `QueryTerm::can_run` is the one new function, and only an app that uses it needs a new pin. v4vmm still has its own copy of that test in `query_can_run`.
 
 ## Target State
 
@@ -148,11 +148,16 @@ This phase can start after Phase 1, if Studio needs it before v4vmm is ready.
 - Mechanical: the cases catch each common JavaScript mistake of `tools/query-text/compare.mjs`.
 - Mechanical: the crate and the module pass the label cases of the case file.
 - Mechanical: `tools/check-site.sh` fails when a copy has other bytes.
-- Visual: in Firefox and Chromium, a search with fields, and the note for a Library field.
+- Visual, open for a person: a search with fields in Firefox and Chromium (musicindex ADR 0049 R-QUERY-4 item 4).
+- Visual, open for a person: the note for a Library field, in Light and Dark (musicindex ADR 0049 R-QUERY-2).
+
+The agent checks of the website do not close these two gates. The website review is `docs/reviews/search-move-phase-5-website-review.md` in `../musicindex`. It also records that a row on the website shows the type label "Feed", so `kind:single` does not show the label "Single" there.
 
 The field list and `cursor_term` are not in this phase. The case file has no cursor cases.
 
 A browser field can hold a text with a lone surrogate, and a Rust string cannot. Thus such a text has no crate result, and its result in the module is unproved. This note states no rule.
+
+The apps differ on `-!!!` and `--`. The plan of each text is `exclusions_only`, because the text has no positive term. v4vmm runs nothing for such a text, so it shows no note (v4vmm ADR 0087 Decision 4). Studio and the website show their notes. This note states no rule, and no change is necessary now.
 
 ### Phase 6: Prefix
 
