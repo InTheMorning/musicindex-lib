@@ -1291,3 +1291,638 @@ fn read_units(text: &str) -> Option<u64> {
     }
     Some(total)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::kind::ReleaseKind;
+
+    const EXAMPLE: &str =
+        r#"artist:jsmovie kind:single after:2026-10-01 -title:remix "night drive""#;
+
+    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(year, month, day).expect("test date is correct")
+    }
+
+    /// The one term of `text`.
+    fn only_term(text: &str) -> QueryTerm {
+        let query = SearchQuery::parse(text);
+        assert_eq!(query.terms().len(), 1, "one term in {text:?}");
+        query.terms()[0].clone()
+    }
+
+    /// The field of the one term of `text`.
+    fn only_field(text: &str) -> FieldTerm {
+        match only_term(text).kind {
+            TermKind::Field(field) => field,
+            other => panic!("{text:?} gives {other:?}, not a field"),
+        }
+    }
+
+    fn valid(text: &str) -> FieldValue {
+        match only_field(text).value {
+            FieldValueState::Valid(value) => value,
+            other => panic!("{text:?} gives {other:?}, not a correct value"),
+        }
+    }
+
+    fn is_invalid(text: &str) -> bool {
+        matches!(only_field(text).value, FieldValueState::Invalid(_))
+    }
+
+    fn duration(text: &str) -> DurationRange {
+        match valid(text) {
+            FieldValue::Duration(range) => range,
+            other => panic!("{text:?} gives {other:?}"),
+        }
+    }
+
+    fn date_value(text: &str) -> DateValue {
+        match valid(text) {
+            FieldValue::Date(value) => value,
+            other => panic!("{text:?} gives {other:?}"),
+        }
+    }
+
+    fn text_field(name: QueryFieldName, text: &str) -> TermKind {
+        TermKind::Field(FieldTerm {
+            name,
+            value: FieldValueState::Valid(FieldValue::Text(text.to_owned())),
+        })
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_01_example_gives_five_typed_terms() {
+        let query = SearchQuery::parse(EXAMPLE);
+        let kinds: Vec<&TermKind> = query.terms().iter().map(|term| &term.kind).collect();
+        let day = date(2026, 10, 1);
+        assert_eq!(
+            kinds,
+            vec![
+                &text_field(QueryFieldName::Artist, "jsmovie"),
+                &TermKind::Field(FieldTerm {
+                    name: QueryFieldName::Kind,
+                    value: FieldValueState::Valid(FieldValue::Kinds(vec![KindValue::Single])),
+                }),
+                &TermKind::Field(FieldTerm {
+                    name: QueryFieldName::After,
+                    value: FieldValueState::Valid(FieldValue::Date(DateValue {
+                        first_day: day,
+                        last_day: day,
+                    })),
+                }),
+                &text_field(QueryFieldName::Title, "remix"),
+                &TermKind::Phrase("night drive".to_owned()),
+            ]
+        );
+        let excluded: Vec<bool> = query.terms().iter().map(|term| term.excluded).collect();
+        assert_eq!(excluded, vec![false, false, false, true, false]);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_02_each_span_gives_its_source_text() {
+        let query = SearchQuery::parse(EXAMPLE);
+        let texts: Vec<&str> = query
+            .terms()
+            .iter()
+            .map(|term| &EXAMPLE[term.span.clone()])
+            .collect();
+        assert_eq!(
+            texts,
+            vec![
+                "artist:jsmovie",
+                "kind:single",
+                "after:2026-10-01",
+                "-title:remix",
+                "\"night drive\"",
+            ]
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_03_unknown_colon_name_stays_one_word() {
+        assert_eq!(
+            only_term("Re:Union").kind,
+            TermKind::Word("Re:Union".to_owned())
+        );
+        assert_eq!(
+            only_term("foo:bar").kind,
+            TermKind::Word("foo:bar".to_owned())
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_04_date_that_is_not_correct_is_invalid() {
+        match only_field("after:yesterday").value {
+            FieldValueState::Invalid(error) => assert_eq!(
+                error.message(),
+                "after: needs a date, for example 2026-10-01"
+            ),
+            other => panic!("after:yesterday gives {other:?}"),
+        }
+        assert!(is_invalid("after:2026-02-30"));
+        assert!(is_invalid("after:2026-1-5"));
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_05_field_name_has_no_case() {
+        for text in ["Artist:x", "ARTIST:x", "artist:x"] {
+            assert_eq!(only_field(text).name, QueryFieldName::Artist, "{text}");
+        }
+        assert_eq!(
+            valid("KIND:Single"),
+            FieldValue::Kinds(vec![KindValue::Single])
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_06_text_value_keeps_case_and_reads_quotes() {
+        assert_eq!(valid("title:Remix"), FieldValue::Text("Remix".to_owned()));
+        assert_eq!(
+            valid(r#"release:"aged friends""#),
+            FieldValue::Text("aged friends".to_owned())
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_07_kind_reads_a_comma_list() {
+        assert_eq!(
+            valid("kind:album,ep"),
+            FieldValue::Kinds(vec![KindValue::Album, KindValue::Ep])
+        );
+        assert_eq!(
+            valid("kind:single,single,"),
+            FieldValue::Kinds(vec![KindValue::Single])
+        );
+        match only_field("kind:lp").value {
+            FieldValueState::Invalid(error) => assert!(error.message().contains("lp")),
+            other => panic!("kind:lp gives {other:?}"),
+        }
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_08_in_reads_one_scope() {
+        assert_eq!(valid("in:library"), FieldValue::Scope(ScopeValue::Library));
+        assert_eq!(valid("in:index"), FieldValue::Scope(ScopeValue::Index));
+        assert!(is_invalid("in:both"));
+        assert!(is_invalid("in:library,index"));
+        assert_eq!(
+            only_field("-in:index").value,
+            FieldValueState::Invalid(FieldValueError::ExcludedScope)
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_09_month_gives_its_first_and_last_day() {
+        let october = date_value("after:2026-10");
+        assert_eq!(october.first_day, date(2026, 10, 1));
+        assert_eq!(october.last_day, date(2026, 10, 31));
+        assert_eq!(date_value("before:2026-02").last_day, date(2026, 2, 28));
+        assert_eq!(date_value("after:2026-10-01").start_unix(), 1_790_812_800);
+        assert_eq!(date_value("before:2026-10-31").end_unix(), 1_793_491_199);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_10_duration_gives_inclusive_limits() {
+        let range = |min, max| DurationRange {
+            min_secs: min,
+            max_secs: max,
+        };
+        assert_eq!(duration("duration:>5m"), range(Some(301), None));
+        assert_eq!(duration("duration:>=5m"), range(Some(300), None));
+        assert_eq!(duration("duration:<3:30"), range(None, Some(209)));
+        assert_eq!(duration("duration:<=3:30"), range(None, Some(210)));
+        assert_eq!(duration("duration:3m..5m"), range(Some(180), Some(300)));
+        assert_eq!(duration("duration:>=1h30m").min_secs, Some(5400));
+        assert_eq!(duration("duration:>=90s").min_secs, Some(90));
+        assert_eq!(duration("duration:>=1:02:03").min_secs, Some(3723));
+        let middle = range(Some(180), Some(300));
+        assert!(middle.contains(180) && middle.contains(300));
+        assert!(!middle.contains(179) && !middle.contains(301));
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_11_duration_that_is_not_correct_is_invalid() {
+        for text in [
+            "duration:5m",
+            "duration:5",
+            "duration:2.5m",
+            "duration:3m..",
+            "duration:5m..3m",
+            "duration:30s3m",
+            "duration:3:5",
+            "duration:<0s",
+            "duration:>99999999999s",
+        ] {
+            assert!(is_invalid(text), "{text}");
+        }
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_12_is_and_has_read_their_fixed_values() {
+        assert_eq!(
+            valid("is:downloaded"),
+            FieldValue::LibraryState(LibraryStateValue::Downloaded)
+        );
+        assert_eq!(
+            valid("is:partial"),
+            FieldValue::LibraryState(LibraryStateValue::Partial)
+        );
+        assert_eq!(
+            valid("is:ready"),
+            FieldValue::LibraryState(LibraryStateValue::Ready)
+        );
+        assert_eq!(
+            valid("is:removed"),
+            FieldValue::LibraryState(LibraryStateValue::Removed)
+        );
+        assert_eq!(valid("has:split"), FieldValue::Content(ContentValue::Split));
+        assert_eq!(valid("has:image"), FieldValue::Content(ContentValue::Image));
+        assert!(is_invalid("is:new"));
+        assert!(is_invalid("has:art"));
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_13_empty_value_is_incomplete() {
+        assert_eq!(only_field("artist:").value, FieldValueState::Incomplete);
+        assert_eq!(
+            only_field(r#"artist:"""#).value,
+            FieldValueState::Incomplete
+        );
+        let query = SearchQuery::parse("artist: jsmovie");
+        assert_eq!(
+            query.terms()[0].kind,
+            TermKind::Field(FieldTerm {
+                name: QueryFieldName::Artist,
+                value: FieldValueState::Incomplete,
+            })
+        );
+        assert_eq!(query.terms()[1].kind, TermKind::Word("jsmovie".to_owned()));
+        assert_eq!(query.terms().len(), 2);
+    }
+
+    /// The operator saw an error until `has:image` was complete on 2026-11-06.
+    #[test]
+    fn adr_0087_start_of_a_fixed_value_is_incomplete_not_an_error() {
+        let state = |text: &str| match only_term(text).kind {
+            TermKind::Field(field) => field.value,
+            other => panic!("not a field: {other:?}"),
+        };
+        for text in ["has:spl", "has:IM", "is:down", "in:lib", "kind:sin"] {
+            assert_eq!(state(text), FieldValueState::Incomplete, "{text}");
+        }
+        for text in ["has:pickle", "is:nope", "kind:sin,nope", "kind:nope,sin"] {
+            assert!(
+                matches!(state(text), FieldValueState::Invalid(_)),
+                "{text} stays an error"
+            );
+        }
+        assert!(matches!(state("kind:album,sin"), FieldValueState::Valid(_)));
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_14_open_quote_closes_at_the_text_end() {
+        assert_eq!(
+            only_term(r#""night drive"#).kind,
+            TermKind::Phrase("night drive".to_owned())
+        );
+        assert_eq!(
+            valid(r#"release:"aged fr"#),
+            FieldValue::Text("aged fr".to_owned())
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_15_backslash_escapes_inside_quotes_only() {
+        assert_eq!(
+            only_term(r#""the \"best\" song""#).kind,
+            TermKind::Phrase(r#"the "best" song"#.to_owned())
+        );
+        assert_eq!(
+            only_term(r#""a\\b""#).kind,
+            TermKind::Phrase(r"a\b".to_owned())
+        );
+        assert_eq!(only_term(r"a\b").kind, TermKind::Word(r"a\b".to_owned()));
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_16_minus_applies_at_the_term_start_only() {
+        assert_eq!(only_term("lo-fi").kind, TermKind::Word("lo-fi".to_owned()));
+        assert!(SearchQuery::parse("-").terms().is_empty());
+        let remix = only_term("-remix");
+        assert_eq!(remix.kind, TermKind::Word("remix".to_owned()));
+        assert!(remix.excluded);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_17_scope_reads_the_correct_fields() {
+        let scope = |text: &str| SearchQuery::parse(text).scope();
+        assert_eq!(scope("haleen"), QueryScope::Everything);
+        assert_eq!(scope("is:ready"), QueryScope::LibraryOnly);
+        assert_eq!(scope("-has:split"), QueryScope::LibraryOnly);
+        assert_eq!(scope("in:library"), QueryScope::LibraryOnly);
+        assert_eq!(scope("in:index"), QueryScope::IndexOnly);
+        assert_eq!(scope("in:index is:ready"), QueryScope::Conflict);
+        assert_eq!(scope("in:library in:index"), QueryScope::Conflict);
+        assert_eq!(scope("is:bogus in:index"), QueryScope::IndexOnly);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_18_index_q_holds_words_and_phrases_only() {
+        let index_q = |text: &str| SearchQuery::parse(text).index_q();
+        assert_eq!(index_q(EXAMPLE), Some("\"night drive\"".to_owned()));
+        assert_eq!(
+            index_q(r#"haleen "a \"b\"""#),
+            Some(r#"haleen "a \"b\"""#.to_owned())
+        );
+        assert_eq!(index_q("artist:x -remix"), None);
+        for text in [
+            EXAMPLE,
+            "haleen kind:album title:x",
+            "is:ready in:index night",
+        ] {
+            let q = index_q(text).unwrap_or_default();
+            for info in &QUERY_FIELDS {
+                assert!(!q.contains(info.token), "{q:?} holds {}", info.token);
+            }
+        }
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_20_runnable_content_needs_a_word_or_a_field() {
+        let runnable = |text: &str| SearchQuery::parse(text).has_runnable_content();
+        for text in ["haleen", "\"night drive\"", "kind:single"] {
+            assert!(runnable(text), "{text}");
+        }
+        for text in [
+            "",
+            "!!!",
+            "-remix",
+            "in:library",
+            "artist:",
+            "after:yesterday",
+            "-kind:single",
+        ] {
+            assert!(!runnable(text), "{text}");
+        }
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_21_cursor_in_a_field_name_gives_the_prefix() {
+        assert_eq!(
+            cursor_term("ar", 2),
+            CursorTerm {
+                range: 0..2,
+                excluded: false,
+                partial: CursorPartial::FieldName {
+                    prefix: "ar".to_owned(),
+                },
+            }
+        );
+        let tokens: Vec<&str> = fields_with_prefix("ar")
+            .iter()
+            .map(|info| info.token)
+            .collect();
+        assert_eq!(tokens, vec!["artist:"]);
+        assert_eq!(fields_with_prefix("").len(), 11);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_22_cursor_after_a_colon_gives_the_value() {
+        assert_eq!(
+            cursor_term("kind:s", 6).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Kind,
+                prefix: "s".to_owned(),
+                value_range: 5..6,
+            }
+        );
+        let words: Vec<&str> = QueryFieldName::Kind
+            .values_with_prefix("s")
+            .iter()
+            .map(|value| value.word)
+            .collect();
+        assert_eq!(words, vec!["single"]);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_23_kind_item_and_excluded_term() {
+        assert_eq!(
+            cursor_term("kind:album,e", 12).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Kind,
+                prefix: "e".to_owned(),
+                value_range: 11..12,
+            }
+        );
+        let term = cursor_term("haleen -ar", 10);
+        assert!(term.excluded);
+        assert_eq!(term.range, 8..10);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_24_empty_term_and_other_terms() {
+        assert_eq!(
+            cursor_term("haleen ", 7),
+            CursorTerm {
+                range: 7..7,
+                excluded: false,
+                partial: CursorPartial::FieldName {
+                    prefix: String::new(),
+                },
+            }
+        );
+        assert_eq!(cursor_term("\"night dr", 9).partial, CursorPartial::Other);
+        assert_eq!(cursor_term("Re:Un", 5).partial, CursorPartial::Other);
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_25_cursor_moves_to_a_character_boundary() {
+        let text = "artist:é";
+        assert_eq!(text.len(), 9);
+        for cursor in [8, 9, 100] {
+            let term = cursor_term(text, cursor);
+            assert!(text.is_char_boundary(term.range.start));
+            assert!(text.is_char_boundary(term.range.end));
+            if let CursorPartial::FieldValue {
+                prefix,
+                value_range,
+                ..
+            } = &term.partial
+            {
+                assert!(text.is_char_boundary(value_range.start));
+                assert!(text.is_char_boundary(value_range.end));
+                assert!(prefix.is_empty() || prefix == "é");
+            }
+        }
+        assert_eq!(
+            cursor_term(text, 9).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Artist,
+                prefix: "é".to_owned(),
+                value_range: 7..9,
+            }
+        );
+        assert_eq!(
+            cursor_term(text, 8).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Artist,
+                prefix: String::new(),
+                value_range: 7..9,
+            }
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_26_field_table_order_tokens_and_scope() {
+        let names: Vec<QueryFieldName> = QUERY_FIELDS.iter().map(|info| info.name).collect();
+        assert_eq!(
+            names,
+            vec![
+                QueryFieldName::Artist,
+                QueryFieldName::Title,
+                QueryFieldName::Release,
+                QueryFieldName::Kind,
+                QueryFieldName::In,
+                QueryFieldName::After,
+                QueryFieldName::Before,
+                QueryFieldName::Duration,
+                QueryFieldName::Is,
+                QueryFieldName::Playlist,
+                QueryFieldName::Has,
+            ]
+        );
+        for info in &QUERY_FIELDS {
+            assert_eq!(
+                info.token,
+                format!("{:?}:", info.name).to_lowercase(),
+                "{info:?}"
+            );
+            let bare = info.token.trim_end_matches(':');
+            assert_eq!(QueryFieldName::from_name(bare), Some(info.name));
+            assert_eq!(info.name.info(), info);
+        }
+        let library_only: Vec<QueryFieldName> = QUERY_FIELDS
+            .iter()
+            .filter(|info| info.library_only)
+            .map(|info| info.name)
+            .collect();
+        assert_eq!(
+            library_only,
+            vec![
+                QueryFieldName::Is,
+                QueryFieldName::Playlist,
+                QueryFieldName::Has
+            ]
+        );
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_27_fixed_values_parse_as_correct_values() {
+        for info in &QUERY_FIELDS {
+            let expected = match info.name {
+                QueryFieldName::Kind => 3,
+                QueryFieldName::In | QueryFieldName::Has => 2,
+                QueryFieldName::Is => 4,
+                _ => 0,
+            };
+            let values = info.name.fixed_values();
+            assert_eq!(values.len(), expected, "{}", info.token);
+            for value in values {
+                let text = format!("{}{}", info.token, value.word);
+                assert!(
+                    matches!(only_field(&text).value, FieldValueState::Valid(_)),
+                    "{text}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_28_kind_words_resolve_to_release_kinds() {
+        for kind in [KindValue::Album, KindValue::Ep, KindValue::Single] {
+            let word = kind.word();
+            let resolved = ReleaseKind::resolve(Some(word), 2);
+            assert!(resolved.label().eq_ignore_ascii_case(word), "{word}");
+        }
+    }
+
+    #[test]
+    fn adr_0087_query_parser_r87_1_29_field_errors_in_text_order() {
+        let query = SearchQuery::parse("after:yesterday kind:lp haleen");
+        let errors = query.field_errors();
+        assert_eq!(errors.len(), 2);
+        let tokens = ["after:", "kind:"];
+        for ((term, error), token) in errors.iter().zip(tokens) {
+            let message = error.message();
+            assert!(!message.is_empty());
+            assert!(message.starts_with(token), "{message}");
+            assert!(
+                matches!(&term.kind, TermKind::Field(field) if field.name.info().token == token)
+            );
+        }
+    }
+
+    /// Packet 005: a quoted field value is one item. Its range starts at
+    /// the opening quote, and its prefix is the raw text from the quote.
+    #[test]
+    fn adr_0087_query_parser_r87_1_31_quoted_value_range_holds_its_quotes() {
+        let text = r#"artist:"Haleen M"#;
+        assert_eq!(
+            cursor_term(text, text.len()).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Artist,
+                prefix: r#""Haleen M"#.to_owned(),
+                value_range: 7..16,
+            }
+        );
+        let text = r#"artist:"a \"b" x"#;
+        assert_eq!(
+            cursor_term(text, 12).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Artist,
+                prefix: r#""a \""#.to_owned(),
+                value_range: 7..14,
+            }
+        );
+        assert_eq!(
+            cursor_term(r#"kind:"si,ep"#, 8).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Kind,
+                prefix: r#""si"#.to_owned(),
+                value_range: 5..11,
+            }
+        );
+        assert_eq!(
+            cursor_term(r#"artist:"x""#, 7).partial,
+            CursorPartial::FieldValue {
+                field: QueryFieldName::Artist,
+                prefix: String::new(),
+                value_range: 7..10,
+            }
+        );
+    }
+
+    /// R87-5-07: `quote_field_value` quotes a text with whitespace or a
+    /// quote, and the parser reads the result as the same text.
+    #[test]
+    fn adr_0087_field_values_r87_5_07_quote_field_value_round_trips() {
+        assert_eq!(quote_field_value("jsmovie"), "jsmovie");
+        assert_eq!(quote_field_value("aged friends"), r#""aged friends""#);
+        assert_eq!(quote_field_value(r#"a "b" \c"#), r#""a \"b\" \\c""#);
+        for text in ["jsmovie", "aged friends", r#"a "b" \c"#] {
+            let query = format!("artist:{}", quote_field_value(text));
+            assert_eq!(valid(&query), FieldValue::Text(text.to_owned()), "{text:?}");
+        }
+    }
+
+    /// R87-5-08: `unquote_field_value_prefix` removes the opening quote and
+    /// resolves the escapes after it.
+    #[test]
+    fn adr_0087_field_values_r87_5_08_unquote_a_value_prefix() {
+        assert_eq!(unquote_field_value_prefix(r#""aged fr"#), "aged fr");
+        assert_eq!(unquote_field_value_prefix(r#""a \"b"#), r#"a "b"#);
+        assert_eq!(unquote_field_value_prefix("hal"), "hal");
+        assert_eq!(unquote_field_value_prefix(r#""Haleen""#), "Haleen");
+    }
+}
