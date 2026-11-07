@@ -15,17 +15,18 @@ repository that owns the subject. musicindex owns the shared interface rules.
 
 ## Where The Work Stands
 
-The repository has no code. Two subjects are proposed, and no ADR accepts them. The
-[search move plan](docs/plans/search-move-phase-plan.md) gives the sequence for search.
+The repository has no code. musicindex ADR 0049 accepts `search/`. No ADR accepts
+`moodbar/`. The [search move plan](docs/plans/search-move-phase-plan.md) gives the
+sequence for search.
 
-| Subject | Proposed content | Research |
+| Subject | Content | Research |
 | --- | --- | --- |
 | `search/` | The query crate for v4vmm and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
 | `moodbar/` | The analysis crate for Studio and v4vmm, the browser drawing code, and the test data | No research document |
 
 ## How An App Uses This Code
 
-These are proposals until an ADR accepts them:
+musicindex ADR 0049 R-QUERY-4 owns these rules for `search/`:
 
 - A Rust app uses a crate as a Git dependency, pinned to a commit.
 - The website keeps a copy of each JavaScript file, because it has no build step. A

@@ -2,8 +2,8 @@
 
 ## Status
 
-Draft - 2026-11-06. This plan binds nothing. A musicindex ADR must accept the shared
-query text first (musicindex ADR 0027). The research is
+Active - 2026-11-06. This plan binds nothing. musicindex ADR 0049 owns the rules of the
+query text. The research is
 `research_notes/search/shared-query-text.md` in `../musicindex-research`.
 
 ## Goal
@@ -63,9 +63,8 @@ It builds with Rust 1.93, because Studio has that minimum. v4vmm has 1.97.
 
 ### Phase 0: Decisions
 
-1. A musicindex ADR owns the query text, the fields and the case file.
-2. A v4vmm ADR amends ADR 0087, because "One parser in the view model layer" changes.
-3. A Studio ADR states which search fields read the syntax.
+1. A v4vmm ADR amends ADR 0087, because "One parser in the view model layer" changes.
+2. A Studio ADR states which search fields read the syntax.
 
 No code moves in this phase.
 
@@ -150,7 +149,5 @@ Each change of a case needs the ADR that owns the rule.
 
 ## Open Questions
 
-- Does Stophammer put the prefix match before the fast routes for a sort? The pickers and live search need it.
-- Does `kind:album` stay without feeds that have no tracks? R-WORD-1 labels such a feed "Album".
-- Does the website load one module file, or does a check keep an inline copy equal?
-- Does an app with no Library show a note and no rows for a Library field?
+- Which settings give an inferred EP? The operator will test settings after the crate exists. `kind:ep` has no inference until then.
+- Which Studio search fields read the syntax?
