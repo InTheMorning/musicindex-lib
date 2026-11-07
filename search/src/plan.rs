@@ -48,6 +48,8 @@ impl IndexSearchPlan {
         };
         if request.has_positive_term() {
             IndexSearchPlan::Send(request)
+        } else if request.filters.has_exclusion() {
+            IndexSearchPlan::Skip(IndexSkip::ExclusionsOnly)
         } else {
             IndexSearchPlan::Skip(IndexSkip::NoIndexPart)
         }
@@ -250,6 +252,14 @@ impl IndexFilters {
             || self.has_duration()
     }
 
+    /// `true` when a `not_` filter has a value.
+    fn has_exclusion(&self) -> bool {
+        !self.not_artist.is_empty()
+            || !self.not_title.is_empty()
+            || !self.not_release.is_empty()
+            || !self.not_q.is_empty()
+    }
+
     /// `true` when `min_duration` or `max_duration` applies.
     fn has_duration(&self) -> bool {
         self.min_duration.is_some() || self.max_duration.is_some()
@@ -279,9 +289,12 @@ fn index_text(text: &str) -> String {
 /// The cause of an Index part that sends no request.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum IndexSkip {
-    /// The Index has nothing to search. The query has no word, no phrase and
-    /// no positive field, or its `kind:` terms share no kind.
+    /// The Index has nothing to search. The query has no word, no phrase, no
+    /// positive field and no exclusion, or its `kind:` terms share no kind.
     NoIndexPart,
+    /// The query has exclusions and no positive term. Stophammer needs a
+    /// positive term. An app can show a note for this cause.
+    ExclusionsOnly,
     /// The query asks for the Library only.
     LibraryOnly,
     /// The query asks for the Library only and for the Index only.
@@ -610,10 +623,14 @@ mod tests {
     fn adr_0087_index_fields_r87_11_07_exclusions_alone_send_nothing() {
         assert_eq!(
             plan("-remix"),
-            IndexSearchPlan::Skip(IndexSkip::NoIndexPart)
+            IndexSearchPlan::Skip(IndexSkip::ExclusionsOnly)
         );
         assert_eq!(
             plan("-title:remix"),
+            IndexSearchPlan::Skip(IndexSkip::ExclusionsOnly)
+        );
+        assert_eq!(
+            plan("-remix kind:single kind:ep"),
             IndexSearchPlan::Skip(IndexSkip::NoIndexPart)
         );
         assert!(matches!(

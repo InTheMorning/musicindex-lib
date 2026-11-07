@@ -122,6 +122,7 @@ fn plan_json(query: &SearchQuery) -> Value {
         IndexSearchPlan::Skip(IndexSkip::Conflict) => json!({ "skip": "conflict" }),
         IndexSearchPlan::Skip(IndexSkip::LibraryOnly) => json!({ "skip": "library_only" }),
         IndexSearchPlan::Skip(IndexSkip::NoIndexPart) => json!({ "skip": "no_index_part" }),
+        IndexSearchPlan::Skip(IndexSkip::ExclusionsOnly) => json!({ "skip": "exclusions_only" }),
         IndexSearchPlan::Skip(IndexSkip::Unsupported(terms)) => {
             json!({ "skip": "unsupported", "tokens": terms.field_tokens })
         }

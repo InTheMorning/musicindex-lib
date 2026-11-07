@@ -1313,7 +1313,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -3479,7 +3479,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -6058,7 +6058,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -6103,7 +6103,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -6126,7 +6126,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -6772,7 +6772,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -9665,7 +9665,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -9698,7 +9698,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -9771,7 +9771,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -9860,7 +9860,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -9877,7 +9877,7 @@
     {
       "index_q": null,
       "plan": {
-        "skip": "no_index_part"
+        "skip": "exclusions_only"
       },
       "runnable": false,
       "scope": "everything",
@@ -10190,6 +10190,108 @@
         }
       ],
       "text": "-kind:album -after:2026-01"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "exclusions_only"
+      },
+      "runnable": false,
+      "scope": "index_only",
+      "terms": [
+        {
+          "raw": "in:index",
+          "excluded": false,
+          "kind": "field",
+          "field": "in:",
+          "state": "valid",
+          "value": {
+            "scope": "index"
+          },
+          "error": null
+        },
+        {
+          "raw": "-remix",
+          "excluded": true,
+          "kind": "word",
+          "text": "remix"
+        }
+      ],
+      "text": "in:index -remix"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "exclusions_only"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "raw": "-title:remix",
+          "excluded": true,
+          "kind": "field",
+          "field": "title:",
+          "state": "valid",
+          "value": {
+            "text": "remix"
+          },
+          "error": null
+        },
+        {
+          "raw": "artist:",
+          "excluded": false,
+          "kind": "field",
+          "field": "artist:",
+          "state": "incomplete",
+          "value": null,
+          "error": null
+        }
+      ],
+      "text": "-title:remix artist:"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "raw": "-remix",
+          "excluded": true,
+          "kind": "word",
+          "text": "remix"
+        },
+        {
+          "raw": "kind:single",
+          "excluded": false,
+          "kind": "field",
+          "field": "kind:",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "single"
+            ]
+          },
+          "error": null
+        },
+        {
+          "raw": "kind:ep",
+          "excluded": false,
+          "kind": "field",
+          "field": "kind:",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "ep"
+            ]
+          },
+          "error": null
+        }
+      ],
+      "text": "-remix kind:single kind:ep"
     }
   ]
 }

@@ -76,13 +76,20 @@ Move the code with no change of behavior. Keep the source commit in the commit m
 - Mechanical: the crate passes `query-text-cases.json`, which comes from the capture of 2026-11-06.
 - Mechanical: the crate builds with Rust 1.93 in CI.
 
+### Phase 1a: A Cause For A Query With Only Exclusions
+
+On 2026-11-07 the operator asked for a skip value of its own, because v4vmm will show a note for this cause. The value is `IndexSkip::ExclusionsOnly`. The Index request does not change, because the crate sends no request for this query. No ADR states this value.
+
+- Mechanical: a case gives `exclusions_only` for `-remix`.
+- Mechanical: a case gives `no_index_part` for `-remix kind:single kind:ep`, because its `kind:` terms share no kind.
+
 ### Phase 2: v4vmm Uses The Crate
 
 Start after the search and sort work that is in progress is in a commit. v4vmm is the first user, because its tests already cover this code.
 
 - `search_query.rs` keeps the two scope functions and gives the other names from the crate, so the other files do not change.
 - These guards change in the same commit: `ADR_0087_QUERY_PARSER_OWNER`, `RUN_OWNER` and the `release_kind.rs` guards in `tests/architecture_tests.rs`.
-- Mechanical: each v4vmm search test passes, with no change to the test.
+- Mechanical: each v4vmm search test passes, with no change to the test, on the commit of Phase 1. A pin after Phase 1a adds `IndexSkip::ExclusionsOnly` to two `match` expressions in `src/view_models/search_results/mod.rs`.
 
 ### Phase 3: Two Behavior Corrections
 
