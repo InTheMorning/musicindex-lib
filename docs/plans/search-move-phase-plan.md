@@ -129,15 +129,19 @@ This phase can start after Phase 1, if Studio needs it before v4vmm is ready.
 
 ### Phase 5: Website Module
 
-1. Move the prototype to `search/web/query-text.mjs`, with the two corrections of Phase 3 and the parameters of Phase 3a.
+1. Move the prototype to `search/web/query-text.mjs`, with the skip value of Phase 1a, the two corrections of Phase 3 and the parameters of Phase 3a.
 2. The website keeps a copy of the module and the case file. `tools/check-site.sh` finds a copy with other bytes.
 3. The toolbar field sends the output of the module.
 
 - Mechanical: the module passes the case file in the CI of musicindex-lib, in Node.
+- Mechanical: the cases catch each common JavaScript mistake of `tools/query-text/compare.mjs`.
+- Mechanical: the crate and the module pass the label cases of the case file.
 - Mechanical: `tools/check-site.sh` fails when a copy has other bytes.
 - Visual: in Firefox and Chromium, a search with fields, and the note for a Library field.
 
 The field list and `cursor_term` are not in this phase. The case file has no cursor cases.
+
+A browser field can hold a text with a lone surrogate, and a Rust string cannot. Thus such a text has no crate result, and its result in the module is unproved. This note states no rule.
 
 ### Phase 6: Prefix
 
