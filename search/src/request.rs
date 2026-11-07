@@ -6,6 +6,69 @@
 use crate::kind::index_kind_pairs;
 use crate::plan::IndexFilters;
 
+/// The name in the node capabilities that states `sort` and `reverse`
+/// (Stophammer ADR 0084 section 11).
+const SORT_CAPABILITY: &str = "sort";
+
+/// The sequence of the rows of one search (Stophammer ADR 0084 sections 2 and 3).
+///
+/// `Relevance` has no direction, because the node gives `400` for a reversed
+/// relevance. A cursor continues only the sequence that gave it (section 9), so
+/// an app keeps one value for all pages of a run.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum IndexOrder {
+    /// The default of the node: best match first with a word, and newest first
+    /// with no word.
+    #[default]
+    Relevance,
+    /// A to Z. With `reverse`, Z to A.
+    Name { reverse: bool },
+    /// Newest first. With `reverse`, oldest first.
+    Date { reverse: bool },
+}
+
+/// What started a search, for the sequence of its rows.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum IndexRun {
+    /// A search that runs while a person types. Each page of `name` or `date`
+    /// sorts its rows again, so a live search keeps `relevance` (Stophammer ADR
+    /// 0084, Consequences).
+    Live,
+    /// A search that a person starts.
+    Command,
+}
+
+/// The `sort` and `reverse` parameters of one search (Stophammer ADR 0084).
+///
+/// `capabilities` is the list `capabilities` of `GET /v1/node/capabilities`. A
+/// node that does not list `sort` gets no parameter, because a node can ignore a
+/// parameter with no error (section 11). `IndexOrder::Relevance` gets no
+/// parameter, because a request with no word gives `400` for `sort=relevance`
+/// (section 5), and the default of the node is the same sequence (section 4).
+#[must_use]
+pub fn index_order_pairs(
+    order: IndexOrder,
+    run: IndexRun,
+    capabilities: &[impl AsRef<str>],
+) -> Vec<(&'static str, String)> {
+    let node_sorts = capabilities
+        .iter()
+        .any(|name| name.as_ref() == SORT_CAPABILITY);
+    if !node_sorts || run == IndexRun::Live {
+        return Vec::new();
+    }
+    let (sort, reverse) = match order {
+        IndexOrder::Relevance => return Vec::new(),
+        IndexOrder::Name { reverse } => ("name", reverse),
+        IndexOrder::Date { reverse } => ("date", reverse),
+    };
+    let mut pairs = vec![("sort", sort.to_owned())];
+    if reverse {
+        pairs.push(("reverse", "true".to_owned()));
+    }
+    pairs
+}
+
 /// The `GET /v1/search` filter parameters of one request (v4vmm ADR 0087
 /// Decision 5, Stophammer ADR 0080 section 2). Each field is its own
 /// parameter. A date is `YYYY-MM-DD`, and a duration is whole seconds.

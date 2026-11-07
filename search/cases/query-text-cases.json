@@ -11106,5 +11106,305 @@
       ],
       "text": "-title:a\"b -release:\"c\\\\d\" x"
     }
+  ],
+  "order_cases": [
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "live",
+      "sort": "relevance"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "live",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [],
+      "reverse": true,
+      "run": "live",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "live",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [],
+      "reverse": true,
+      "run": "live",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "command",
+      "sort": "relevance"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [
+        [
+          "sort",
+          "name"
+        ]
+      ],
+      "reverse": false,
+      "run": "command",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [
+        [
+          "sort",
+          "name"
+        ],
+        [
+          "reverse",
+          "true"
+        ]
+      ],
+      "reverse": true,
+      "run": "command",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [
+        [
+          "sort",
+          "date"
+        ]
+      ],
+      "reverse": false,
+      "run": "command",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists",
+        "sort"
+      ],
+      "params": [
+        [
+          "sort",
+          "date"
+        ],
+        [
+          "reverse",
+          "true"
+        ]
+      ],
+      "reverse": true,
+      "run": "command",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "live",
+      "sort": "relevance"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "live",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": true,
+      "run": "live",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "live",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": true,
+      "run": "live",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "command",
+      "sort": "relevance"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "command",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": true,
+      "run": "command",
+      "sort": "name"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": false,
+      "run": "command",
+      "sort": "date"
+    },
+    {
+      "capabilities": [
+        "query",
+        "search",
+        "sync",
+        "push",
+        "name_lists"
+      ],
+      "params": [],
+      "reverse": true,
+      "run": "command",
+      "sort": "date"
+    }
   ]
 }

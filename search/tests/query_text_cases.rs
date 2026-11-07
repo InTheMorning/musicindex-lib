@@ -11,7 +11,7 @@ use musicindex_search::query::{
     ContentValue, FieldValue, FieldValueError, FieldValueState, LibraryStateValue, QueryScope,
     QueryTerm, ScopeValue, SearchQuery, TermKind,
 };
-use musicindex_search::request::index_filter_pairs;
+use musicindex_search::request::{IndexOrder, IndexRun, index_filter_pairs, index_order_pairs};
 use serde_json::{Value, json};
 
 fn case_file() -> Value {
@@ -181,6 +181,54 @@ fn adr_0049_r_query_3_item_3_the_file_holds_the_language_differences() {
                 .iter()
                 .any(|case| case["text"].as_str().is_some_and(|t| t.contains(part))),
             "musicindex ADR 0049 R-QUERY-3 item 3: add a case with {part:?} to the case file."
+        );
+    }
+}
+
+fn order_of(case: &Value) -> IndexOrder {
+    let reverse = case["reverse"].as_bool().expect("a case has a direction");
+    match case["sort"].as_str() {
+        Some("relevance") => {
+            assert!(
+                !reverse,
+                "Stophammer ADR 0084 section 5: relevance has no reverse"
+            );
+            IndexOrder::Relevance
+        }
+        Some("name") => IndexOrder::Name { reverse },
+        Some("date") => IndexOrder::Date { reverse },
+        other => panic!("a case has no sort: {other:?}"),
+    }
+}
+
+#[test]
+fn adr_0084_the_crate_gives_each_order_of_the_case_file() {
+    let file = case_file();
+    let cases = file["order_cases"]
+        .as_array()
+        .expect("the file has order cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let run = match case["run"].as_str() {
+            Some("live") => IndexRun::Live,
+            Some("command") => IndexRun::Command,
+            other => panic!("a case has no run: {other:?}"),
+        };
+        let capabilities: Vec<&str> = case["capabilities"]
+            .as_array()
+            .expect("a case has capabilities")
+            .iter()
+            .map(|name| name.as_str().expect("a capability is text"))
+            .collect();
+        let actual: Vec<Value> = index_order_pairs(order_of(case), run, &capabilities)
+            .into_iter()
+            .map(|(name, value)| json!([name, value]))
+            .collect();
+        assert_eq!(
+            &Value::Array(actual),
+            &case["params"],
+            "Stophammer ADR 0084: {case}. Correct request::index_order_pairs, or change the case \
+             with the ADR that owns the rule."
         );
     }
 }
