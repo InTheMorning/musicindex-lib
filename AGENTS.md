@@ -16,11 +16,10 @@ repository that owns the subject. musicindex owns the shared interface rules.
 ## Where The Work Stands
 
 `search/` holds the crate `musicindex-search`, the JavaScript module
-`web/query-text.mjs` and the case file. musicindex ADR 0049 accepts `search/`. The crate
-has Phases 1, 1a, 3 and 3a of the
-[search move plan](docs/plans/search-move-phase-plan.md). The module has item 1 of
-Phase 5. No app uses the crate or the module. No ADR accepts `moodbar/`, and it has no
-folder.
+`web/query-text.mjs` and the case file. musicindex ADR 0049 accepts `search/`. v4vmm and
+Studio pin the crate at commit `7cfc4e7`. The website does not use the module yet. The
+[search move plan](docs/plans/search-move-phase-plan.md) gives the state of each phase.
+No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |
 | --- | --- | --- |

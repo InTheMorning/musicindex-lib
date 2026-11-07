@@ -21,15 +21,26 @@ They also use one kind rule for the label and for the filter.
 
 ## Current State
 
-The commits are from 2026-11-06. v4vmm has 15 changed files that are not in a commit,
-and Studio has 9.
+These facts come from the repositories and the live node on 2026-11-07.
 
 | Repository | Search state |
 | --- | --- |
-| v4vmm | `search_query.rs` has the parser. `search_run.rs` has the Index plan. `release_kind.rs` has the kind rule. It sends `kind=single`, so `kind:single` finds no Index rows. A text search found no code that sends `sort` or `reverse` on a search. |
-| Studio | The pickers send text to `/musicindex/search`. Core sends `q`, `type=feed` and `limit=25`. The route holds the workspace lock during the request. |
-| Website | The toolbar field sends a plain query (musicindex ADR 0047). Shell packet 002, the toolbar, is in commit `531716c`. |
-| Stophammer | Release 0.19.0 is live, and on 2026-11-07 its capabilities list `sort` (ADR 0084 §11). ADR 0085 §6 gives the kind requests. The index has no prefix match, and Stophammer has no ADR for one. |
+| v4vmm | It pins the crate at commit `7cfc4e7` (v4vmm ADR 0091, steps 1 and 2). `search_query.rs` keeps the two scope functions. |
+| Studio | It pins the crate at commit `7cfc4e7` (Studio ADR 0151). `studio-core` reads each typed search text with the crate. |
+| Website | The toolbar field sends a plain query (musicindex ADR 0047). The website has no copy of the module. |
+| Stophammer | The capabilities of the live node list `sort` (ADR 0084 §11). ADR 0085 §6 gives the kind requests. The live node has the prefix match of ADR 0086. |
+
+| Phase | State |
+| --- | --- |
+| 0 | Complete: v4vmm ADR 0091 and Studio ADR 0151 |
+| 1, 1a and 3a | Complete |
+| 2 | Complete: v4vmm commits `bebfe97` and `c433582` |
+| 3 | Mechanical checks complete. The visual check is open in `docs/pending-human-checks.md` of v4vmm. |
+| 4 | Complete: Studio commit `2ecd7e9`. Studio records that the visual checks passed. |
+| 5 | Item 1 is complete. Items 2 and 3 are open, and they need the website. |
+| 6 | Complete, with no change to the crate |
+
+The commits of this repository after `7cfc4e7` change no compiled code of the crate. An app needs no new pin for them.
 
 ## Target State
 
@@ -145,15 +156,14 @@ A browser field can hold a text with a lone surrogate, and a Rust string cannot.
 
 ### Phase 6: Prefix
 
-Start when Stophammer deploys a prefix match. Stophammer has no ADR for it. The crate follows the deployed contract, not a contract in work.
+Stophammer ADR 0086 gives the prefix match. It adds no parameter, so the crate and the module need no change. The node reads the last word of `q` as a prefix.
 
-- When Stophammer accepts a prefix match, the crate needs no change unless the contract gives a new parameter.
+- Mechanical: on 2026-11-07, the live node gave rows for `q=jsmo`, and no rows for `q="jsmo"` or `artist=jsmo`.
 
 ## Risks
 
 | Risk | Control |
 | --- | --- |
-| The v4vmm working tree changes during the move | Phase 2 starts after the work is in a commit |
 | The Stophammer contract changes | The crate uses only deployed parameters, and a case holds each parameter name |
 | A feed states a kind | Stophammer ADR 0085 §6 states that the mapping must then change, and `kind=unknown` does not find such a feed |
 | `episode_count` differs from the true track count | The label and the filter read the same field. The research did not compare it with the track rows. |
@@ -173,4 +183,3 @@ Each change of a case needs the ADR that owns the rule.
 ## Open Questions
 
 - Which settings give an inferred EP? The operator will test settings after the crate exists. `kind:ep` has no inference until then.
-- Which Studio search fields read the syntax?
