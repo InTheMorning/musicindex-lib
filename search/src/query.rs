@@ -1,0 +1,1293 @@
+//! The parser of the query text (musicindex ADR 0049 R-QUERY-1).
+//!
+//! The source is `src/view_models/search_query.rs` of v4vmm. The query text
+//! holds words, phrases and fields. This module gives a typed query: the
+//! words, the phrases, the fields, the exclusions and one typed error for each
+//! field value that is not correct.
+//!
+//! The module also holds the field table, the fixed values of each field
+//! and the scope rules. It gives the words for the Index `q` and the term at
+//! the text cursor. Each range is a byte range on a character boundary of
+//! the text.
+//!
+//! The module has no I/O.
+
+use std::ops::Range;
+
+use chrono::{Months, NaiveDate, NaiveTime};
+
+/// The double quote character that opens and closes a phrase.
+const QUOTE: char = '\u{22}';
+
+/// The character that escapes a quote or a backslash inside quotes.
+const BACKSLASH: char = '\\';
+
+/// The number of seconds in one day.
+const SECONDS_PER_DAY: i64 = 86_400;
+
+/// The name of one query field (v4vmm ADR 0087 Decision 2).
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum QueryFieldName {
+    Artist,
+    Title,
+    Release,
+    Kind,
+    In,
+    After,
+    Before,
+    Duration,
+    Is,
+    Playlist,
+    Has,
+}
+
+/// The kind of value that one query field reads.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FieldValueKind {
+    /// A text that is not empty, bare or in quotes.
+    Text,
+    /// One or more release kinds, with commas.
+    KindList,
+    /// `library` or `index`.
+    Scope,
+    /// A date or a month.
+    Date,
+    /// A comparison or a range of durations.
+    Duration,
+    /// One Library state of a track.
+    LibraryState,
+    /// One kind of content.
+    Content,
+}
+
+/// One row of the field table that the field list shows.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct QueryFieldInfo {
+    /// The field name.
+    pub name: QueryFieldName,
+    /// The field name in lowercase with its colon, for example `artist:`.
+    pub token: &'static str,
+    /// The kind of value that the field reads.
+    pub value_kind: FieldValueKind,
+    /// A short text that names the correct values.
+    pub values_text: &'static str,
+    /// One correct example of the field, with its token.
+    pub example: &'static str,
+    /// What the field matches.
+    pub description: &'static str,
+    /// `true` when only the Library can apply the field.
+    pub library_only: bool,
+}
+
+/// One fixed value of a field, with a short description.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FixedValueInfo {
+    /// The value word, in lowercase.
+    pub word: &'static str,
+    /// What the value means.
+    pub description: &'static str,
+}
+
+/// The field table, in the order of v4vmm ADR 0087 Decision 2.
+pub const QUERY_FIELDS: [QueryFieldInfo; 11] = [
+    QueryFieldInfo {
+        name: QueryFieldName::Artist,
+        token: "artist:",
+        value_kind: FieldValueKind::Text,
+        values_text: "an artist name",
+        example: "artist:jsmovie",
+        description: "The track artist or the album artist",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Title,
+        token: "title:",
+        value_kind: FieldValueKind::Text,
+        values_text: "a title",
+        example: "title:\"night drive\"",
+        description: "The track title or the release title",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Release,
+        token: "release:",
+        value_kind: FieldValueKind::Text,
+        values_text: "a release title",
+        example: "release:\"aged friends\"",
+        description: "The release title",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Kind,
+        token: "kind:",
+        value_kind: FieldValueKind::KindList,
+        values_text: "album, ep, single",
+        example: "kind:single",
+        description: "The release kind. Use commas for more than one kind",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::In,
+        token: "in:",
+        value_kind: FieldValueKind::Scope,
+        values_text: "library, index",
+        example: "in:library",
+        description: "Search only the Library or only the Index",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::After,
+        token: "after:",
+        value_kind: FieldValueKind::Date,
+        values_text: "a date or a month",
+        example: "after:2026-10-01",
+        description: "Released on this date or after it",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Before,
+        token: "before:",
+        value_kind: FieldValueKind::Date,
+        values_text: "a date or a month",
+        example: "before:2026-10",
+        description: "Released on this date or before it",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Duration,
+        token: "duration:",
+        value_kind: FieldValueKind::Duration,
+        values_text: ">5m, <3:30, 3m..5m",
+        example: "duration:3m..5m",
+        description: "The track duration",
+        library_only: false,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Is,
+        token: "is:",
+        value_kind: FieldValueKind::LibraryState,
+        values_text: "downloaded, partial, ready, removed",
+        example: "is:downloaded",
+        description: "The Library state of the track",
+        library_only: true,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Playlist,
+        token: "playlist:",
+        value_kind: FieldValueKind::Text,
+        values_text: "a playlist name",
+        example: "playlist:\"friday show\"",
+        description: "The tracks of a playlist",
+        library_only: true,
+    },
+    QueryFieldInfo {
+        name: QueryFieldName::Has,
+        token: "has:",
+        value_kind: FieldValueKind::Content,
+        values_text: "split, image",
+        example: "has:split",
+        description: "A value split or an image of its own",
+        library_only: true,
+    },
+];
+
+/// The field table as a static, so that a row reference lives for the
+/// full program.
+static FIELD_ROWS: [QueryFieldInfo; 11] = QUERY_FIELDS;
+
+const KIND_VALUES: &[FixedValueInfo] = &[
+    FixedValueInfo {
+        word: "album",
+        description: "A release with many tracks",
+    },
+    FixedValueInfo {
+        word: "ep",
+        description: "A short release",
+    },
+    FixedValueInfo {
+        word: "single",
+        description: "A release with one track",
+    },
+];
+
+const SCOPE_VALUES: &[FixedValueInfo] = &[
+    FixedValueInfo {
+        word: "library",
+        description: "Only the Library",
+    },
+    FixedValueInfo {
+        word: "index",
+        description: "Only MusicIndex",
+    },
+];
+
+const LIBRARY_STATE_VALUES: &[FixedValueInfo] = &[
+    FixedValueInfo {
+        word: "downloaded",
+        description: "Each track is downloaded",
+    },
+    FixedValueInfo {
+        word: "partial",
+        description: "Some tracks are downloaded",
+    },
+    FixedValueInfo {
+        word: "ready",
+        description: "Ready for a show",
+    },
+    FixedValueInfo {
+        word: "removed",
+        description: "Removed from its feed",
+    },
+];
+
+const CONTENT_VALUES: &[FixedValueInfo] = &[
+    FixedValueInfo {
+        word: "split",
+        description: "A value block with payment routes",
+    },
+    FixedValueInfo {
+        word: "image",
+        description: "An image of its own",
+    },
+];
+
+impl QueryFieldName {
+    /// Reads a field name without its colon, without case.
+    ///
+    /// Returns `None` for a name that is not in the field table.
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        FIELD_ROWS
+            .iter()
+            .find(|info| {
+                info.token
+                    .strip_suffix(':')
+                    .is_some_and(|bare| bare.eq_ignore_ascii_case(name))
+            })
+            .map(|info| info.name)
+    }
+
+    /// The row of the field table for this field.
+    #[must_use]
+    pub fn info(self) -> &'static QueryFieldInfo {
+        &FIELD_ROWS[self as usize]
+    }
+
+    /// `true` when only the Library can apply this field.
+    #[must_use]
+    pub fn is_library_only(self) -> bool {
+        self.info().library_only
+    }
+
+    /// The fixed values of this field. A field with free values gives an
+    /// empty slice.
+    #[must_use]
+    pub fn fixed_values(self) -> &'static [FixedValueInfo] {
+        match self {
+            Self::Kind => KIND_VALUES,
+            Self::In => SCOPE_VALUES,
+            Self::Is => LIBRARY_STATE_VALUES,
+            Self::Has => CONTENT_VALUES,
+            Self::Artist
+            | Self::Title
+            | Self::Release
+            | Self::After
+            | Self::Before
+            | Self::Duration
+            | Self::Playlist => &[],
+        }
+    }
+
+    /// The fixed values of this field whose word starts with `prefix`,
+    /// compared without case.
+    #[must_use]
+    pub fn values_with_prefix(self, prefix: &str) -> Vec<&'static FixedValueInfo> {
+        let prefix = prefix.to_lowercase();
+        self.fixed_values()
+            .iter()
+            .filter(|value| value.word.starts_with(&prefix))
+            .collect()
+    }
+
+    /// The token of this field, for example `after:`.
+    fn token(self) -> &'static str {
+        self.info().token
+    }
+
+    /// The example value of this field, without its token.
+    fn example_value(self) -> &'static str {
+        let info = self.info();
+        info.example
+            .strip_prefix(info.token)
+            .unwrap_or(info.example)
+    }
+}
+
+/// The rows of the field table whose token starts with `prefix`, compared
+/// without case. An empty prefix gives each row.
+#[must_use]
+pub fn fields_with_prefix(prefix: &str) -> Vec<&'static QueryFieldInfo> {
+    let prefix = prefix.to_lowercase();
+    FIELD_ROWS
+        .iter()
+        .filter(|info| info.token.starts_with(&prefix))
+        .collect()
+}
+
+/// One release kind that `kind:` reads (v4vmm ADR 0084 Decision 5).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum KindValue {
+    Album,
+    Ep,
+    Single,
+}
+
+impl KindValue {
+    /// The query word of this kind: `album`, `ep` or `single`.
+    #[must_use]
+    pub const fn word(self) -> &'static str {
+        match self {
+            Self::Album => "album",
+            Self::Ep => "ep",
+            Self::Single => "single",
+        }
+    }
+
+    fn from_word(word: &str) -> Option<Self> {
+        [Self::Album, Self::Ep, Self::Single]
+            .into_iter()
+            .find(|kind| kind.word().eq_ignore_ascii_case(word))
+    }
+}
+
+/// The scope that `in:` sets.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScopeValue {
+    Library,
+    Index,
+}
+
+/// The Library state that `is:` reads.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LibraryStateValue {
+    Downloaded,
+    Partial,
+    Ready,
+    Removed,
+}
+
+/// The content that `has:` reads.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContentValue {
+    Split,
+    Image,
+}
+
+/// A date or a month that `after:` or `before:` reads.
+///
+/// A day gives the same day twice. A month gives its first day and its last
+/// day. The dates are in UTC, the same time zone as `fmt_date`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DateValue {
+    /// The first day that the value includes.
+    pub first_day: NaiveDate,
+    /// The last day that the value includes.
+    pub last_day: NaiveDate,
+}
+
+impl DateValue {
+    /// The first second of `first_day` in UTC, as Unix seconds.
+    #[must_use]
+    pub fn start_unix(&self) -> i64 {
+        self.first_day
+            .and_time(NaiveTime::MIN)
+            .and_utc()
+            .timestamp()
+    }
+
+    /// The last second of `last_day` in UTC, as Unix seconds.
+    #[must_use]
+    pub fn end_unix(&self) -> i64 {
+        self.last_day.and_time(NaiveTime::MIN).and_utc().timestamp() + SECONDS_PER_DAY - 1
+    }
+}
+
+/// A duration range that `duration:` reads. Both limits are inclusive
+/// seconds. A limit with no value does not apply.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DurationRange {
+    /// The shortest duration that matches.
+    pub min_secs: Option<u32>,
+    /// The longest duration that matches.
+    pub max_secs: Option<u32>,
+}
+
+impl DurationRange {
+    /// `true` when `secs` is in the range.
+    #[must_use]
+    pub fn contains(&self, secs: u32) -> bool {
+        self.min_secs.is_none_or(|min| secs >= min) && self.max_secs.is_none_or(|max| secs <= max)
+    }
+}
+
+/// The typed value of a correct field.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FieldValue {
+    Text(String),
+    Kinds(Vec<KindValue>),
+    Scope(ScopeValue),
+    Date(DateValue),
+    Duration(DurationRange),
+    LibraryState(LibraryStateValue),
+    Content(ContentValue),
+}
+
+/// The error of one field value that is not correct.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FieldValueError {
+    /// The value is not a word of the fixed values of the field.
+    UnknownValue {
+        field: QueryFieldName,
+        value: String,
+    },
+    /// The field takes one value, but the value has a comma.
+    OneValueOnly { field: QueryFieldName },
+    /// The value of `after:` or `before:` is not a date or a month.
+    NotADate { field: QueryFieldName },
+    /// The value of `duration:` is not a comparison or a range.
+    NotADuration,
+    /// `in:` has a `-` (packet decision D6).
+    ExcludedScope,
+}
+
+impl FieldValueError {
+    /// The text that the field list shows. It starts with the field token
+    /// and gives one correct example.
+    #[must_use]
+    pub fn message(&self) -> String {
+        match self {
+            Self::UnknownValue { field, value } => format!(
+                "{} cannot read {value}. Use one of these values: {}",
+                field.token(),
+                field.info().values_text
+            ),
+            Self::OneValueOnly { field } => format!(
+                "{} takes one value, for example {}",
+                field.token(),
+                field.info().example
+            ),
+            Self::NotADate { field } => format!(
+                "{} needs a date, for example {}",
+                field.token(),
+                field.example_value()
+            ),
+            Self::NotADuration => {
+                let field = QueryFieldName::Duration;
+                format!(
+                    "{} needs a comparison or a range, for example {}",
+                    field.token(),
+                    field.example_value()
+                )
+            }
+            Self::ExcludedScope => {
+                let field = QueryFieldName::In;
+                format!(
+                    "{} cannot have a -. Use {}library or {}index",
+                    field.token(),
+                    field.token(),
+                    field.token()
+                )
+            }
+        }
+    }
+}
+
+/// The state of the value of one field term.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FieldValueState {
+    /// The value is correct.
+    Valid(FieldValue),
+    /// The value is empty. The field applies nothing, and this is not an
+    /// error (packet decision D5).
+    Incomplete,
+    /// The value is not correct. The field applies nothing.
+    Invalid(FieldValueError),
+}
+
+/// One field term: a field name and the state of its value.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FieldTerm {
+    /// The field name.
+    pub name: QueryFieldName,
+    /// The state of the field value.
+    pub value: FieldValueState,
+}
+
+/// The kind of one query term.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TermKind {
+    Word(String),
+    Phrase(String),
+    Field(FieldTerm),
+}
+
+/// One term of the query text.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct QueryTerm {
+    /// The byte range of the term in the text, with its `-`.
+    pub span: Range<usize>,
+    /// `true` when the term has a `-`.
+    pub excluded: bool,
+    /// The word, the phrase or the field.
+    pub kind: TermKind,
+}
+
+/// The scope of a query (v4vmm ADR 0087 Decision 2).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum QueryScope {
+    /// The Library and the Index.
+    Everything,
+    /// Only the Library.
+    LibraryOnly,
+    /// Only the Index.
+    IndexOnly,
+    /// The fields cannot apply together. The query shows no rows.
+    Conflict,
+}
+
+/// The typed query of one query text (v4vmm ADR 0087 Decision 1).
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct SearchQuery {
+    terms: Vec<QueryTerm>,
+}
+
+impl SearchQuery {
+    /// Parses the query text into its terms, in text order.
+    #[must_use]
+    pub fn parse(text: &str) -> Self {
+        let terms = lex(text)
+            .into_iter()
+            .filter_map(RawTerm::into_term)
+            .collect();
+        Self { terms }
+    }
+
+    /// The terms, in text order.
+    #[must_use]
+    pub fn terms(&self) -> &[QueryTerm] {
+        &self.terms
+    }
+
+    /// The scope that the correct fields set.
+    #[must_use]
+    pub fn scope(&self) -> QueryScope {
+        let mut library_field = false;
+        let mut in_library = false;
+        let mut in_index = false;
+        for field in self.valid_fields() {
+            if field.name.is_library_only() {
+                library_field = true;
+            }
+            match field.value {
+                FieldValueState::Valid(FieldValue::Scope(ScopeValue::Library)) => {
+                    in_library = true;
+                }
+                FieldValueState::Valid(FieldValue::Scope(ScopeValue::Index)) => in_index = true,
+                _ => {}
+            }
+        }
+        if in_index && (library_field || in_library) {
+            QueryScope::Conflict
+        } else if in_index {
+            QueryScope::IndexOnly
+        } else if library_field || in_library {
+            QueryScope::LibraryOnly
+        } else {
+            QueryScope::Everything
+        }
+    }
+
+    /// The words and the phrases without `-`, for the Index `q`.
+    ///
+    /// The terms keep their text order, with one space between them. A
+    /// phrase keeps its double quotes. Inside a phrase, a quote is written
+    /// `\"` and a backslash is written `\\`. With no such word or phrase,
+    /// the result is `None`. The result never holds a field.
+    #[must_use]
+    pub fn index_q(&self) -> Option<String> {
+        let parts: Vec<String> = self
+            .terms
+            .iter()
+            .filter(|term| !term.excluded)
+            .filter_map(|term| match &term.kind {
+                TermKind::Word(word) => Some(word.clone()),
+                TermKind::Phrase(phrase) => Some(quote_phrase(phrase)),
+                TermKind::Field(_) => None,
+            })
+            .collect();
+        (!parts.is_empty()).then(|| parts.join(" "))
+    }
+
+    /// `true` when the query holds one term without `-` that can run: a word
+    /// or a phrase with an alphanumeric character, or a correct field other
+    /// than `in:` (v4vmm ADR 0087 Decision 4).
+    #[must_use]
+    pub fn has_runnable_content(&self) -> bool {
+        self.terms
+            .iter()
+            .filter(|term| !term.excluded)
+            .any(|term| match &term.kind {
+                TermKind::Word(text) | TermKind::Phrase(text) => {
+                    text.chars().any(char::is_alphanumeric)
+                }
+                TermKind::Field(field) => is_valid_filter(field),
+            })
+    }
+
+    /// Each field value error with its term, in text order.
+    #[must_use]
+    pub fn field_errors(&self) -> Vec<(&QueryTerm, &FieldValueError)> {
+        self.terms
+            .iter()
+            .filter_map(|term| match &term.kind {
+                TermKind::Field(FieldTerm {
+                    value: FieldValueState::Invalid(error),
+                    ..
+                }) => Some((term, error)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn valid_fields(&self) -> impl Iterator<Item = &FieldTerm> {
+        self.terms.iter().filter_map(|term| match &term.kind {
+            TermKind::Field(field) if matches!(field.value, FieldValueState::Valid(_)) => {
+                Some(field)
+            }
+            _ => None,
+        })
+    }
+}
+
+/// `true` for a correct field other than `in:`.
+fn is_valid_filter(field: &FieldTerm) -> bool {
+    field.name != QueryFieldName::In && matches!(field.value, FieldValueState::Valid(_))
+}
+
+/// Writes a phrase in double quotes, with each quote and each backslash
+/// escaped.
+pub(crate) fn quote_phrase(phrase: &str) -> String {
+    let mut out = String::with_capacity(phrase.len() + 2);
+    out.push(QUOTE);
+    for ch in phrase.chars() {
+        if ch == QUOTE || ch == BACKSLASH {
+            out.push(BACKSLASH);
+        }
+        out.push(ch);
+    }
+    out.push(QUOTE);
+    out
+}
+
+/// Writes `text` as one field value (v4vmm ADR 0087 Decision 3, packet 005).
+///
+/// A text with a whitespace character or a quote gets double quotes.
+/// Inside the quotes, each backslash and each quote gets a backslash before
+/// it. Each other text does not change. The parser reads the result as the
+/// same text.
+#[must_use]
+pub fn quote_field_value(text: &str) -> String {
+    if text.chars().any(|ch| ch.is_whitespace() || ch == QUOTE) {
+        quote_phrase(text)
+    } else {
+        text.to_owned()
+    }
+}
+
+/// Gives the text of a value prefix that the curator types (v4vmm ADR 0087
+/// packet 005).
+///
+/// When the prefix starts with a quote, the function removes that quote.
+/// After it, `\"` gives a quote and `\\` gives a backslash, as in the
+/// parser. A quote with no backslash before it closes the value, so the
+/// function stops there. A prefix with no quote at the start does not
+/// change.
+#[must_use]
+pub fn unquote_field_value_prefix(prefix: &str) -> String {
+    let Some(rest) = prefix.strip_prefix(QUOTE) else {
+        return prefix.to_owned();
+    };
+    let mut out = String::with_capacity(rest.len());
+    let mut chars = rest.chars();
+    while let Some(ch) = chars.next() {
+        if ch == QUOTE {
+            break;
+        }
+        if ch == BACKSLASH {
+            match chars.next() {
+                Some(next) if next == QUOTE || next == BACKSLASH => out.push(next),
+                Some(next) => {
+                    out.push(BACKSLASH);
+                    out.push(next);
+                }
+                None => out.push(BACKSLASH),
+            }
+            continue;
+        }
+        out.push(ch);
+    }
+    out
+}
+
+/// The term under the text cursor, for the field list.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CursorTerm {
+    /// The byte range of the term after its `-`.
+    pub range: Range<usize>,
+    /// `true` when the term has a `-`.
+    pub excluded: bool,
+    /// The part of the term that the curator types.
+    pub partial: CursorPartial,
+}
+
+/// The part of the term under the cursor.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum CursorPartial {
+    /// The term has no colon of a known field. `prefix` is the text from the
+    /// term start to the cursor.
+    FieldName { prefix: String },
+    /// The cursor is after the colon of a known field. `prefix` is the value
+    /// text from the start of the value item to the cursor. `value_range` is
+    /// the byte range of that value item. A quoted value is one item: its
+    /// range starts at the opening quote and ends after the closing quote,
+    /// or at the text end, and its prefix is the raw text from the quote.
+    FieldValue {
+        field: QueryFieldName,
+        prefix: String,
+        value_range: Range<usize>,
+    },
+    /// The cursor is in a phrase, or in a word whose colon name is not a
+    /// field.
+    Other,
+}
+
+/// Reads the term under the cursor. `cursor` is a byte offset into `text`.
+///
+/// An offset that is not on a character boundary moves back to the
+/// boundary. An offset after the end moves to the end. The term under the
+/// cursor holds the cursor or ends at the cursor. With no such term, the
+/// term is empty at the cursor.
+#[must_use]
+pub fn cursor_term(text: &str, cursor: usize) -> CursorTerm {
+    let mut cursor = cursor.min(text.len());
+    while !text.is_char_boundary(cursor) {
+        cursor -= 1;
+    }
+    let Some(raw) = lex(text)
+        .into_iter()
+        .find(|raw| raw.span.start <= cursor && cursor <= raw.span.end)
+    else {
+        return CursorTerm {
+            range: cursor..cursor,
+            excluded: false,
+            partial: CursorPartial::FieldName {
+                prefix: String::new(),
+            },
+        };
+    };
+    let body_start = raw.body_start;
+    let typed_end = cursor.max(body_start);
+    let partial = match &raw.shape {
+        RawShape::Empty => CursorPartial::FieldName {
+            prefix: String::new(),
+        },
+        RawShape::Phrase { .. } => CursorPartial::Other,
+        RawShape::Word { text: word } => {
+            if word.contains(':') {
+                CursorPartial::Other
+            } else {
+                CursorPartial::FieldName {
+                    prefix: text[body_start..typed_end].to_owned(),
+                }
+            }
+        }
+        RawShape::Field {
+            name,
+            colon,
+            value_raw,
+            quoted,
+            ..
+        } => {
+            if typed_end <= *colon {
+                CursorPartial::FieldName {
+                    prefix: text[body_start..typed_end].to_owned(),
+                }
+            } else {
+                let typed = typed_end.clamp(value_raw.start, value_raw.end);
+                // A quoted value is one item. Its commas do not split it.
+                let (item_start, item_end) = if *name == QueryFieldName::Kind && !*quoted {
+                    let item_start = text[value_raw.start..typed]
+                        .rfind(',')
+                        .map_or(value_raw.start, |comma| value_raw.start + comma + 1);
+                    let item_end = text[typed..value_raw.end]
+                        .find(',')
+                        .map_or(value_raw.end, |comma| typed + comma);
+                    (item_start, item_end)
+                } else {
+                    (value_raw.start, value_raw.end)
+                };
+                CursorPartial::FieldValue {
+                    field: *name,
+                    prefix: text[item_start..typed].to_owned(),
+                    value_range: item_start..item_end,
+                }
+            }
+        }
+    };
+    CursorTerm {
+        range: body_start..raw.span.end,
+        excluded: raw.excluded,
+        partial,
+    }
+}
+
+/// The shape of one raw term, before the parser checks its value.
+#[derive(Debug)]
+enum RawShape {
+    /// A lone `-` with no text after it.
+    Empty,
+    /// A word. A colon in it does not start a known field.
+    Word { text: String },
+    /// A phrase in quotes, with its escapes read.
+    Phrase { content: String },
+    /// A known field name, its colon and its value.
+    Field {
+        name: QueryFieldName,
+        /// The byte offset of the colon.
+        colon: usize,
+        /// The byte range of the value text. A quoted value starts at its
+        /// opening quote and ends after its closing quote, or at the text
+        /// end (v4vmm ADR 0087 packet 005).
+        value_raw: Range<usize>,
+        /// `true` when the value starts with a quote.
+        quoted: bool,
+        /// The value text, with its escapes read.
+        value: String,
+    },
+}
+
+/// One raw term of the text, with the byte offsets that the cursor needs.
+#[derive(Debug)]
+struct RawTerm {
+    /// The byte range of the term, with its `-`.
+    span: Range<usize>,
+    /// The byte offset after the `-`.
+    body_start: usize,
+    /// `true` when the term has a `-`.
+    excluded: bool,
+    shape: RawShape,
+}
+
+impl RawTerm {
+    /// Gives the query term, or `None` for a term with no text.
+    fn into_term(self) -> Option<QueryTerm> {
+        let kind = match self.shape {
+            RawShape::Empty => return None,
+            RawShape::Word { text } => TermKind::Word(text),
+            RawShape::Phrase { content } if content.is_empty() => return None,
+            RawShape::Phrase { content } => TermKind::Phrase(content),
+            RawShape::Field { name, value, .. } => TermKind::Field(FieldTerm {
+                name,
+                value: field_value_state(name, &value, self.excluded),
+            }),
+        };
+        Some(QueryTerm {
+            span: self.span,
+            excluded: self.excluded,
+            kind,
+        })
+    }
+}
+
+/// Reads the text from left to right into raw terms. A whitespace
+/// character outside quotes ends a term.
+fn lex(text: &str) -> Vec<RawTerm> {
+    let mut terms = Vec::new();
+    let mut pos = 0;
+    while let Some(ch) = text[pos..].chars().next() {
+        if ch.is_whitespace() {
+            pos += ch.len_utf8();
+            continue;
+        }
+        let excluded = ch == '-';
+        let body_start = if excluded { pos + 1 } else { pos };
+        let (end, shape) = lex_body(text, body_start);
+        terms.push(RawTerm {
+            span: pos..end,
+            body_start,
+            excluded,
+            shape,
+        });
+        pos = end;
+    }
+    terms
+}
+
+/// Reads the term body that starts at `start`, after a possible `-`.
+/// Returns the byte offset of the term end and the shape of the term.
+fn lex_body(text: &str, start: usize) -> (usize, RawShape) {
+    let rest = &text[start..];
+    match rest.chars().next() {
+        None => return (start, RawShape::Empty),
+        Some(ch) if ch.is_whitespace() => return (start, RawShape::Empty),
+        Some(QUOTE) => {
+            let quoted = read_quoted(text, start);
+            return (
+                quoted.end,
+                RawShape::Phrase {
+                    content: quoted.content,
+                },
+            );
+        }
+        Some(_) => {}
+    }
+    let word_end = rest
+        .find(char::is_whitespace)
+        .map_or(text.len(), |offset| start + offset);
+    let word = &text[start..word_end];
+    if let Some(colon_offset) = word.find(':')
+        && let Some(name) = QueryFieldName::from_name(&word[..colon_offset])
+    {
+        let colon = start + colon_offset;
+        let value_start = colon + 1;
+        if text[value_start..].starts_with(QUOTE) {
+            let quoted = read_quoted(text, value_start);
+            return (
+                quoted.end,
+                RawShape::Field {
+                    name,
+                    colon,
+                    value_raw: value_start..quoted.end,
+                    quoted: true,
+                    value: quoted.content,
+                },
+            );
+        }
+        return (
+            word_end,
+            RawShape::Field {
+                name,
+                colon,
+                value_raw: value_start..word_end,
+                quoted: false,
+                value: text[value_start..word_end].to_owned(),
+            },
+        );
+    }
+    (
+        word_end,
+        RawShape::Word {
+            text: word.to_owned(),
+        },
+    )
+}
+
+/// The result of one quoted text.
+struct Quoted {
+    /// The text inside the quotes, with its escapes read.
+    content: String,
+    /// The byte offset after the closing quote, or the text end.
+    end: usize,
+}
+
+/// Reads a quoted text that starts with the quote at `quote_at`.
+///
+/// Inside quotes, a backslash before a quote or a backslash gives that
+/// character. Each other backslash stays in the text. A quote with no
+/// closing quote closes at the end of the text (packet decision D10).
+fn read_quoted(text: &str, quote_at: usize) -> Quoted {
+    let base = quote_at + QUOTE.len_utf8();
+    let mut content = String::new();
+    let mut chars = text[base..].char_indices();
+    while let Some((offset, ch)) = chars.next() {
+        if ch == QUOTE {
+            return Quoted {
+                content,
+                end: base + offset + QUOTE.len_utf8(),
+            };
+        }
+        if ch == BACKSLASH {
+            match chars.next() {
+                Some((_, next)) if next == QUOTE || next == BACKSLASH => content.push(next),
+                Some((_, next)) => {
+                    content.push(BACKSLASH);
+                    content.push(next);
+                }
+                None => content.push(BACKSLASH),
+            }
+            continue;
+        }
+        content.push(ch);
+    }
+    Quoted {
+        content,
+        end: text.len(),
+    }
+}
+
+/// Checks the value of one field (v4vmm ADR 0087 Decision 2).
+fn field_value_state(name: QueryFieldName, value: &str, excluded: bool) -> FieldValueState {
+    if value.trim().is_empty() {
+        return FieldValueState::Incomplete;
+    }
+    match name.info().value_kind {
+        FieldValueKind::Text => FieldValueState::Valid(FieldValue::Text(value.to_owned())),
+        FieldValueKind::KindList => kinds_state(value),
+        FieldValueKind::Scope if excluded => {
+            FieldValueState::Invalid(FieldValueError::ExcludedScope)
+        }
+        FieldValueKind::Scope => one_value_state(name, value, read_scope, FieldValue::Scope),
+        FieldValueKind::Date => match read_date(value) {
+            Some(date) => FieldValueState::Valid(FieldValue::Date(date)),
+            None => FieldValueState::Invalid(FieldValueError::NotADate { field: name }),
+        },
+        FieldValueKind::Duration => match read_duration(value) {
+            Some(range) => FieldValueState::Valid(FieldValue::Duration(range)),
+            None => FieldValueState::Invalid(FieldValueError::NotADuration),
+        },
+        FieldValueKind::LibraryState => {
+            one_value_state(name, value, read_library_state, FieldValue::LibraryState)
+        }
+        FieldValueKind::Content => one_value_state(name, value, read_content, FieldValue::Content),
+    }
+}
+
+/// Reads the comma list of `kind:`. Empty items are ignored, and a
+/// repeated item counts one time.
+fn kinds_state(value: &str) -> FieldValueState {
+    let mut kinds = Vec::new();
+    let items: Vec<&str> = value
+        .split(',')
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
+        .collect();
+    for (index, item) in items.iter().copied().enumerate() {
+        let Some(kind) = KindValue::from_word(item) else {
+            // The last item can be a value that the curator still types.
+            if index + 1 == items.len() && !QueryFieldName::Kind.values_with_prefix(item).is_empty()
+            {
+                break;
+            }
+            return FieldValueState::Invalid(FieldValueError::UnknownValue {
+                field: QueryFieldName::Kind,
+                value: item.to_owned(),
+            });
+        };
+        if !kinds.contains(&kind) {
+            kinds.push(kind);
+        }
+    }
+    if kinds.is_empty() {
+        FieldValueState::Incomplete
+    } else {
+        FieldValueState::Valid(FieldValue::Kinds(kinds))
+    }
+}
+
+/// Reads one fixed value of a field that takes one value only (packet
+/// decision D7).
+fn one_value_state<T>(
+    field: QueryFieldName,
+    value: &str,
+    read: fn(&str) -> Option<T>,
+    wrap: fn(T) -> FieldValue,
+) -> FieldValueState {
+    if value.contains(',') {
+        return FieldValueState::Invalid(FieldValueError::OneValueOnly { field });
+    }
+    match read(value.trim()) {
+        Some(read_value) => FieldValueState::Valid(wrap(read_value)),
+        // The start of a fixed value is a value that the curator still types.
+        None if !field.values_with_prefix(value.trim()).is_empty() => FieldValueState::Incomplete,
+        None => FieldValueState::Invalid(FieldValueError::UnknownValue {
+            field,
+            value: value.to_owned(),
+        }),
+    }
+}
+
+fn read_scope(value: &str) -> Option<ScopeValue> {
+    if value.eq_ignore_ascii_case("library") {
+        Some(ScopeValue::Library)
+    } else if value.eq_ignore_ascii_case("index") {
+        Some(ScopeValue::Index)
+    } else {
+        None
+    }
+}
+
+fn read_library_state(value: &str) -> Option<LibraryStateValue> {
+    [
+        ("downloaded", LibraryStateValue::Downloaded),
+        ("partial", LibraryStateValue::Partial),
+        ("ready", LibraryStateValue::Ready),
+        ("removed", LibraryStateValue::Removed),
+    ]
+    .into_iter()
+    .find(|(word, _)| word.eq_ignore_ascii_case(value))
+    .map(|(_, state)| state)
+}
+
+fn read_content(value: &str) -> Option<ContentValue> {
+    if value.eq_ignore_ascii_case("split") {
+        Some(ContentValue::Split)
+    } else if value.eq_ignore_ascii_case("image") {
+        Some(ContentValue::Image)
+    } else {
+        None
+    }
+}
+
+/// Reads a number of ASCII digits only. An empty text gives `None`.
+fn ascii_number<T: std::str::FromStr>(text: &str) -> Option<T> {
+    if text.is_empty() || !text.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    text.parse().ok()
+}
+
+/// Reads `YYYY-MM-DD` or `YYYY-MM` into a date value.
+fn read_date(value: &str) -> Option<DateValue> {
+    if !value.is_ascii() {
+        return None;
+    }
+    let bytes = value.as_bytes();
+    if bytes.get(4) != Some(&b'-') {
+        return None;
+    }
+    let year: i32 = ascii_number(&value[..4])?;
+    match bytes.len() {
+        10 if bytes[7] == b'-' => {
+            let day = NaiveDate::from_ymd_opt(
+                year,
+                ascii_number(&value[5..7])?,
+                ascii_number(&value[8..10])?,
+            )?;
+            Some(DateValue {
+                first_day: day,
+                last_day: day,
+            })
+        }
+        7 => {
+            let first_day = NaiveDate::from_ymd_opt(year, ascii_number(&value[5..7])?, 1)?;
+            let last_day = first_day.checked_add_months(Months::new(1))?.pred_opt()?;
+            Some(DateValue {
+                first_day,
+                last_day,
+            })
+        }
+        _ => None,
+    }
+}
+
+/// Reads a duration comparison or a duration range (packet "The duration
+/// grammar").
+fn read_duration(value: &str) -> Option<DurationRange> {
+    if let Some((start, end)) = value.split_once("..") {
+        let min = read_amount(start)?;
+        let max = read_amount(end)?;
+        return (min <= max).then_some(DurationRange {
+            min_secs: Some(min),
+            max_secs: Some(max),
+        });
+    }
+    if let Some(amount) = value.strip_prefix(">=") {
+        return Some(DurationRange {
+            min_secs: Some(read_amount(amount)?),
+            max_secs: None,
+        });
+    }
+    if let Some(amount) = value.strip_prefix('>') {
+        return Some(DurationRange {
+            min_secs: Some(read_amount(amount)?.checked_add(1)?),
+            max_secs: None,
+        });
+    }
+    if let Some(amount) = value.strip_prefix("<=") {
+        return Some(DurationRange {
+            min_secs: None,
+            max_secs: Some(read_amount(amount)?),
+        });
+    }
+    if let Some(amount) = value.strip_prefix('<') {
+        return Some(DurationRange {
+            min_secs: None,
+            max_secs: Some(read_amount(amount)?.checked_sub(1)?),
+        });
+    }
+    None
+}
+
+/// Reads one amount, a clock or units, in seconds.
+fn read_amount(text: &str) -> Option<u32> {
+    let secs = if text.contains(':') {
+        read_clock(text)?
+    } else {
+        read_units(text)?
+    };
+    u32::try_from(secs).ok()
+}
+
+/// Reads `m:ss` or `h:mm:ss`.
+fn read_clock(text: &str) -> Option<u64> {
+    let parts: Vec<&str> = text.split(':').collect();
+    match parts.as_slice() {
+        [minutes, seconds] => ascii_number::<u64>(minutes)?
+            .checked_mul(60)?
+            .checked_add(read_sexagesimal(seconds)?),
+        [hours, minutes, seconds] => ascii_number::<u64>(hours)?
+            .checked_mul(3600)?
+            .checked_add(read_sexagesimal(minutes)? * 60)?
+            .checked_add(read_sexagesimal(seconds)?),
+        _ => None,
+    }
+}
+
+/// Reads two digits from `00` to `59`.
+fn read_sexagesimal(text: &str) -> Option<u64> {
+    if text.len() != 2 {
+        return None;
+    }
+    ascii_number::<u64>(text).filter(|value| *value < 60)
+}
+
+/// Reads `[digits h][digits m][digits s]`, with one or more parts, in this
+/// order, each one time at most. The units have no case.
+fn read_units(text: &str) -> Option<u64> {
+    if text.is_empty() {
+        return None;
+    }
+    let mut total: u64 = 0;
+    let mut last_rank = 0;
+    let mut rest = text;
+    while !rest.is_empty() {
+        let digits_len = rest
+            .find(|ch: char| !ch.is_ascii_digit())
+            .unwrap_or(rest.len());
+        let amount: u64 = ascii_number(&rest[..digits_len])?;
+        let unit = rest[digits_len..].chars().next()?;
+        let (rank, factor) = match unit.to_ascii_lowercase() {
+            'h' => (1, 3600),
+            'm' => (2, 60),
+            's' => (3, 1),
+            _ => return None,
+        };
+        if rank <= last_rank {
+            return None;
+        }
+        last_rank = rank;
+        total = total.checked_add(amount.checked_mul(factor)?)?;
+        rest = &rest[digits_len + unit.len_utf8()..];
+    }
+    Some(total)
+}

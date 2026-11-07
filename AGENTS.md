@@ -15,9 +15,9 @@ repository that owns the subject. musicindex owns the shared interface rules.
 
 ## Where The Work Stands
 
-The repository has no code. musicindex ADR 0049 accepts `search/`. No ADR accepts
-`moodbar/`. The [search move plan](docs/plans/search-move-phase-plan.md) gives the
-sequence for search.
+`search/` holds the crate `musicindex-search`. musicindex ADR 0049 accepts `search/`.
+No ADR accepts `moodbar/`, and it has no folder. The
+[search move plan](docs/plans/search-move-phase-plan.md) gives the sequence for search.
 
 | Subject | Content | Research |
 | --- | --- | --- |
