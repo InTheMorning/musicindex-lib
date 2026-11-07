@@ -15,11 +15,12 @@ repository that owns the subject. musicindex owns the shared interface rules.
 
 ## Where The Work Stands
 
-The repository has no code. Two subjects are proposed, and no ADR accepts them:
+The repository has no code. Two subjects are proposed, and no ADR accepts them. The
+[search move plan](docs/plans/search-move-phase-plan.md) gives the sequence for search.
 
 | Subject | Proposed content | Research |
 | --- | --- | --- |
-| `search/` | The query text parser for the website and Studio, and the case file that each parser must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
+| `search/` | The query crate for v4vmm and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
 | `moodbar/` | The analysis crate for Studio and v4vmm, the browser drawing code, and the test data | No research document |
 
 ## How An App Uses This Code
@@ -27,14 +28,14 @@ The repository has no code. Two subjects are proposed, and no ADR accepts them:
 These are proposals until an ADR accepts them:
 
 - A Rust app uses a crate as a Git dependency, pinned to a commit.
-- The website and Studio keep a copy of each JavaScript file, because they have no
-  build step. A check finds a copy with other bytes.
+- The website keeps a copy of each JavaScript file, because it has no build step. A
+  check finds a copy with other bytes.
 
 ## Working Rules
 
 These rules are advisory. The `project-baseline` skill owns them.
 
-- Add a folder only when an ADR accepts its subject and the code for it exists.
+- Add a code folder only when an ADR accepts its subject and the code for it exists.
 - Run the gate of `project-baseline` in each crate that you change.
 - A crate must build with the lowest Rust version of an app that uses it.
 - Write prose in ASD-STE100 Simplified Technical English.
