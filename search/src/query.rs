@@ -544,6 +544,21 @@ pub struct QueryTerm {
     pub kind: TermKind,
 }
 
+impl QueryTerm {
+    /// `true` when this term can run: a word or a phrase with an alphanumeric
+    /// character, or a correct field other than `in:`. The `-` of the term has
+    /// no effect here. An app decides if a term with `-` starts a run.
+    #[must_use]
+    pub fn can_run(&self) -> bool {
+        match &self.kind {
+            TermKind::Word(text) | TermKind::Phrase(text) => {
+                text.chars().any(char::is_alphanumeric)
+            }
+            TermKind::Field(field) => is_valid_filter(field),
+        }
+    }
+}
+
 /// The scope of a query (v4vmm ADR 0087 Decision 2).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum QueryScope {
@@ -639,12 +654,7 @@ impl SearchQuery {
         self.terms
             .iter()
             .filter(|term| !term.excluded)
-            .any(|term| match &term.kind {
-                TermKind::Word(text) | TermKind::Phrase(text) => {
-                    text.chars().any(char::is_alphanumeric)
-                }
-                TermKind::Field(field) => is_valid_filter(field),
-            })
+            .any(QueryTerm::can_run)
     }
 
     /// Each field value error with its term, in text order.
@@ -1980,5 +1990,23 @@ mod tests {
         assert_eq!(index_q(r"\"), None);
         assert_eq!(index_q(r#""\"""#), None);
         assert_eq!(index_q(r#"" ""#), None);
+    }
+
+    /// `can_run` reads an excluded term as it reads any other term.
+    /// `has_runnable_content` still counts only the terms without `-`.
+    #[test]
+    fn can_run_reads_an_excluded_term() {
+        for text in [
+            "-remix",
+            r#"-"night drive""#,
+            "-title:remix",
+            "-kind:single",
+        ] {
+            assert!(only_term(text).can_run(), "{text}");
+            assert!(!SearchQuery::parse(text).has_runnable_content(), "{text}");
+        }
+        for text in ["-!!!", "--", "-artist:", "-after:yesterday", "-in:library"] {
+            assert!(!only_term(text).can_run(), "{text}");
+        }
     }
 }
