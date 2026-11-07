@@ -11105,6 +11105,166 @@
         }
       ],
       "text": "-title:a\"b -release:\"c\\\\d\" x"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_duration",
+            "message": "duration: needs a comparison or a range, for example 3m..5m"
+          },
+          "excluded": false,
+          "field": "duration:",
+          "kind": "field",
+          "raw": "duration:>=9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999s",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "duration:>=9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999s"
+    }
+  ],
+  "label_cases": [
+    {
+      "label": "Album",
+      "stated": null,
+      "track_count": 0
+    },
+    {
+      "label": "Single",
+      "stated": null,
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": null,
+      "track_count": 2
+    },
+    {
+      "label": "Album",
+      "stated": null,
+      "track_count": 12
+    },
+    {
+      "label": "Album",
+      "stated": "album",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "Album",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "ALBUM",
+      "track_count": 0
+    },
+    {
+      "label": "EP",
+      "stated": "ep",
+      "track_count": 1
+    },
+    {
+      "label": "EP",
+      "stated": "EP",
+      "track_count": 12
+    },
+    {
+      "label": "EP",
+      "stated": "Ep",
+      "track_count": 0
+    },
+    {
+      "label": "Single",
+      "stated": "single",
+      "track_count": 5
+    },
+    {
+      "label": "Single",
+      "stated": "Single",
+      "track_count": 0
+    },
+    {
+      "label": "Single",
+      "stated": " Single ",
+      "track_count": 5
+    },
+    {
+      "label": "Single",
+      "stated": "Single",
+      "track_count": 5
+    },
+    {
+      "label": "EP",
+      "stated": " ep　",
+      "track_count": 1
+    },
+    {
+      "label": "Single",
+      "stated": "﻿ep",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "﻿ep",
+      "track_count": 5
+    },
+    {
+      "label": "Single",
+      "stated": "unknown",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "unknown",
+      "track_count": 5
+    },
+    {
+      "label": "Single",
+      "stated": "",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "   ",
+      "track_count": 5
+    },
+    {
+      "label": "Single",
+      "stated": "lp",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "e p",
+      "track_count": 5
+    },
+    {
+      "label": "Album",
+      "stated": "ſingle",
+      "track_count": 5
+    },
+    {
+      "label": "Album",
+      "stated": "constructor",
+      "track_count": 5
+    },
+    {
+      "label": "Single",
+      "stated": "__proto__",
+      "track_count": 1
+    },
+    {
+      "label": "Album",
+      "stated": "toString",
+      "track_count": 5
     }
   ],
   "order_cases": [

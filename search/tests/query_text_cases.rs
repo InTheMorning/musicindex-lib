@@ -6,6 +6,7 @@
 use std::fs;
 use std::path::Path;
 
+use musicindex_search::kind::ReleaseKind;
 use musicindex_search::plan::{IndexEntity, IndexSearchPlan, IndexSearchRequest, IndexSkip};
 use musicindex_search::query::{
     ContentValue, FieldValue, FieldValueError, FieldValueState, LibraryStateValue, QueryScope,
@@ -229,6 +230,28 @@ fn adr_0084_the_crate_gives_each_order_of_the_case_file() {
             &case["params"],
             "Stophammer ADR 0084: {case}. Correct request::index_order_pairs, or change the case \
              with the ADR that owns the rule."
+        );
+    }
+}
+
+#[test]
+fn adr_0049_r_query_6_the_crate_gives_each_label_of_the_case_file() {
+    let file = case_file();
+    let cases = file["label_cases"]
+        .as_array()
+        .expect("the file has label cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let count = case["track_count"]
+            .as_u64()
+            .expect("a case has a track count");
+        let count = usize::try_from(count).expect("a track count fits");
+        let label = ReleaseKind::resolve(case["stated"].as_str(), count).label();
+        assert_eq!(
+            Some(label),
+            case["label"].as_str(),
+            "musicindex ADR 0020 R-WORD-1: {case}. Correct kind::ReleaseKind::resolve, or change \
+             the case with the ADR that owns the rule."
         );
     }
 }

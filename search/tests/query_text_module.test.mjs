@@ -17,7 +17,7 @@ import {
 
 const moduleUrl = new URL('../web/query-text.mjs', import.meta.url);
 const file = JSON.parse(readFileSync(new URL('../cases/query-text-cases.json', import.meta.url), 'utf8'));
-const { cases, order_cases: orderCases } = file;
+const { cases, label_cases: labelCases, order_cases: orderCases } = file;
 
 const canonical = (value) => {
   if (Array.isArray(value)) return value.map(canonical);
@@ -75,6 +75,18 @@ test('Stophammer ADR 0084: the module gives each order of the case file', () => 
   }
 });
 
+test('musicindex ADR 0020 R-WORD-1: the module gives each label of the case file', () => {
+  assert.ok(labelCases.length > 0);
+  const { releaseKind } = createQueryText();
+  for (const { stated, track_count: count, label } of labelCases) {
+    assert.equal(
+      kindLabel(releaseKind(stated, count)),
+      label,
+      `musicindex ADR 0020 R-WORD-1: ${JSON.stringify({ stated, count })}. Correct releaseKind.`,
+    );
+  }
+});
+
 // A person cannot give these values to the crate, because its type does not hold them.
 test('Stophammer ADR 0084 section 5: the module sends no parameter that gives 400', () => {
   const capabilities = ['sort'];
@@ -96,6 +108,11 @@ const mistakes = {
   'a day with no check of the month length': {
     validDay: (_year, month, day) => month >= 1 && month <= 12 && day >= 1 && day <= 31,
   },
+  // A value above 2^53 is also above the u32 limit, so the two forms refuse it. An
+  // amount of more than 308 digits gives an exception with this form.
+  'numbers with Number': {
+    readNumber: (text) => (/^[0-9]+$/.test(text) ? BigInt(Number(text)) : null),
+  },
 };
 
 for (const [name, rules] of Object.entries(mistakes)) {
@@ -107,29 +124,6 @@ for (const [name, rules] of Object.entries(mistakes)) {
     );
   });
 }
-
-// This mistake gives no difference on the cases. A value above 2^53 is also above the
-// u32 limit, so the two forms refuse it. An amount of more than 308 digits gives an
-// exception with this mistake, and no case has such an amount. This test records the
-// gap: when a case catches the mistake, move it to the list above.
-test('no case catches this JavaScript mistake: numbers with Number', () => {
-  const readNumber = (text) => (/^[0-9]+$/.test(text) ? BigInt(Number(text)) : null);
-  assert.equal(failures(createQueryText({ readNumber })).length, 0);
-});
-
-test('musicindex ADR 0020 R-WORD-1: a stated kind wins, and a count never gives an EP', () => {
-  const { releaseKind } = createQueryText();
-  assert.equal(releaseKind('Album', 1), 'album');
-  assert.equal(releaseKind('ep', 1), 'ep');
-  assert.equal(releaseKind(' Single ', 5), 'single');
-  assert.equal(releaseKind('\u0085Single\u0085', 5), 'single');
-  assert.equal(releaseKind('unknown', 1), 'single');
-  assert.equal(releaseKind('unknown', 5), 'album');
-  assert.equal(releaseKind('constructor', 5), 'album');
-  assert.equal(releaseKind(null, 0), 'album');
-  assert.equal(releaseKind(null, 12), 'album');
-  assert.deepEqual(['album', 'ep', 'single'].map(kindLabel), ['Album', 'EP', 'Single']);
-});
 
 test('musicindex ADR 0049 R-QUERY-6: each set of kinds gives its request', () => {
   const pairs = (name, value) => [['kind', 'unknown'], [name, value]];
