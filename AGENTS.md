@@ -18,9 +18,8 @@ repository that owns the subject. musicindex owns the shared interface rules.
 `search/` holds the crate `musicindex-search`, the JavaScript module
 `web/query-text.mjs` and the case file. musicindex ADR 0049 accepts `search/`. v4vmm and
 Studio pin the crate at commit `7cfc4e7`. The website keeps a copy of the module, and its
-toolbar field uses that copy. A person has not done the visual check of musicindex ADR 0049
-for the website. The [search move plan](docs/plans/search-move-phase-plan.md) gives the
-state of each phase.
+toolbar field uses that copy. The [search move plan](docs/plans/search-move-phase-plan.md)
+gives the state of each phase.
 No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |

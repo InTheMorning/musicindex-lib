@@ -37,7 +37,7 @@ These facts come from the repositories and the live node on 2026-11-07.
 | 2 | Complete: v4vmm commits `bebfe97` and `c433582` |
 | 3 | Mechanical checks complete. The visual check is open in `docs/pending-human-checks.md` of v4vmm. |
 | 4 | Complete: Studio commit `2ecd7e9`. Studio records that the visual checks passed. |
-| 5 | Items 1, 2 and 3 and the mechanical checks are complete. The visual gate of musicindex ADR 0049 is open for a person, and it has not passed. |
+| 5 | Complete. The operator passed the two visual gates of musicindex ADR 0049, as musicindex commit `6b8e824` records. |
 | 6 | Complete, with no change to the crate |
 
 The commits of this repository after `7cfc4e7` change no behavior of the crate. `QueryTerm::can_run` is the one new function, and only an app that uses it needs a new pin. v4vmm still has its own copy of that test in `query_can_run`.
@@ -148,10 +148,10 @@ This phase can start after Phase 1, if Studio needs it before v4vmm is ready.
 - Mechanical: the cases catch each common JavaScript mistake of `tools/query-text/compare.mjs`.
 - Mechanical: the crate and the module pass the label cases of the case file.
 - Mechanical: `tools/check-site.sh` fails when a copy has other bytes.
-- Visual, open for a person: a search with fields in Firefox and Chromium (musicindex ADR 0049 R-QUERY-4 item 4).
-- Visual, open for a person: the note for a Library field, in Light and Dark (musicindex ADR 0049 R-QUERY-2).
+- Visual, passed by the operator: a search with fields in Firefox and Chromium (musicindex ADR 0049 R-QUERY-4 item 4).
+- Visual, passed by the operator: the note for a Library field, in Light and Dark (musicindex ADR 0049 R-QUERY-2).
 
-The agent checks of the website do not close these two gates. The website review is `docs/reviews/search-move-phase-5-website-review.md` in `../musicindex`. It also records that a row on the website shows the type label "Feed", so `kind:single` does not show the label "Single" there.
+The operator looked on the live site at musicindex commit `465b9af`, in Firefox and Chromium windows. The orchestrator session relayed the pass. No real phone and no browser with WebKit ran this change, and musicindex ADR 0049 does not require them. The website review is `docs/reviews/search-move-phase-5-website-review.md` in `../musicindex`. It also records that a search row on the website shows no type label, so `kind:single` does not show the label "Single" there.
 
 The field list and `cursor_term` are not in this phase. The case file has no cursor cases.
 
