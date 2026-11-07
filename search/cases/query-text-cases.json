@@ -243,19 +243,19 @@
       "text": "release:\"aged fr"
     },
     {
-      "index_q": "\"the \\\"best\\\" song\"",
+      "index_q": "\"the  best  song\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"the \\\"best\\\" song\""
+          "q": "\"the  best  song\""
         },
         "publisher": {
           "params": [],
-          "q": "\"the \\\"best\\\" song\""
+          "q": "\"the  best  song\""
         },
         "track": {
           "params": [],
-          "q": "\"the \\\"best\\\" song\""
+          "q": "\"the  best  song\""
         }
       },
       "runnable": true,
@@ -311,19 +311,19 @@
       "text": "the \"best\" song"
     },
     {
-      "index_q": "\"a\\\\b\"",
+      "index_q": "\"a b\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a\\\\b\""
+          "q": "\"a b\""
         },
         "publisher": {
           "params": [],
-          "q": "\"a\\\\b\""
+          "q": "\"a b\""
         },
         "track": {
           "params": [],
-          "q": "\"a\\\\b\""
+          "q": "\"a b\""
         }
       },
       "runnable": true,
@@ -339,19 +339,19 @@
       "text": "\"a\\\\b\""
     },
     {
-      "index_q": "haleen \"a \\\"b\\\"\"",
+      "index_q": "haleen \"a  b \"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "haleen \"a \\\"b\\\"\""
+          "q": "haleen \"a  b \""
         },
         "publisher": {
           "params": [],
-          "q": "haleen \"a \\\"b\\\"\""
+          "q": "haleen \"a  b \""
         },
         "track": {
           "params": [],
-          "q": "haleen \"a \\\"b\\\"\""
+          "q": "haleen \"a  b \""
         }
       },
       "runnable": true,
@@ -455,7 +455,7 @@
           "params": [
             [
               "artist",
-              "\"a \\\"b\""
+              "\"a  b\""
             ]
           ],
           "q": "x"
@@ -464,7 +464,7 @@
           "params": [
             [
               "artist",
-              "\"a \\\"b\""
+              "\"a  b\""
             ]
           ],
           "q": "x"
@@ -473,7 +473,7 @@
           "params": [
             [
               "artist",
-              "\"a \\\"b\""
+              "\"a  b\""
             ]
           ],
           "q": "x"
@@ -503,19 +503,19 @@
       "text": "artist:\"a \\\"b\" x"
     },
     {
-      "index_q": "\"a \\\"\"",
+      "index_q": "\"a  \"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a \\\"\""
+          "q": "\"a  \""
         },
         "publisher": {
           "params": [],
-          "q": "\"a \\\"\""
+          "q": "\"a  \""
         },
         "track": {
           "params": [],
-          "q": "\"a \\\"\""
+          "q": "\"a  \""
         }
       },
       "runnable": true,
@@ -658,19 +658,19 @@
       "text": "\"aged friends\""
     },
     {
-      "index_q": "a \"b\" \\c",
+      "index_q": "a \"b\" c",
       "plan": {
         "feed": {
           "params": [],
-          "q": "a \"b\" \\c"
+          "q": "a \"b\" c"
         },
         "publisher": {
           "params": [],
-          "q": "a \"b\" \\c"
+          "q": "a \"b\" c"
         },
         "track": {
           "params": [],
-          "q": "a \"b\" \\c"
+          "q": "a \"b\" c"
         }
       },
       "runnable": true,
@@ -698,19 +698,19 @@
       "text": "a \"b\" \\c"
     },
     {
-      "index_q": "\"a \\\"b\\\" \\\\c\"",
+      "index_q": "\"a  b   c\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a \\\"b\\\" \\\\c\""
+          "q": "\"a  b   c\""
         },
         "publisher": {
           "params": [],
-          "q": "\"a \\\"b\\\" \\\\c\""
+          "q": "\"a  b   c\""
         },
         "track": {
           "params": [],
-          "q": "\"a \\\"b\\\" \\\\c\""
+          "q": "\"a  b   c\""
         }
       },
       "runnable": true,
@@ -754,19 +754,19 @@
       "text": "\"aged fr"
     },
     {
-      "index_q": "\"a \\\"b\"",
+      "index_q": "\"a  b\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a \\\"b\""
+          "q": "\"a  b\""
         },
         "publisher": {
           "params": [],
-          "q": "\"a \\\"b\""
+          "q": "\"a  b\""
         },
         "track": {
           "params": [],
-          "q": "\"a \\\"b\""
+          "q": "\"a  b\""
         }
       },
       "runnable": true,
@@ -3459,19 +3459,19 @@
       "text": "aged fr"
     },
     {
-      "index_q": "a\\b",
+      "index_q": "a b",
       "plan": {
         "feed": {
           "params": [],
-          "q": "a\\b"
+          "q": "a b"
         },
         "publisher": {
           "params": [],
-          "q": "a\\b"
+          "q": "a b"
         },
         "track": {
           "params": [],
-          "q": "a\\b"
+          "q": "a b"
         }
       },
       "runnable": true,
@@ -6370,19 +6370,19 @@
       "text": "café title:\"café au lait\""
     },
     {
-      "index_q": "\"\\\\🖖\"",
+      "index_q": "\" 🖖\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"\\\\🖖\""
+          "q": "\" 🖖\""
         },
         "publisher": {
           "params": [],
-          "q": "\"\\\\🖖\""
+          "q": "\" 🖖\""
         },
         "track": {
           "params": [],
-          "q": "\"\\\\🖖\""
+          "q": "\" 🖖\""
         }
       },
       "runnable": false,
@@ -6404,7 +6404,7 @@
           "params": [
             [
               "artist",
-              "a\\🖖b"
+              "\"a 🖖b\""
             ]
           ],
           "q": null
@@ -6413,7 +6413,7 @@
           "params": [
             [
               "artist",
-              "a\\🖖b"
+              "\"a 🖖b\""
             ]
           ],
           "q": null
@@ -6422,7 +6422,7 @@
           "params": [
             [
               "artist",
-              "a\\🖖b"
+              "\"a 🖖b\""
             ]
           ],
           "q": null
@@ -6466,20 +6466,9 @@
       "text": "\"\""
     },
     {
-      "index_q": "\" \"",
+      "index_q": null,
       "plan": {
-        "feed": {
-          "params": [],
-          "q": "\" \""
-        },
-        "publisher": {
-          "params": [],
-          "q": "\" \""
-        },
-        "track": {
-          "params": [],
-          "q": "\" \""
-        }
+        "skip": "no_index_part"
       },
       "runnable": false,
       "scope": "everything",
@@ -6532,19 +6521,19 @@
       "text": "\"a"
     },
     {
-      "index_q": "a\"",
+      "index_q": "a",
       "plan": {
         "feed": {
           "params": [],
-          "q": "a\""
+          "q": "a"
         },
         "publisher": {
           "params": [],
-          "q": "a\""
+          "q": "a"
         },
         "track": {
           "params": [],
-          "q": "a\""
+          "q": "a"
         }
       },
       "runnable": true,
@@ -6560,19 +6549,19 @@
       "text": "a\""
     },
     {
-      "index_q": "a\"b",
+      "index_q": "a b",
       "plan": {
         "feed": {
           "params": [],
-          "q": "a\"b"
+          "q": "a b"
         },
         "publisher": {
           "params": [],
-          "q": "a\"b"
+          "q": "a b"
         },
         "track": {
           "params": [],
-          "q": "a\"b"
+          "q": "a b"
         }
       },
       "runnable": true,
@@ -6588,19 +6577,19 @@
       "text": "a\"b"
     },
     {
-      "index_q": "a\"b c\"d",
+      "index_q": "a b c d",
       "plan": {
         "feed": {
           "params": [],
-          "q": "a\"b c\"d"
+          "q": "a b c d"
         },
         "publisher": {
           "params": [],
-          "q": "a\"b c\"d"
+          "q": "a b c d"
         },
         "track": {
           "params": [],
-          "q": "a\"b c\"d"
+          "q": "a b c d"
         }
       },
       "runnable": true,
@@ -6622,19 +6611,19 @@
       "text": "a\"b c\"d"
     },
     {
-      "index_q": "\"a\\\"b\"",
+      "index_q": "\"a b\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a\\\"b\""
+          "q": "\"a b\""
         },
         "publisher": {
           "params": [],
-          "q": "\"a\\\"b\""
+          "q": "\"a b\""
         },
         "track": {
           "params": [],
-          "q": "\"a\\\"b\""
+          "q": "\"a b\""
         }
       },
       "runnable": true,
@@ -6650,19 +6639,19 @@
       "text": "\"a\\\"b\""
     },
     {
-      "index_q": "\"a\\\\b\"",
+      "index_q": "\"a b\"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a\\\\b\""
+          "q": "\"a b\""
         },
         "publisher": {
           "params": [],
-          "q": "\"a\\\\b\""
+          "q": "\"a b\""
         },
         "track": {
           "params": [],
-          "q": "\"a\\\\b\""
+          "q": "\"a b\""
         }
       },
       "runnable": true,
@@ -6678,19 +6667,19 @@
       "text": "\"a\\b\""
     },
     {
-      "index_q": "\"a\\\\\"",
+      "index_q": "\"a \"",
       "plan": {
         "feed": {
           "params": [],
-          "q": "\"a\\\\\""
+          "q": "\"a \""
         },
         "publisher": {
           "params": [],
-          "q": "\"a\\\\\""
+          "q": "\"a \""
         },
         "track": {
           "params": [],
-          "q": "\"a\\\\\""
+          "q": "\"a \""
         }
       },
       "runnable": true,
@@ -6752,7 +6741,7 @@
           "params": [
             [
               "artist",
-              "\"a\\\"b\""
+              "\"a b\""
             ]
           ],
           "q": null
@@ -6761,7 +6750,7 @@
           "params": [
             [
               "artist",
-              "\"a\\\"b\""
+              "\"a b\""
             ]
           ],
           "q": null
@@ -6770,7 +6759,7 @@
           "params": [
             [
               "artist",
-              "\"a\\\"b\""
+              "\"a b\""
             ]
           ],
           "q": null
@@ -6800,7 +6789,7 @@
           "params": [
             [
               "artist",
-              "\"a\\\"b\""
+              "a b"
             ]
           ],
           "q": null
@@ -6809,7 +6798,7 @@
           "params": [
             [
               "artist",
-              "\"a\\\"b\""
+              "a b"
             ]
           ],
           "q": null
@@ -6818,7 +6807,7 @@
           "params": [
             [
               "artist",
-              "\"a\\\"b\""
+              "a b"
             ]
           ],
           "q": null
@@ -10294,20 +10283,20 @@
       "scope": "index_only",
       "terms": [
         {
-          "raw": "in:index",
+          "error": null,
           "excluded": false,
-          "kind": "field",
           "field": "in:",
+          "kind": "field",
+          "raw": "in:index",
           "state": "valid",
           "value": {
             "scope": "index"
-          },
-          "error": null
+          }
         },
         {
-          "raw": "-remix",
           "excluded": true,
           "kind": "word",
+          "raw": "-remix",
           "text": "remix"
         }
       ],
@@ -10322,24 +10311,24 @@
       "scope": "everything",
       "terms": [
         {
-          "raw": "-title:remix",
+          "error": null,
           "excluded": true,
-          "kind": "field",
           "field": "title:",
+          "kind": "field",
+          "raw": "-title:remix",
           "state": "valid",
           "value": {
             "text": "remix"
-          },
-          "error": null
+          }
         },
         {
-          "raw": "artist:",
+          "error": null,
           "excluded": false,
-          "kind": "field",
           "field": "artist:",
+          "kind": "field",
+          "raw": "artist:",
           "state": "incomplete",
-          "value": null,
-          "error": null
+          "value": null
         }
       ],
       "text": "-title:remix artist:"
@@ -10353,36 +10342,36 @@
       "scope": "everything",
       "terms": [
         {
-          "raw": "-remix",
           "excluded": true,
           "kind": "word",
+          "raw": "-remix",
           "text": "remix"
         },
         {
-          "raw": "kind:single",
+          "error": null,
           "excluded": false,
-          "kind": "field",
           "field": "kind:",
+          "kind": "field",
+          "raw": "kind:single",
           "state": "valid",
           "value": {
             "kinds": [
               "single"
             ]
-          },
-          "error": null
+          }
         },
         {
-          "raw": "kind:ep",
+          "error": null,
           "excluded": false,
-          "kind": "field",
           "field": "kind:",
+          "kind": "field",
+          "raw": "kind:ep",
           "state": "valid",
           "value": {
             "kinds": [
               "ep"
             ]
-          },
-          "error": null
+          }
         }
       ],
       "text": "-remix kind:single kind:ep"
@@ -10661,6 +10650,461 @@
         }
       ],
       "text": "kind:ep -remix"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "title",
+              "\"a b\""
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "title",
+              "\"a b\""
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "title",
+              "\"a b\""
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "title:",
+          "kind": "field",
+          "raw": "title:\"a\\\"b\"",
+          "state": "valid",
+          "value": {
+            "text": "a\"b"
+          }
+        }
+      ],
+      "text": "title:\"a\\\"b\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "title",
+              "\"a b\""
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "title",
+              "\"a b\""
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "title",
+              "\"a b\""
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "title:",
+          "kind": "field",
+          "raw": "title:\"a\\\\b\"",
+          "state": "valid",
+          "value": {
+            "text": "a\\b"
+          }
+        }
+      ],
+      "text": "title:\"a\\\\b\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "artist",
+              "\"the  best  song\""
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "artist",
+              "\"the  best  song\""
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "artist",
+              "\"the  best  song\""
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "artist:",
+          "kind": "field",
+          "raw": "artist:\"the \\\"best\\\" song\"",
+          "state": "valid",
+          "value": {
+            "text": "the \"best\" song"
+          }
+        }
+      ],
+      "text": "artist:\"the \\\"best\\\" song\""
+    },
+    {
+      "index_q": "haleen",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "not_release",
+              "a b"
+            ]
+          ],
+          "q": "haleen"
+        },
+        "publisher": {
+          "params": [],
+          "q": "haleen"
+        },
+        "track": {
+          "params": [
+            [
+              "not_release",
+              "a b"
+            ]
+          ],
+          "q": "haleen"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": true,
+          "field": "release:",
+          "kind": "field",
+          "raw": "-release:a\\b",
+          "state": "valid",
+          "value": {
+            "text": "a\\b"
+          }
+        },
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "haleen",
+          "text": "haleen"
+        }
+      ],
+      "text": "-release:a\\b haleen"
+    },
+    {
+      "index_q": "haleen",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "not_artist",
+              "\"a  b\""
+            ]
+          ],
+          "q": "haleen"
+        },
+        "publisher": {
+          "params": [
+            [
+              "not_artist",
+              "\"a  b\""
+            ]
+          ],
+          "q": "haleen"
+        },
+        "track": {
+          "params": [
+            [
+              "not_artist",
+              "\"a  b\""
+            ]
+          ],
+          "q": "haleen"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": true,
+          "field": "artist:",
+          "kind": "field",
+          "raw": "-artist:\"a \\\"b\"",
+          "state": "valid",
+          "value": {
+            "text": "a \"b"
+          }
+        },
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "haleen",
+          "text": "haleen"
+        }
+      ],
+      "text": "-artist:\"a \\\"b\" haleen"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "artist:",
+          "kind": "field",
+          "raw": "artist:\\",
+          "state": "valid",
+          "value": {
+            "text": "\\"
+          }
+        }
+      ],
+      "text": "artist:\\"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": true,
+          "kind": "word",
+          "raw": "-\\",
+          "text": "\\"
+        }
+      ],
+      "text": "-\\"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": true,
+          "kind": "phrase",
+          "raw": "-\"\\\"\"",
+          "text": "\""
+        }
+      ],
+      "text": "-\"\\\"\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "phrase",
+          "raw": "\"\\\"\"",
+          "text": "\""
+        }
+      ],
+      "text": "\"\\\"\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "\\",
+          "text": "\\"
+        }
+      ],
+      "text": "\\"
+    },
+    {
+      "index_q": "a b",
+      "plan": {
+        "feed": {
+          "params": [],
+          "q": "a b"
+        },
+        "publisher": {
+          "params": [],
+          "q": "a b"
+        },
+        "track": {
+          "params": [],
+          "q": "a b"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "a\\\"b",
+          "text": "a\\\"b"
+        }
+      ],
+      "text": "a\\\"b"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "exclusions_only"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": true,
+          "kind": "word",
+          "raw": "-a\"b",
+          "text": "a\"b"
+        }
+      ],
+      "text": "-a\"b"
+    },
+    {
+      "index_q": "x",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "not_title",
+              "a b"
+            ],
+            [
+              "not_release",
+              "\"c d\""
+            ]
+          ],
+          "q": "x"
+        },
+        "publisher": {
+          "params": [
+            [
+              "not_title",
+              "a b"
+            ]
+          ],
+          "q": "x"
+        },
+        "track": {
+          "params": [
+            [
+              "not_title",
+              "a b"
+            ],
+            [
+              "not_release",
+              "\"c d\""
+            ]
+          ],
+          "q": "x"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": true,
+          "field": "title:",
+          "kind": "field",
+          "raw": "-title:a\"b",
+          "state": "valid",
+          "value": {
+            "text": "a\"b"
+          }
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "release:",
+          "kind": "field",
+          "raw": "-release:\"c\\\\d\"",
+          "state": "valid",
+          "value": {
+            "text": "c\\d"
+          }
+        },
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "x",
+          "text": "x"
+        }
+      ],
+      "text": "-title:a\"b -release:\"c\\\\d\" x"
     }
   ]
 }

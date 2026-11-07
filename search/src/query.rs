@@ -538,6 +538,8 @@ pub struct QueryTerm {
     pub span: Range<usize>,
     /// `true` when the term has a `-`.
     pub excluded: bool,
+    /// `true` for a phrase and for a field value in double quotes.
+    pub quoted: bool,
     /// The word, the phrase or the field.
     pub kind: TermKind,
 }
@@ -610,9 +612,10 @@ impl SearchQuery {
     /// The words and the phrases without `-`, for the Index `q`.
     ///
     /// The terms keep their text order, with one space between them. A
-    /// phrase keeps its double quotes. Inside a phrase, a quote is written
-    /// `\"` and a backslash is written `\\`. With no such word or phrase,
-    /// the result is `None`. The result never holds a field.
+    /// phrase keeps its double quotes. A quote and a backslash each give a
+    /// space (musicindex ADR 0049 R-QUERY-5). A term with no text then gives
+    /// nothing. With no word or phrase, the result is `None`. The result never
+    /// holds a field.
     #[must_use]
     pub fn index_q(&self) -> Option<String> {
         let parts: Vec<String> = self
@@ -620,8 +623,8 @@ impl SearchQuery {
             .iter()
             .filter(|term| !term.excluded)
             .filter_map(|term| match &term.kind {
-                TermKind::Word(word) => Some(word.clone()),
-                TermKind::Phrase(phrase) => Some(quote_phrase(phrase)),
+                TermKind::Word(word) => index_word(word),
+                TermKind::Phrase(phrase) => index_phrase(phrase),
                 TermKind::Field(_) => None,
             })
             .collect();
@@ -674,9 +677,39 @@ fn is_valid_filter(field: &FieldTerm) -> bool {
     field.name != QueryFieldName::In && matches!(field.value, FieldValueState::Valid(_))
 }
 
-/// Writes a phrase in double quotes, with each quote and each backslash
-/// escaped.
-pub(crate) fn quote_phrase(phrase: &str) -> String {
+/// Writes a space for each quote and each backslash (musicindex ADR 0049
+/// R-QUERY-5).
+fn with_spaces(text: &str) -> String {
+    text.chars()
+        .map(|ch| {
+            if ch == QUOTE || ch == BACKSLASH {
+                ' '
+            } else {
+                ch
+            }
+        })
+        .collect()
+}
+
+/// The Index form of one word. A word that has two parts after
+/// [`with_spaces`] gives two words. `None` means that no part remains.
+pub(crate) fn index_word(word: &str) -> Option<String> {
+    let spaced = with_spaces(word);
+    let parts: Vec<&str> = spaced.split_whitespace().collect();
+    (!parts.is_empty()).then(|| parts.join(" "))
+}
+
+/// The Index form of one phrase: the text of [`with_spaces`] in double quotes.
+/// `None` means that the phrase has no text.
+pub(crate) fn index_phrase(phrase: &str) -> Option<String> {
+    let spaced = with_spaces(phrase);
+    (!spaced.trim().is_empty()).then(|| format!("{QUOTE}{spaced}{QUOTE}"))
+}
+
+/// Writes a phrase of the query text in double quotes, with each quote and
+/// each backslash escaped. The parser reads the result as the same text. This
+/// is the form of the query text, not the form of an Index request.
+fn quote_phrase(phrase: &str) -> String {
     let mut out = String::with_capacity(phrase.len() + 2);
     out.push(QUOTE);
     for ch in phrase.chars() {
@@ -891,6 +924,10 @@ struct RawTerm {
 impl RawTerm {
     /// Gives the query term, or `None` for a term with no text.
     fn into_term(self) -> Option<QueryTerm> {
+        let quoted = matches!(
+            self.shape,
+            RawShape::Phrase { .. } | RawShape::Field { quoted: true, .. }
+        );
         let kind = match self.shape {
             RawShape::Empty => return None,
             RawShape::Word { text } => TermKind::Word(text),
@@ -904,6 +941,7 @@ impl RawTerm {
         Some(QueryTerm {
             span: self.span,
             excluded: self.excluded,
+            quoted,
             kind,
         })
     }
@@ -1633,7 +1671,7 @@ mod tests {
         assert_eq!(index_q(EXAMPLE), Some("\"night drive\"".to_owned()));
         assert_eq!(
             index_q(r#"haleen "a \"b\"""#),
-            Some(r#"haleen "a \"b\"""#.to_owned())
+            Some(r#"haleen "a  b ""#.to_owned())
         );
         assert_eq!(index_q("artist:x -remix"), None);
         for text in [
@@ -1924,5 +1962,23 @@ mod tests {
         assert_eq!(unquote_field_value_prefix(r#""a \"b"#), r#"a "b"#);
         assert_eq!(unquote_field_value_prefix("hal"), "hal");
         assert_eq!(unquote_field_value_prefix(r#""Haleen""#), "Haleen");
+    }
+
+    /// musicindex ADR 0049 R-QUERY-5: `q` holds a space for each quote and each
+    /// backslash. A word with two parts gives two words, and a term with no
+    /// text gives nothing.
+    #[test]
+    fn adr_0049_r_query_5_q_has_a_space_for_each_quote_and_backslash() {
+        let index_q = |text: &str| SearchQuery::parse(text).index_q();
+        assert_eq!(
+            index_q(r#""the \"best\" song""#).as_deref(),
+            Some(r#""the  best  song""#)
+        );
+        assert_eq!(index_q(r"a\b").as_deref(), Some("a b"));
+        assert_eq!(index_q(r#"a"b c"d"#).as_deref(), Some("a b c d"));
+        assert_eq!(index_q(r#""a\\b""#).as_deref(), Some(r#""a b""#));
+        assert_eq!(index_q(r"\"), None);
+        assert_eq!(index_q(r#""\"""#), None);
+        assert_eq!(index_q(r#"" ""#), None);
     }
 }

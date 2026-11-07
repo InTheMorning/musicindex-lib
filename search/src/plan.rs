@@ -15,7 +15,7 @@ use chrono::NaiveDate;
 use crate::kind::index_kind_pairs;
 use crate::query::{
     FieldValue, FieldValueState, KindValue, QueryFieldName, QueryScope, SearchQuery, TermKind,
-    quote_phrase,
+    index_phrase, index_word,
 };
 
 /// The plan of the Index part of one query.
@@ -173,16 +173,16 @@ impl IndexFilters {
         let mut filters = IndexFilters::default();
         for term in query.terms() {
             match &term.kind {
-                TermKind::Word(text) if term.excluded => filters.not_q.push(text.clone()),
+                TermKind::Word(text) if term.excluded => filters.not_q.extend(index_word(text)),
                 TermKind::Phrase(text) if term.excluded => {
-                    filters.not_q.push(quote_phrase(text));
+                    filters.not_q.extend(index_phrase(text));
                 }
                 TermKind::Word(_) | TermKind::Phrase(_) => {}
                 TermKind::Field(field) => {
                     let FieldValueState::Valid(value) = &field.value else {
                         continue;
                     };
-                    if !filters.add_field(field.name, value, term.excluded) {
+                    if !filters.add_field(field.name, value, term.excluded, term.quoted) {
                         return None;
                     }
                 }
@@ -196,25 +196,31 @@ impl IndexFilters {
 
     /// Adds one correct field. Returns `false` when the `kind:` terms share
     /// no kind. Each field that has no filter gives nothing.
-    fn add_field(&mut self, name: QueryFieldName, value: &FieldValue, excluded: bool) -> bool {
+    fn add_field(
+        &mut self,
+        name: QueryFieldName,
+        value: &FieldValue,
+        excluded: bool,
+        quoted: bool,
+    ) -> bool {
         match (name, value, excluded) {
             (QueryFieldName::Artist, FieldValue::Text(text), false) => {
-                join_text(&mut self.artist, text);
+                join_text(&mut self.artist, text, quoted);
             }
             (QueryFieldName::Artist, FieldValue::Text(text), true) => {
-                self.not_artist.push(index_text(text));
+                self.not_artist.extend(index_text(text, quoted));
             }
             (QueryFieldName::Title, FieldValue::Text(text), false) => {
-                join_text(&mut self.title, text);
+                join_text(&mut self.title, text, quoted);
             }
             (QueryFieldName::Title, FieldValue::Text(text), true) => {
-                self.not_title.push(index_text(text));
+                self.not_title.extend(index_text(text, quoted));
             }
             (QueryFieldName::Release, FieldValue::Text(text), false) => {
-                join_text(&mut self.release, text);
+                join_text(&mut self.release, text, quoted);
             }
             (QueryFieldName::Release, FieldValue::Text(text), true) => {
-                self.not_release.push(index_text(text));
+                self.not_release.extend(index_text(text, quoted));
             }
             (QueryFieldName::Kind, FieldValue::Kinds(kinds), false) => {
                 if self.kinds.is_empty() {
@@ -272,22 +278,30 @@ impl IndexFilters {
 }
 
 /// Adds one text value to a text filter. A second value joins the first one
-/// with a space.
-fn join_text(slot: &mut Option<String>, text: &str) {
-    let text = index_text(text);
+/// with a space. A value with no text after [`index_text`] adds nothing.
+fn join_text(slot: &mut Option<String>, text: &str, quoted: bool) {
+    let Some(text) = index_text(text, quoted) else {
+        return;
+    };
     *slot = Some(match slot.take() {
         Some(previous) => format!("{previous} {text}"),
         None => text,
     });
 }
 
-/// The form of one text value in a parameter: the text as it is, or in
-/// double quotes when the text has a white space or a double quote.
-fn index_text(text: &str) -> String {
-    if text.chars().any(|ch| ch.is_whitespace() || ch == '"') {
-        quote_phrase(text)
+/// The form of one text value in a parameter (musicindex ADR 0049 R-QUERY-5). A
+/// value in double quotes with a white space, a quote or a backslash is a
+/// phrase. Each other value follows the rule of a word. `None` means that the
+/// value has no text.
+fn index_text(text: &str, quoted: bool) -> Option<String> {
+    if quoted
+        && text
+            .chars()
+            .any(|ch| ch.is_whitespace() || ch == '"' || ch == '\\')
+    {
+        index_phrase(text)
     } else {
-        text.to_owned()
+        index_word(text)
     }
 }
 
@@ -708,5 +722,33 @@ mod tests {
             plan("haleen -after:yesterday"),
             IndexSearchPlan::Send(_)
         ));
+    }
+
+    /// musicindex ADR 0049 R-QUERY-5: a text filter follows the rule of `q`.
+    #[test]
+    fn adr_0049_r_query_5_a_text_filter_has_a_space_for_each_quote_and_backslash() {
+        let filters = |text: &str| request(text).filters;
+        assert_eq!(
+            filters(r#"artist:"the \"best\" song""#).artist.as_deref(),
+            Some(r#""the  best  song""#)
+        );
+        assert_eq!(filters(r#"title:a"b"#).title.as_deref(), Some("a b"));
+        assert_eq!(
+            filters(r#"title:"a\"b""#).title.as_deref(),
+            Some(r#""a b""#)
+        );
+        assert_eq!(
+            filters(r#"title:"a\\b""#).title.as_deref(),
+            Some(r#""a b""#)
+        );
+        assert_eq!(filters(r#"title:"remix""#).title.as_deref(), Some("remix"));
+        let excluded = filters(r#"haleen -release:a\b -c"d"#);
+        assert_eq!(excluded.not_release, vec!["a b".to_owned()]);
+        assert_eq!(excluded.not_q, vec!["c d".to_owned()]);
+        assert_eq!(
+            plan(r"artist:\"),
+            IndexSearchPlan::Skip(IndexSkip::NoIndexPart)
+        );
+        assert_eq!(plan(r"-\"), IndexSearchPlan::Skip(IndexSkip::NoIndexPart));
     }
 }
