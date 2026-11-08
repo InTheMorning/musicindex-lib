@@ -6,11 +6,13 @@
 use std::fs;
 use std::path::Path;
 
+use musicindex_search::field_list::{FieldListRow, Library, field_list_rows};
 use musicindex_search::kind::ReleaseKind;
+use musicindex_search::note::search_note;
 use musicindex_search::plan::{IndexEntity, IndexSearchPlan, IndexSearchRequest, IndexSkip};
 use musicindex_search::query::{
-    ContentValue, FieldValue, FieldValueError, FieldValueState, LibraryStateValue, QueryScope,
-    QueryTerm, ScopeValue, SearchQuery, TermKind,
+    ContentValue, FieldValue, FieldValueError, FieldValueKind, FieldValueState, LibraryStateValue,
+    QUERY_FIELDS, QueryScope, QueryTerm, ScopeValue, SearchQuery, TermKind,
 };
 use musicindex_search::request::{IndexOrder, IndexRun, index_filter_pairs, index_order_pairs};
 use serde_json::{Value, json};
@@ -252,6 +254,118 @@ fn adr_0049_r_query_6_the_crate_gives_each_label_of_the_case_file() {
             case["label"].as_str(),
             "musicindex ADR 0020 R-WORD-1: {case}. Correct kind::ReleaseKind::resolve, or change \
              the case with the ADR that owns the rule."
+        );
+    }
+}
+
+fn library_of(case: &Value) -> Library {
+    match case["library"].as_str() {
+        Some("present") => Library::Present,
+        Some("absent") => Library::Absent,
+        other => panic!("a case has no library: {other:?}"),
+    }
+}
+
+fn value_kind_word(kind: FieldValueKind) -> &'static str {
+    match kind {
+        FieldValueKind::Text => "text",
+        FieldValueKind::KindList => "kind_list",
+        FieldValueKind::Scope => "scope",
+        FieldValueKind::Date => "date",
+        FieldValueKind::Duration => "duration",
+        FieldValueKind::LibraryState => "library_state",
+        FieldValueKind::Content => "content",
+    }
+}
+
+#[test]
+fn adr_0052_r_query_7_the_crate_gives_the_field_table_of_the_case_file() {
+    let table: Vec<Value> = QUERY_FIELDS
+        .iter()
+        .map(|info| {
+            let fixed: Vec<Value> = info
+                .name
+                .fixed_values()
+                .iter()
+                .map(|value| json!({ "word": value.word, "description": value.description }))
+                .collect();
+            json!({
+                "token": info.token,
+                "value_kind": value_kind_word(info.value_kind),
+                "values": info.values_text,
+                "example": info.example,
+                "description": info.description,
+                "library_only": info.library_only,
+                "fixed_values": fixed,
+            })
+        })
+        .collect();
+    assert_eq!(
+        Value::Array(table),
+        case_file()["field_table"],
+        "musicindex ADR 0052 R-QUERY-7: the field table of the crate differs from the case file. \
+         Correct query::QUERY_FIELDS, or change the case with the ADR that owns the rule."
+    );
+}
+
+#[test]
+fn adr_0052_r_query_7_the_crate_gives_each_cursor_case() {
+    let file = case_file();
+    let cases = file["cursor_cases"]
+        .as_array()
+        .expect("the file has cursor cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let text = case["text"].as_str().expect("a case has a text");
+        let before = case["before"]
+            .as_str()
+            .expect("a case has the text before the cursor");
+        let result = field_list_rows(text, before.len(), library_of(case));
+        let rows: Vec<Value> = result
+            .rows
+            .iter()
+            .map(|row| match row {
+                FieldListRow::Field(info) => json!({ "field": info.token }),
+                FieldListRow::Value { field, value } => {
+                    json!({ "field": field.info().token, "value": value.word })
+                }
+            })
+            .collect();
+        let actual = json!({
+            "text": text,
+            "before": before,
+            "library": case["library"],
+            "edit": result.edit.map(|edit| json!({ "before": &text[..edit.start], "text": &text[edit] })),
+            "rows": rows,
+            "names": result.names.map(|names| json!({ "field": names.field.info().token, "prefix": names.prefix })),
+            "error": result.error,
+        });
+        assert_eq!(
+            &actual, case,
+            "musicindex ADR 0052 R-QUERY-7: a cursor case differs. Correct field_list::field_list_rows, \
+             or change the case with the ADR that owns the rule."
+        );
+    }
+}
+
+#[test]
+fn adr_0052_r_query_8_the_crate_gives_each_note_case() {
+    let file = case_file();
+    let cases = file["note_cases"]
+        .as_array()
+        .expect("the file has note cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let text = case["text"].as_str().expect("a case has a text");
+        let query = SearchQuery::parse(text);
+        let plan = IndexSearchPlan::for_query(&query);
+        let note = search_note(&query, &plan, library_of(case))
+            .map(|note| json!({ "title": note.title, "text": note.text }));
+        assert_eq!(
+            note.as_ref().unwrap_or(&Value::Null),
+            &case["note"],
+            "musicindex ADR 0052 R-QUERY-8: the note of {text:?} differs. Correct note::search_note, \
+             or change the case with the ADR that owns the rule."
         );
     }
 }

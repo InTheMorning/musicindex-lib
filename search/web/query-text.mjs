@@ -29,19 +29,60 @@ export const defaultRules = {
   },
 };
 
-const FIELDS = {
-  'artist': { kind: 'text', values: 'an artist name', example: 'artist:jsmovie' },
-  'title': { kind: 'text', values: 'a title', example: 'title:"night drive"' },
-  'release': { kind: 'text', values: 'a release title', example: 'release:"aged friends"' },
-  'kind': { kind: 'kinds', values: 'album, ep, single', example: 'kind:single', words: ['album', 'ep', 'single'] },
-  'in': { kind: 'scope', values: 'library, index', example: 'in:library', words: ['library', 'index'] },
-  'after': { kind: 'date', values: 'a date or a month', example: 'after:2026-10-01' },
-  'before': { kind: 'date', values: 'a date or a month', example: 'before:2026-10' },
-  'duration': { kind: 'duration', values: '>5m, <3:30, 3m..5m', example: 'duration:3m..5m' },
-  'is': { kind: 'state', values: 'downloaded, partial, ready, removed', example: 'is:downloaded', words: ['downloaded', 'partial', 'ready', 'removed'], libraryOnly: true },
-  'playlist': { kind: 'text', values: 'a playlist name', example: 'playlist:"friday show"', libraryOnly: true },
-  'has': { kind: 'content', values: 'split, image', example: 'has:split', words: ['split', 'image'], libraryOnly: true },
+const fixed = (...pairs) => pairs.map(([word, description]) => ({ word, description }));
+
+// The field table, in the order of v4vmm ADR 0087 Decision 2 (musicindex ADR 0052
+// R-QUERY-7). The crate holds the same table.
+export const fieldTable = Object.freeze([
+  { token: 'artist:', value_kind: 'text', values: 'an artist name', example: 'artist:jsmovie', description: 'The track artist or the album artist', library_only: false, fixed_values: [] },
+  { token: 'title:', value_kind: 'text', values: 'a title', example: 'title:"night drive"', description: 'The track title or the release title', library_only: false, fixed_values: [] },
+  { token: 'release:', value_kind: 'text', values: 'a release title', example: 'release:"aged friends"', description: 'The release title', library_only: false, fixed_values: [] },
+  {
+    token: 'kind:', value_kind: 'kind_list', values: 'album, ep, single', example: 'kind:single', description: 'The release kind. Use commas for more than one kind', library_only: false,
+    fixed_values: fixed(['album', 'A release with many tracks'], ['ep', 'A short release'], ['single', 'A release with one track']),
+  },
+  {
+    token: 'in:', value_kind: 'scope', values: 'library, index', example: 'in:library', description: 'Search only the Library or only the Index', library_only: false,
+    fixed_values: fixed(['library', 'Only the Library'], ['index', 'Only Music Index']),
+  },
+  { token: 'after:', value_kind: 'date', values: 'a date or a month', example: 'after:2026-10-01', description: 'Released on this date or after it', library_only: false, fixed_values: [] },
+  { token: 'before:', value_kind: 'date', values: 'a date or a month', example: 'before:2026-10', description: 'Released on this date or before it', library_only: false, fixed_values: [] },
+  { token: 'duration:', value_kind: 'duration', values: '>5m, <3:30, 3m..5m', example: 'duration:3m..5m', description: 'The track duration', library_only: false, fixed_values: [] },
+  {
+    token: 'is:', value_kind: 'library_state', values: 'downloaded, partial, ready, removed', example: 'is:downloaded', description: 'The Library state of the track', library_only: true,
+    fixed_values: fixed(['downloaded', 'Each track is downloaded'], ['partial', 'Some tracks are downloaded'], ['ready', 'Ready for a show'], ['removed', 'Removed from its feed']),
+  },
+  { token: 'playlist:', value_kind: 'text', values: 'a playlist name', example: 'playlist:"friday show"', description: 'The tracks of a playlist', library_only: true, fixed_values: [] },
+  {
+    token: 'has:', value_kind: 'content', values: 'split, image', example: 'has:split', description: 'A value split or an image of its own', library_only: true,
+    fixed_values: fixed(['split', 'A value block with payment routes'], ['image', 'An image of its own']),
+  },
+].map((row) => Object.freeze({ ...row, fixed_values: Object.freeze(row.fixed_values.map(Object.freeze)) })));
+
+// The rows of the field table by the field name without its colon.
+const FIELDS = Object.fromEntries(fieldTable.map((row) => [row.token.slice(0, -1), row]));
+
+const wordsOf = (name) => FIELDS[name].fixed_values.map((value) => value.word);
+
+// The fields whose value rows are names, which the app gives.
+const NAME_FIELDS = ['artist', 'release', 'playlist'];
+
+// `true` when the field list of an app shows the rows of the field `name`
+// (musicindex ADR 0052 R-QUERY-7 item 3). `library` is `present` or `absent`.
+// With no Library, `in:` has no row, because `in:index` alone changes nothing.
+const showsField = (library, name) => {
+  if (library === 'present') return true;
+  if (library === 'absent') return !FIELDS[name].library_only && name !== 'in';
+  throw new TypeError('library is "present" or "absent"');
 };
+
+// Joins the tokens: `a`, `a and b`, or `a, b and c`.
+const tokenList = (tokens) => (tokens.length < 2
+  ? tokens.join('')
+  : `${tokens.slice(0, -1).join(', ')} and ${tokens[tokens.length - 1]}`);
+
+const note = (title, text) => ({ title, text });
+const NEEDS_A_WORD = note('Music Index needs a word or a field to search for', 'Add a word, a phrase or a field.');
 
 // The count rule: the track counts that give each kind when the feed states no
 // kind (musicindex ADR 0049 R-QUERY-6). Null means that no count gives the kind,
@@ -126,7 +167,7 @@ export function createQueryText(overrides = {}) {
 
   const hasValuePrefix = (name, prefix) => {
     const lower = prefix.toLowerCase();
-    return (FIELDS[name].words ?? []).some((word) => word.startsWith(lower));
+    return wordsOf(name).some((word) => word.startsWith(lower));
   };
 
   const readQuoted = (text, quoteAt) => {
@@ -277,7 +318,7 @@ export function createQueryText(overrides = {}) {
     const items = value.split(',').map(trim).filter((item) => item !== '');
     const kinds = [];
     for (const [index, item] of items.entries()) {
-      const kind = FIELDS.kind.words.find((word) => rules.lowerAscii(item) === word);
+      const kind = wordsOf('kind').find((word) => rules.lowerAscii(item) === word);
       if (kind === undefined) {
         if (index + 1 === items.length && hasValuePrefix('kind', item)) break;
         return { state: 'invalid', error: unknownValue('kind', item) };
@@ -295,7 +336,7 @@ export function createQueryText(overrides = {}) {
       };
     }
     const trimmed = trim(value);
-    const word = FIELDS[name].words.find((candidate) => rules.lowerAscii(trimmed) === candidate);
+    const word = wordsOf(name).find((candidate) => rules.lowerAscii(trimmed) === candidate);
     if (word !== undefined) return { state: 'valid', value: { [key]: word } };
     if (hasValuePrefix(name, trimmed)) return { state: 'incomplete' };
     return { state: 'invalid', error: unknownValue(name, value) };
@@ -305,10 +346,10 @@ export function createQueryText(overrides = {}) {
 
   const valueState = (name, value, excluded) => {
     if (trim(value) === '') return { state: 'incomplete' };
-    switch (FIELDS[name].kind) {
+    switch (FIELDS[name].value_kind) {
       case 'text':
         return { state: 'valid', value: { text: value } };
-      case 'kinds':
+      case 'kind_list':
         return kindsState(value);
       case 'scope':
         if (excluded) {
@@ -330,7 +371,7 @@ export function createQueryText(overrides = {}) {
           ? { state: 'invalid', error: { code: 'not_a_duration', message: `duration: needs a comparison or a range, for example ${exampleValue('duration')}` } }
           : { state: 'valid', value: range };
       }
-      case 'state':
+      case 'library_state':
         return oneValueState(name, value, 'state');
       default:
         return oneValueState(name, value, 'content');
@@ -395,7 +436,7 @@ export function createQueryText(overrides = {}) {
     let inLibrary = false;
     let inIndex = false;
     for (const term of validFields(terms)) {
-      if (FIELDS[fieldName(term)].libraryOnly) libraryField = true;
+      if (FIELDS[fieldName(term)].library_only) libraryField = true;
       if (term.value.scope === 'library') inLibrary = true;
       if (term.value.scope === 'index') inIndex = true;
     }
@@ -586,5 +627,186 @@ export function createQueryText(overrides = {}) {
     };
   };
 
-  return { parse, scope, indexQ, runnable, plan, releaseKind };
+  // The raw terms of the text, with the UTF-16 offsets that the cursor needs. This
+  // is the lexer of the crate, so each offset agrees with its byte offset.
+  const rawTerms = (text) => {
+    const terms = [];
+    let pos = 0;
+    while (pos < text.length) {
+      if (rules.isSpace(text[pos])) {
+        pos += 1;
+        continue;
+      }
+      const excluded = text[pos] === '-';
+      const bodyStart = excluded ? pos + 1 : pos;
+      const term = { start: pos, bodyStart, excluded };
+      if (bodyStart >= text.length || rules.isSpace(text[bodyStart])) {
+        terms.push({ ...term, end: bodyStart, shape: 'empty' });
+        pos = bodyStart;
+        continue;
+      }
+      if (text[bodyStart] === '"') {
+        const quoted = readQuoted(text, bodyStart);
+        terms.push({ ...term, end: quoted.end, shape: 'phrase' });
+        pos = quoted.end;
+        continue;
+      }
+      let wordEnd = bodyStart;
+      while (wordEnd < text.length && !rules.isSpace(text[wordEnd])) wordEnd += 1;
+      const word = text.slice(bodyStart, wordEnd);
+      const colon = word.indexOf(':');
+      const name = colon >= 0 ? fieldOf(word.slice(0, colon)) : null;
+      if (name === null) {
+        terms.push({ ...term, end: wordEnd, shape: 'word', word });
+        pos = wordEnd;
+        continue;
+      }
+      const colonAt = bodyStart + colon;
+      const valueStart = colonAt + 1;
+      const quoted = text[valueStart] === '"';
+      const read = quoted ? readQuoted(text, valueStart) : null;
+      const end = quoted ? read.end : wordEnd;
+      const value = quoted ? read.content : text.slice(valueStart, wordEnd);
+      terms.push({ ...term, end, shape: 'field', name, colon: colonAt, valueStart, quoted, value });
+      pos = end;
+    }
+    return terms;
+  };
+
+  // The text of a value prefix that a person types. A quote at the start opens the
+  // value, and the escapes after it read as in the parser.
+  const unquoteValuePrefix = (prefix) => {
+    if (!prefix.startsWith('"')) return prefix;
+    let out = '';
+    let at = 1;
+    while (at < prefix.length) {
+      const ch = prefix[at];
+      if (ch === '"') break;
+      if (ch === '\\') {
+        const next = prefix[at + 1];
+        if (next === '"' || next === '\\') out += next;
+        else if (next === undefined) out += '\\';
+        else out += `\\${next}`;
+        at += 2;
+        continue;
+      }
+      out += ch;
+      at += 1;
+    }
+    return out;
+  };
+
+  // The term under the cursor. `cursor` counts UTF-16 code units. A cursor in a
+  // surrogate pair moves back to the start of the pair.
+  const cursorTerm = (text, at) => {
+    let cursor = Math.max(0, Math.min(at, text.length));
+    if (cursor > 0 && cursor < text.length && /[\uD800-\uDBFF]/.test(text[cursor - 1]) && /[\uDC00-\uDFFF]/.test(text[cursor])) {
+      cursor -= 1;
+    }
+    const raw = rawTerms(text).find((term) => term.start <= cursor && cursor <= term.end);
+    if (raw === undefined) return { cursor, raw: null, range: [cursor, cursor], partial: { kind: 'name', prefix: '' } };
+    const typedEnd = Math.max(cursor, raw.bodyStart);
+    const named = (end) => ({ kind: 'name', prefix: text.slice(raw.bodyStart, end) });
+    let partial;
+    if (raw.shape === 'empty') partial = { kind: 'name', prefix: '' };
+    else if (raw.shape === 'phrase') partial = { kind: 'other' };
+    else if (raw.shape === 'word') partial = raw.word.includes(':') ? { kind: 'other' } : named(typedEnd);
+    else if (typedEnd <= raw.colon) partial = named(typedEnd);
+    else {
+      const typed = Math.min(Math.max(typedEnd, raw.valueStart), raw.end);
+      let start = raw.valueStart;
+      let end = raw.end;
+      // A quoted value is one item. Its commas do not split it.
+      if (raw.name === 'kind' && !raw.quoted) {
+        start = raw.valueStart + text.slice(raw.valueStart, typed).lastIndexOf(',') + 1;
+        const comma = text.slice(typed, raw.end).indexOf(',');
+        end = comma < 0 ? raw.end : typed + comma;
+      }
+      partial = { kind: 'value', name: raw.name, prefix: text.slice(start, typed), range: [start, end] };
+    }
+    return { cursor, raw, range: [raw.bodyStart, raw.end], partial };
+  };
+
+  // The rows of the field list for `text` and the UTF-16 offset `cursor` (musicindex
+  // ADR 0052 R-QUERY-7 item 2). `library` is `present` or `absent`. The result has
+  // `edit`, the range that a row replaces, or null. It has `rows`, each a field
+  // token or a field token with a value word. It has `names`, the field and the
+  // typed prefix of the name rows that the app gives, or null. It has `error`, the
+  // message of the field under the cursor, or null.
+  const fieldListRows = (text, cursor, library) => {
+    showsField(library, 'artist');
+    const term = cursorTerm(text, cursor);
+    let error = null;
+    for (const raw of rawTerms(text)) {
+      if (raw.shape !== 'field' || raw.start > term.cursor || term.cursor > raw.end) continue;
+      if (!showsField(library, raw.name)) continue;
+      const state = valueState(raw.name, raw.value, raw.excluded);
+      if (state.state === 'invalid') {
+        error = state.error.message;
+        break;
+      }
+    }
+    const { partial } = term;
+    if (partial.kind === 'name') {
+      const start = term.range[0];
+      const prefix = partial.prefix.toLowerCase();
+      return {
+        edit: { start, end: Math.max(term.cursor, start) },
+        rows: fieldTable
+          .filter((row) => row.token.startsWith(prefix) && showsField(library, row.token.slice(0, -1)))
+          .map((row) => ({ field: row.token })),
+        names: null,
+        error,
+      };
+    }
+    if (partial.kind === 'value') {
+      const shown = showsField(library, partial.name);
+      const typed = unquoteValuePrefix(partial.prefix);
+      const lower = typed.toLowerCase();
+      const token = `${partial.name}:`;
+      return {
+        edit: { start: partial.range[0], end: partial.range[1] },
+        rows: shown
+          ? wordsOf(partial.name).filter((word) => word.startsWith(lower)).map((value) => ({ field: token, value }))
+          : [],
+        names: shown && NAME_FIELDS.includes(partial.name) ? { field: token, prefix: typed } : null,
+        error,
+      };
+    }
+    return { edit: null, rows: [], names: null, error };
+  };
+
+  // The note of the terms and their plan, or null when the Index part has no note
+  // (musicindex ADR 0052 R-QUERY-8). `library` is `present` or `absent`. The first
+  // field error comes first. An app with a Library gets no note for a query of
+  // the Library only, because its Library rows show.
+  const searchNote = (terms, queryPlan, library) => {
+    showsField(library, 'artist');
+    const failed = terms.find((term) => term.kind === 'field' && term.state === 'invalid');
+    if (failed) return note('This search cannot run', failed.error.message);
+    switch (queryPlan.skip) {
+      case undefined:
+        return runnable(terms) ? null : NEEDS_A_WORD;
+      case 'library_only':
+        return library === 'present'
+          ? null
+          : note('This search uses a Library field', 'Remove is:, playlist:, has: or in:library to search Music Index.');
+      case 'conflict':
+        return note('No results', 'The search asks for the Library and for Music Index only. Remove one of the fields.');
+      case 'unsupported':
+        return note(
+          queryPlan.tokens.length === 0
+            ? 'Music Index cannot apply this search yet'
+            : `Music Index cannot exclude ${tokenList(queryPlan.tokens)} yet`,
+          'Remove the - from the field.',
+        );
+      case 'no_index_part':
+        // A term that can run, with no request: the `kind:` values send none.
+        return runnable(terms) ? note('No results', 'Music Index has no rows for these fields.') : NEEDS_A_WORD;
+      default:
+        return NEEDS_A_WORD;
+    }
+  };
+
+  return { parse, scope, indexQ, runnable, plan, releaseKind, fieldListRows, searchNote };
 }

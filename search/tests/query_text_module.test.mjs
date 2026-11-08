@@ -10,6 +10,7 @@ import { test } from 'node:test';
 import {
   createQueryText,
   defaultRules,
+  fieldTable,
   indexOrderPairs,
   kindLabel,
   kindPairs,
@@ -17,7 +18,14 @@ import {
 
 const moduleUrl = new URL('../web/query-text.mjs', import.meta.url);
 const file = JSON.parse(readFileSync(new URL('../cases/query-text-cases.json', import.meta.url), 'utf8'));
-const { cases, label_cases: labelCases, order_cases: orderCases } = file;
+const {
+  cases,
+  cursor_cases: cursorCases,
+  field_table: fieldTableCases,
+  label_cases: labelCases,
+  note_cases: noteCases,
+  order_cases: orderCases,
+} = file;
 
 const canonical = (value) => {
   if (Array.isArray(value)) return value.map(canonical);
@@ -83,6 +91,53 @@ test('musicindex ADR 0020 R-WORD-1: the module gives each label of the case file
       kindLabel(releaseKind(stated, count)),
       label,
       `musicindex ADR 0020 R-WORD-1: ${JSON.stringify({ stated, count })}. Correct releaseKind.`,
+    );
+  }
+});
+
+test('musicindex ADR 0052 R-QUERY-7: the module gives the field table of the case file', () => {
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(fieldTable)),
+    fieldTableCases,
+    'musicindex ADR 0052 R-QUERY-7: correct fieldTable, or change the case with the ADR that owns the rule.',
+  );
+});
+
+test('musicindex ADR 0052 R-QUERY-7: the module gives each cursor case', () => {
+  assert.ok(cursorCases.length > 0);
+  const queryText = createQueryText();
+  for (const expected of cursorCases) {
+    const { text, before, library } = expected;
+    assert.ok(text.startsWith(before));
+    const result = queryText.fieldListRows(text, before.length, library);
+    const actual = {
+      text,
+      before,
+      library,
+      edit: result.edit === null
+        ? null
+        : { before: text.slice(0, result.edit.start), text: text.slice(result.edit.start, result.edit.end) },
+      rows: result.rows,
+      names: result.names,
+      error: result.error,
+    };
+    assert.deepEqual(
+      actual,
+      expected,
+      `musicindex ADR 0052 R-QUERY-7: ${JSON.stringify({ text, before, library })}. Correct fieldListRows.`,
+    );
+  }
+});
+
+test('musicindex ADR 0052 R-QUERY-8: the module gives each note case', () => {
+  assert.ok(noteCases.length > 0);
+  const queryText = createQueryText();
+  for (const { text, library, note } of noteCases) {
+    const terms = queryText.parse(text);
+    assert.deepEqual(
+      queryText.searchNote(terms, queryText.plan(terms), library),
+      note,
+      `musicindex ADR 0052 R-QUERY-8: ${JSON.stringify({ text, library })}. Correct searchNote.`,
     );
   }
 });

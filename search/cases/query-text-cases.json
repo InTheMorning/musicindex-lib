@@ -11130,6 +11130,1164 @@
       "text": "duration:>=9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999s"
     }
   ],
+  "cursor_cases": [
+    {
+      "before": "",
+      "edit": {
+        "before": "",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        },
+        {
+          "field": "title:"
+        },
+        {
+          "field": "release:"
+        },
+        {
+          "field": "kind:"
+        },
+        {
+          "field": "in:"
+        },
+        {
+          "field": "after:"
+        },
+        {
+          "field": "before:"
+        },
+        {
+          "field": "duration:"
+        },
+        {
+          "field": "is:"
+        },
+        {
+          "field": "playlist:"
+        },
+        {
+          "field": "has:"
+        }
+      ],
+      "text": ""
+    },
+    {
+      "before": "",
+      "edit": {
+        "before": "",
+        "text": ""
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        },
+        {
+          "field": "title:"
+        },
+        {
+          "field": "release:"
+        },
+        {
+          "field": "kind:"
+        },
+        {
+          "field": "after:"
+        },
+        {
+          "field": "before:"
+        },
+        {
+          "field": "duration:"
+        }
+      ],
+      "text": ""
+    },
+    {
+      "before": "ar",
+      "edit": {
+        "before": "",
+        "text": "ar"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        }
+      ],
+      "text": "ar"
+    },
+    {
+      "before": "ar",
+      "edit": {
+        "before": "",
+        "text": "ar"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        }
+      ],
+      "text": "ar"
+    },
+    {
+      "before": "-ar",
+      "edit": {
+        "before": "-",
+        "text": "ar"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        }
+      ],
+      "text": "-ar"
+    },
+    {
+      "before": "AR",
+      "edit": {
+        "before": "",
+        "text": "AR"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        }
+      ],
+      "text": "AR"
+    },
+    {
+      "before": "i",
+      "edit": {
+        "before": "",
+        "text": "i"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "in:"
+        },
+        {
+          "field": "is:"
+        }
+      ],
+      "text": "i"
+    },
+    {
+      "before": "i",
+      "edit": {
+        "before": "",
+        "text": "i"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "i"
+    },
+    {
+      "before": "p",
+      "edit": {
+        "before": "",
+        "text": "p"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "playlist:"
+        }
+      ],
+      "text": "p"
+    },
+    {
+      "before": "p",
+      "edit": {
+        "before": "",
+        "text": "p"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "p"
+    },
+    {
+      "before": "h",
+      "edit": {
+        "before": "",
+        "text": "h"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "has:"
+        }
+      ],
+      "text": "h"
+    },
+    {
+      "before": "h",
+      "edit": {
+        "before": "",
+        "text": "h"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "h"
+    },
+    {
+      "before": "zz",
+      "edit": {
+        "before": "",
+        "text": "zz"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "zz"
+    },
+    {
+      "before": "haleen ",
+      "edit": {
+        "before": "haleen ",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        },
+        {
+          "field": "title:"
+        },
+        {
+          "field": "release:"
+        },
+        {
+          "field": "kind:"
+        },
+        {
+          "field": "in:"
+        },
+        {
+          "field": "after:"
+        },
+        {
+          "field": "before:"
+        },
+        {
+          "field": "duration:"
+        },
+        {
+          "field": "is:"
+        },
+        {
+          "field": "playlist:"
+        },
+        {
+          "field": "has:"
+        }
+      ],
+      "text": "haleen "
+    },
+    {
+      "before": "hal",
+      "edit": {
+        "before": "",
+        "text": "hal"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "haleen"
+    },
+    {
+      "before": "Re:Un",
+      "edit": null,
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "Re:Un"
+    },
+    {
+      "before": "\"night dr",
+      "edit": null,
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "\"night dr"
+    },
+    {
+      "before": "Kind",
+      "edit": {
+        "before": "",
+        "text": "Kind"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:"
+        }
+      ],
+      "text": "Kind"
+    },
+    {
+      "before": "kind:",
+      "edit": {
+        "before": "kind:",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "album"
+        },
+        {
+          "field": "kind:",
+          "value": "ep"
+        },
+        {
+          "field": "kind:",
+          "value": "single"
+        }
+      ],
+      "text": "kind:"
+    },
+    {
+      "before": "kind:s",
+      "edit": {
+        "before": "kind:",
+        "text": "s"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "single"
+        }
+      ],
+      "text": "kind:s"
+    },
+    {
+      "before": "-kind:s",
+      "edit": {
+        "before": "-kind:",
+        "text": "s"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "single"
+        }
+      ],
+      "text": "-kind:s"
+    },
+    {
+      "before": "kind:album,e",
+      "edit": {
+        "before": "kind:album,",
+        "text": "e"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "ep"
+        }
+      ],
+      "text": "kind:album,e"
+    },
+    {
+      "before": "kind:\"si",
+      "edit": {
+        "before": "kind:",
+        "text": "\"si,ep"
+      },
+      "error": "kind: cannot read si. Use one of these values: album, ep, single",
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "single"
+        }
+      ],
+      "text": "kind:\"si,ep"
+    },
+    {
+      "before": "kind:single ",
+      "edit": {
+        "before": "kind:single ",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "artist:"
+        },
+        {
+          "field": "title:"
+        },
+        {
+          "field": "release:"
+        },
+        {
+          "field": "kind:"
+        },
+        {
+          "field": "in:"
+        },
+        {
+          "field": "after:"
+        },
+        {
+          "field": "before:"
+        },
+        {
+          "field": "duration:"
+        },
+        {
+          "field": "is:"
+        },
+        {
+          "field": "playlist:"
+        },
+        {
+          "field": "has:"
+        }
+      ],
+      "text": "kind:single "
+    },
+    {
+      "before": "in:",
+      "edit": {
+        "before": "in:",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "in:",
+          "value": "library"
+        },
+        {
+          "field": "in:",
+          "value": "index"
+        }
+      ],
+      "text": "in:"
+    },
+    {
+      "before": "in:",
+      "edit": {
+        "before": "in:",
+        "text": ""
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "in:"
+    },
+    {
+      "before": "in:l",
+      "edit": {
+        "before": "in:",
+        "text": "l"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "in:",
+          "value": "library"
+        }
+      ],
+      "text": "in:l"
+    },
+    {
+      "before": "in:l",
+      "edit": {
+        "before": "in:",
+        "text": "l"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "in:l"
+    },
+    {
+      "before": "is:",
+      "edit": {
+        "before": "is:",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "is:",
+          "value": "downloaded"
+        },
+        {
+          "field": "is:",
+          "value": "partial"
+        },
+        {
+          "field": "is:",
+          "value": "ready"
+        },
+        {
+          "field": "is:",
+          "value": "removed"
+        }
+      ],
+      "text": "is:"
+    },
+    {
+      "before": "is:",
+      "edit": {
+        "before": "is:",
+        "text": ""
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "is:"
+    },
+    {
+      "before": "is:dow",
+      "edit": {
+        "before": "is:",
+        "text": "dow"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "is:",
+          "value": "downloaded"
+        }
+      ],
+      "text": "is:dow"
+    },
+    {
+      "before": "is:dow",
+      "edit": {
+        "before": "is:",
+        "text": "dow"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "is:dow"
+    },
+    {
+      "before": "has:sp",
+      "edit": {
+        "before": "has:",
+        "text": "sp"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "has:",
+          "value": "split"
+        }
+      ],
+      "text": "has:sp"
+    },
+    {
+      "before": "has:sp",
+      "edit": {
+        "before": "has:",
+        "text": "sp"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "has:sp"
+    },
+    {
+      "before": "KIND:S",
+      "edit": {
+        "before": "KIND:",
+        "text": "S"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "single"
+        }
+      ],
+      "text": "KIND:S"
+    },
+    {
+      "before": "artist:",
+      "edit": {
+        "before": "artist:",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "artist:",
+        "prefix": ""
+      },
+      "rows": [],
+      "text": "artist:"
+    },
+    {
+      "before": "artist:",
+      "edit": {
+        "before": "artist:",
+        "text": ""
+      },
+      "error": null,
+      "library": "absent",
+      "names": {
+        "field": "artist:",
+        "prefix": ""
+      },
+      "rows": [],
+      "text": "artist:"
+    },
+    {
+      "before": "artist:hal",
+      "edit": {
+        "before": "artist:",
+        "text": "hal"
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "artist:",
+        "prefix": "hal"
+      },
+      "rows": [],
+      "text": "artist:hal"
+    },
+    {
+      "before": "artist:hal",
+      "edit": {
+        "before": "artist:",
+        "text": "hal"
+      },
+      "error": null,
+      "library": "absent",
+      "names": {
+        "field": "artist:",
+        "prefix": "hal"
+      },
+      "rows": [],
+      "text": "artist:hal"
+    },
+    {
+      "before": "artist:\"Haleen M",
+      "edit": {
+        "before": "artist:",
+        "text": "\"Haleen M"
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "artist:",
+        "prefix": "Haleen M"
+      },
+      "rows": [],
+      "text": "artist:\"Haleen M"
+    },
+    {
+      "before": "artist:\"a \\\"",
+      "edit": {
+        "before": "artist:",
+        "text": "\"a \\\"b\""
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "artist:",
+        "prefix": "a \""
+      },
+      "rows": [],
+      "text": "artist:\"a \\\"b\" x"
+    },
+    {
+      "before": "release:aged",
+      "edit": {
+        "before": "release:",
+        "text": "aged"
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "release:",
+        "prefix": "aged"
+      },
+      "rows": [],
+      "text": "release:aged"
+    },
+    {
+      "before": "release:aged",
+      "edit": {
+        "before": "release:",
+        "text": "aged"
+      },
+      "error": null,
+      "library": "absent",
+      "names": {
+        "field": "release:",
+        "prefix": "aged"
+      },
+      "rows": [],
+      "text": "release:aged"
+    },
+    {
+      "before": "playlist:fr",
+      "edit": {
+        "before": "playlist:",
+        "text": "fr"
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "playlist:",
+        "prefix": "fr"
+      },
+      "rows": [],
+      "text": "playlist:fr"
+    },
+    {
+      "before": "playlist:fr",
+      "edit": {
+        "before": "playlist:",
+        "text": "fr"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "playlist:fr"
+    },
+    {
+      "before": "title:x",
+      "edit": {
+        "before": "title:",
+        "text": "x"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "title:x"
+    },
+    {
+      "before": "artist:🖖",
+      "edit": {
+        "before": "artist:",
+        "text": "🖖x"
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "artist:",
+        "prefix": "🖖"
+      },
+      "rows": [],
+      "text": "artist:🖖x"
+    },
+    {
+      "before": "artist:é",
+      "edit": {
+        "before": "artist:",
+        "text": "é"
+      },
+      "error": null,
+      "library": "present",
+      "names": {
+        "field": "artist:",
+        "prefix": "é"
+      },
+      "rows": [],
+      "text": "artist:é"
+    },
+    {
+      "before": "after:2026",
+      "edit": {
+        "before": "after:",
+        "text": "2026"
+      },
+      "error": "after: needs a date, for example 2026-10-01",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "after:2026"
+    },
+    {
+      "before": "duration:>5",
+      "edit": {
+        "before": "duration:",
+        "text": ">5"
+      },
+      "error": "duration: needs a comparison or a range, for example 3m..5m",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "duration:>5"
+    },
+    {
+      "before": "kind:lp",
+      "edit": {
+        "before": "kind:",
+        "text": "lp"
+      },
+      "error": "kind: cannot read lp. Use one of these values: album, ep, single",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "kind:lp"
+    },
+    {
+      "before": "kind:lp haleen",
+      "edit": {
+        "before": "kind:lp ",
+        "text": "haleen"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "kind:lp haleen"
+    },
+    {
+      "before": "kind:lp",
+      "edit": {
+        "before": "kind:",
+        "text": "lp"
+      },
+      "error": "kind: cannot read lp. Use one of these values: album, ep, single",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "kind:lp haleen"
+    },
+    {
+      "before": "after:yesterday",
+      "edit": {
+        "before": "after:",
+        "text": "yesterday"
+      },
+      "error": "after: needs a date, for example 2026-10-01",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "after:yesterday"
+    },
+    {
+      "before": "is:new",
+      "edit": {
+        "before": "is:",
+        "text": "new"
+      },
+      "error": "is: cannot read new. Use one of these values: downloaded, partial, ready, removed",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "is:new"
+    },
+    {
+      "before": "is:new",
+      "edit": {
+        "before": "is:",
+        "text": "new"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "is:new"
+    },
+    {
+      "before": "in:both",
+      "edit": {
+        "before": "in:",
+        "text": "both"
+      },
+      "error": "in: cannot read both. Use one of these values: library, index",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "in:both"
+    },
+    {
+      "before": "in:both",
+      "edit": {
+        "before": "in:",
+        "text": "both"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "in:both"
+    },
+    {
+      "before": "kind:sin",
+      "edit": {
+        "before": "kind:",
+        "text": "sin"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "kind:",
+          "value": "single"
+        }
+      ],
+      "text": "kind:sin"
+    },
+    {
+      "before": "-in:index",
+      "edit": {
+        "before": "-in:",
+        "text": "index"
+      },
+      "error": "in: cannot have a -. Use in:library or in:index",
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "in:",
+          "value": "index"
+        }
+      ],
+      "text": "-in:index"
+    },
+    {
+      "before": "-in:index",
+      "edit": {
+        "before": "-in:",
+        "text": "index"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "-in:index"
+    }
+  ],
+  "field_table": [
+    {
+      "description": "The track artist or the album artist",
+      "example": "artist:jsmovie",
+      "fixed_values": [],
+      "library_only": false,
+      "token": "artist:",
+      "value_kind": "text",
+      "values": "an artist name"
+    },
+    {
+      "description": "The track title or the release title",
+      "example": "title:\"night drive\"",
+      "fixed_values": [],
+      "library_only": false,
+      "token": "title:",
+      "value_kind": "text",
+      "values": "a title"
+    },
+    {
+      "description": "The release title",
+      "example": "release:\"aged friends\"",
+      "fixed_values": [],
+      "library_only": false,
+      "token": "release:",
+      "value_kind": "text",
+      "values": "a release title"
+    },
+    {
+      "description": "The release kind. Use commas for more than one kind",
+      "example": "kind:single",
+      "fixed_values": [
+        {
+          "description": "A release with many tracks",
+          "word": "album"
+        },
+        {
+          "description": "A short release",
+          "word": "ep"
+        },
+        {
+          "description": "A release with one track",
+          "word": "single"
+        }
+      ],
+      "library_only": false,
+      "token": "kind:",
+      "value_kind": "kind_list",
+      "values": "album, ep, single"
+    },
+    {
+      "description": "Search only the Library or only the Index",
+      "example": "in:library",
+      "fixed_values": [
+        {
+          "description": "Only the Library",
+          "word": "library"
+        },
+        {
+          "description": "Only Music Index",
+          "word": "index"
+        }
+      ],
+      "library_only": false,
+      "token": "in:",
+      "value_kind": "scope",
+      "values": "library, index"
+    },
+    {
+      "description": "Released on this date or after it",
+      "example": "after:2026-10-01",
+      "fixed_values": [],
+      "library_only": false,
+      "token": "after:",
+      "value_kind": "date",
+      "values": "a date or a month"
+    },
+    {
+      "description": "Released on this date or before it",
+      "example": "before:2026-10",
+      "fixed_values": [],
+      "library_only": false,
+      "token": "before:",
+      "value_kind": "date",
+      "values": "a date or a month"
+    },
+    {
+      "description": "The track duration",
+      "example": "duration:3m..5m",
+      "fixed_values": [],
+      "library_only": false,
+      "token": "duration:",
+      "value_kind": "duration",
+      "values": ">5m, <3:30, 3m..5m"
+    },
+    {
+      "description": "The Library state of the track",
+      "example": "is:downloaded",
+      "fixed_values": [
+        {
+          "description": "Each track is downloaded",
+          "word": "downloaded"
+        },
+        {
+          "description": "Some tracks are downloaded",
+          "word": "partial"
+        },
+        {
+          "description": "Ready for a show",
+          "word": "ready"
+        },
+        {
+          "description": "Removed from its feed",
+          "word": "removed"
+        }
+      ],
+      "library_only": true,
+      "token": "is:",
+      "value_kind": "library_state",
+      "values": "downloaded, partial, ready, removed"
+    },
+    {
+      "description": "The tracks of a playlist",
+      "example": "playlist:\"friday show\"",
+      "fixed_values": [],
+      "library_only": true,
+      "token": "playlist:",
+      "value_kind": "text",
+      "values": "a playlist name"
+    },
+    {
+      "description": "A value split or an image of its own",
+      "example": "has:split",
+      "fixed_values": [
+        {
+          "description": "A value block with payment routes",
+          "word": "split"
+        },
+        {
+          "description": "An image of its own",
+          "word": "image"
+        }
+      ],
+      "library_only": true,
+      "token": "has:",
+      "value_kind": "content",
+      "values": "split, image"
+    }
+  ],
   "label_cases": [
     {
       "label": "Album",
@@ -11265,6 +12423,368 @@
       "label": "Album",
       "stated": "toString",
       "track_count": 5
+    }
+  ],
+  "note_cases": [
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": ""
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": ""
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "!!!"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "!!!"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "haleen"
+    },
+    {
+      "library": "absent",
+      "note": null,
+      "text": "haleen"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "kind: cannot read lp. Use one of these values: album, ep, single",
+        "title": "This search cannot run"
+      },
+      "text": "kind:lp"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "kind: cannot read lp. Use one of these values: album, ep, single",
+        "title": "This search cannot run"
+      },
+      "text": "kind:lp"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "after: needs a date, for example 2026-10-01",
+        "title": "This search cannot run"
+      },
+      "text": "after:yesterday kind:lp haleen"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "after: needs a date, for example 2026-10-01",
+        "title": "This search cannot run"
+      },
+      "text": "after:yesterday kind:lp haleen"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "is:ready"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove is:, playlist:, has: or in:library to search Music Index.",
+        "title": "This search uses a Library field"
+      },
+      "text": "is:ready"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "in:library"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove is:, playlist:, has: or in:library to search Music Index.",
+        "title": "This search uses a Library field"
+      },
+      "text": "in:library"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "-is:ready"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove is:, playlist:, has: or in:library to search Music Index.",
+        "title": "This search uses a Library field"
+      },
+      "text": "-is:ready"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "The search asks for the Library and for Music Index only. Remove one of the fields.",
+        "title": "No results"
+      },
+      "text": "in:index is:ready"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "The search asks for the Library and for Music Index only. Remove one of the fields.",
+        "title": "No results"
+      },
+      "text": "in:index is:ready"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Remove the - from the field.",
+        "title": "Music Index cannot exclude kind: yet"
+      },
+      "text": "haleen -kind:single"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove the - from the field.",
+        "title": "Music Index cannot exclude kind: yet"
+      },
+      "text": "haleen -kind:single"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Remove the - from the field.",
+        "title": "Music Index cannot exclude kind: and after: yet"
+      },
+      "text": "haleen -kind:ep -after:2026-11"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove the - from the field.",
+        "title": "Music Index cannot exclude kind: and after: yet"
+      },
+      "text": "haleen -kind:ep -after:2026-11"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "-remix"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "-remix"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "-!!!"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "-!!!"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "kind:ep"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "kind:ep"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "haleen kind:ep"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "haleen kind:ep"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "kind:single kind:ep"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "kind:single kind:ep"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "artist:"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "artist:"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "artist:\\"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Music Index has no rows for these fields.",
+        "title": "No results"
+      },
+      "text": "artist:\\"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "in:index"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "in:index"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "kind:single"
+    },
+    {
+      "library": "absent",
+      "note": null,
+      "text": "kind:single"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "\"\\\"\""
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "\"\\\"\""
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "is: cannot read new. Use one of these values: downloaded, partial, ready, removed",
+        "title": "This search cannot run"
+      },
+      "text": "is:new"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "is: cannot read new. Use one of these values: downloaded, partial, ready, removed",
+        "title": "This search cannot run"
+      },
+      "text": "is:new"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "in:index -remix"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "in:index -remix"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "haleen in:library"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove is:, playlist:, has: or in:library to search Music Index.",
+        "title": "This search uses a Library field"
+      },
+      "text": "haleen in:library"
     }
   ],
   "order_cases": [
