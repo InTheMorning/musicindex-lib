@@ -358,15 +358,15 @@ impl UnsupportedIndexTerms {
         (!field_tokens.is_empty()).then_some(Self { field_tokens })
     }
 
-    /// The title of the note, for example "`MusicIndex` cannot exclude kind:
+    /// The title of the note, for example "Music Index cannot exclude kind:
     /// and after: yet" (v4vmm ADR 0087 Decision 5).
     #[must_use]
     pub fn note_title(&self) -> String {
         let tokens = token_list(&self.field_tokens);
         if tokens.is_empty() {
-            "MusicIndex cannot apply this search yet".to_owned()
+            "Music Index cannot apply this search yet".to_owned()
         } else {
-            format!("MusicIndex cannot exclude {tokens} yet")
+            format!("Music Index cannot exclude {tokens} yet")
         }
     }
 }
@@ -451,14 +451,14 @@ mod tests {
             }
             .note_title()
         };
-        assert_eq!(title(vec!["kind:"]), "MusicIndex cannot exclude kind: yet");
+        assert_eq!(title(vec!["kind:"]), "Music Index cannot exclude kind: yet");
         assert_eq!(
             title(vec!["kind:", "after:"]),
-            "MusicIndex cannot exclude kind: and after: yet"
+            "Music Index cannot exclude kind: and after: yet"
         );
         assert_eq!(
             title(vec!["after:", "before:", "duration:"]),
-            "MusicIndex cannot exclude after:, before: and duration: yet"
+            "Music Index cannot exclude after:, before: and duration: yet"
         );
     }
 

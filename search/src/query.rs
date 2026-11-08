@@ -217,7 +217,7 @@ const SCOPE_VALUES: &[FixedValueInfo] = &[
     },
     FixedValueInfo {
         word: "index",
-        description: "Only MusicIndex",
+        description: "Only Music Index",
     },
 ];
 
