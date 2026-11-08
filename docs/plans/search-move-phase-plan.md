@@ -35,7 +35,7 @@ These facts come from the repositories and the live node on 2026-11-07.
 | 0 | Complete: v4vmm ADR 0091 and Studio ADR 0151 |
 | 1, 1a and 3a | Complete |
 | 2 | Complete: v4vmm commits `bebfe97` and `c433582` |
-| 3 | Mechanical checks complete. The visual check is open in `docs/pending-human-checks.md` of v4vmm. |
+| 3 | Complete. The operator passed the visual check, as v4vmm commit `9aed106` records (v4vmm ADR 0087, Operator Answers item 8). |
 | 4 | Complete: Studio commit `2ecd7e9`. Studio records that the visual checks passed. |
 | 5 | Complete. The operator passed the two visual gates of musicindex ADR 0049, as musicindex commit `6b8e824` records. |
 | 6 | Complete, with no change to the crate |
@@ -111,7 +111,7 @@ Each correction changes the case file in the same commit. Stophammer changes in 
 
 - Mechanical: a case gives `kind=unknown&tracks=1` for `kind:single`.
 - Mechanical: the round trip test of `tools/query-text` in the research repository gives no difference for `q`.
-- Visual: in v4vmm, `kind:single` shows Index rows, and each row has the label "Single".
+- Visual, passed by the operator from agent screenshots: in v4vmm, `kind:single` shows Index rows, and each row has the label "Single".
 
 ### Phase 3a: Sort And Reverse
 
