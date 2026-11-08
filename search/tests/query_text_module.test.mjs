@@ -25,6 +25,7 @@ const {
   label_cases: labelCases,
   note_cases: noteCases,
   order_cases: orderCases,
+  scope_note_cases: scopeNoteCases,
 } = file;
 
 const canonical = (value) => {
@@ -138,6 +139,19 @@ test('musicindex ADR 0052 R-QUERY-8: the module gives each note case', () => {
       queryText.searchNote(terms, queryText.plan(terms), library),
       note,
       `musicindex ADR 0052 R-QUERY-8: ${JSON.stringify({ text, library })}. Correct searchNote.`,
+    );
+  }
+});
+
+test('musicindex ADR 0052 R-QUERY-8: the module gives each scope note case', () => {
+  assert.ok(scopeNoteCases.length > 0);
+  const queryText = createQueryText();
+  for (const { text, entity, note } of scopeNoteCases) {
+    const terms = queryText.parse(text);
+    assert.deepEqual(
+      queryText.scopeNote(terms, queryText.plan(terms), entity),
+      note,
+      `musicindex ADR 0052 R-QUERY-8: ${JSON.stringify({ text, entity })}. Correct scopeNote.`,
     );
   }
 });

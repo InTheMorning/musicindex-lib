@@ -599,6 +599,19 @@ export function createQueryText(overrides = {}) {
     return { q, params: pairsOf(filters) };
   };
 
+  // `true` when `entity` does not take a positive filter of these filters.
+  const refusedBy = (entity, filters) => {
+    if (entity === 'feed') return hasDuration(filters);
+    if (entity === 'publisher') {
+      return filters.release !== null
+        || filters.kinds.length > 0
+        || filters.after !== null
+        || filters.before !== null
+        || hasDuration(filters);
+    }
+    return false;
+  };
+
   const plan = (terms) => {
     const queryScope = scope(terms);
     if (queryScope === 'conflict' || queryScope === 'library_only') return { skip: queryScope };
@@ -615,15 +628,10 @@ export function createQueryText(overrides = {}) {
     if (q === null && !hasPositive(filters)) {
       return { skip: hasExclusion(filters) ? 'exclusions_only' : 'no_index_part' };
     }
-    const blocksPublisher = filters.release !== null
-      || filters.kinds.length > 0
-      || filters.after !== null
-      || filters.before !== null
-      || hasDuration(filters);
     return {
-      feed: hasDuration(filters) ? null : requestOf(q, filters),
+      feed: refusedBy('feed', filters) ? null : requestOf(q, filters),
       track: requestOf(q, filters),
-      publisher: blocksPublisher ? null : requestOf(q, { ...filters, not_release: [] }),
+      publisher: refusedBy('publisher', filters) ? null : requestOf(q, { ...filters, not_release: [] }),
     };
   };
 
@@ -808,5 +816,24 @@ export function createQueryText(overrides = {}) {
     }
   };
 
-  return { parse, scope, indexQ, runnable, plan, releaseKind, fieldListRows, searchNote };
+  // The note for a field that the Index request of an entity leaves out, or null
+  // (musicindex ADR 0052 R-QUERY-8). Only a plan that sends has this note. Each
+  // field token comes one time, in text order. The Track request has no note.
+  const scopeNote = (terms, queryPlan, entity) => {
+    if (queryPlan.skip !== undefined || queryPlan[entity] !== null) return null;
+    if (entity !== 'feed' && entity !== 'publisher') return null;
+    const tokens = [];
+    for (const term of terms) {
+      if (term.kind !== 'field' || term.excluded || term.state !== 'valid') continue;
+      const alone = filtersOf([term]);
+      // A `kind:` term with no Index request has kinds, so Publisher refuses it.
+      const refused = alone === null ? entity === 'publisher' : refusedBy(entity, alone);
+      if (refused && !tokens.includes(term.field)) tokens.push(term.field);
+    }
+    const [verb, field] = tokens.length === 1 ? ['does', 'field'] : ['do', 'fields'];
+    const scopeName = entity === 'publisher' ? 'artists and labels' : 'releases';
+    return note(`${tokenList(tokens)} ${verb} not apply to ${scopeName}`, `Remove the ${field} to search ${scopeName}.`);
+  };
+
+  return { parse, scope, indexQ, runnable, plan, releaseKind, fieldListRows, searchNote, scopeNote };
 }

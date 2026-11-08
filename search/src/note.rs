@@ -7,7 +7,7 @@
 //! The module has no I/O.
 
 use crate::field_list::Library;
-use crate::plan::{IndexSearchPlan, IndexSkip};
+use crate::plan::{IndexEntity, IndexSearchPlan, IndexSkip, refused_tokens, token_list};
 use crate::query::SearchQuery;
 
 /// The title and the text of one note.
@@ -80,4 +80,39 @@ pub fn search_note(
         )),
         IndexSkip::ExclusionsOnly | IndexSkip::NoIndexPart => Some(SearchNote::needs_a_word()),
     }
+}
+
+/// The note of a scope that gets no request, or `None` (musicindex ADR 0052
+/// R-QUERY-8).
+///
+/// The note names each field that `entity` does not take. It shows only when the
+/// plan sends a request and `entity` gets none, so an app gives [`search_note`]
+/// first. A track takes each filter, so it never gets this note.
+#[must_use]
+pub fn scope_note(
+    query: &SearchQuery,
+    plan: &IndexSearchPlan,
+    entity: IndexEntity,
+) -> Option<SearchNote> {
+    let IndexSearchPlan::Send(request) = plan else {
+        return None;
+    };
+    if request.for_entity(entity).is_some() {
+        return None;
+    }
+    let tokens = refused_tokens(query, entity);
+    let (verb, field) = if tokens.len() == 1 {
+        ("does", "field")
+    } else {
+        ("do", "fields")
+    };
+    let scope = match entity {
+        IndexEntity::Publisher => "artists and labels",
+        IndexEntity::Feed => "releases",
+        IndexEntity::Track => return None,
+    };
+    Some(SearchNote::new(
+        format!("{} {verb} not apply to {scope}", token_list(&tokens)),
+        format!("Remove the {field} to search {scope}."),
+    ))
 }

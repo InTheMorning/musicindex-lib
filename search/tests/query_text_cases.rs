@@ -8,7 +8,7 @@ use std::path::Path;
 
 use musicindex_search::field_list::{FieldListRow, Library, field_list_rows};
 use musicindex_search::kind::ReleaseKind;
-use musicindex_search::note::search_note;
+use musicindex_search::note::{scope_note, search_note};
 use musicindex_search::plan::{IndexEntity, IndexSearchPlan, IndexSearchRequest, IndexSkip};
 use musicindex_search::query::{
     ContentValue, FieldValue, FieldValueError, FieldValueKind, FieldValueState, LibraryStateValue,
@@ -366,6 +366,34 @@ fn adr_0052_r_query_8_the_crate_gives_each_note_case() {
             &case["note"],
             "musicindex ADR 0052 R-QUERY-8: the note of {text:?} differs. Correct note::search_note, \
              or change the case with the ADR that owns the rule."
+        );
+    }
+}
+
+#[test]
+fn adr_0052_r_query_8_the_crate_gives_each_scope_note_case() {
+    let file = case_file();
+    let cases = file["scope_note_cases"]
+        .as_array()
+        .expect("the file has scope note cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let text = case["text"].as_str().expect("a case has a text");
+        let entity = match case["entity"].as_str() {
+            Some("feed") => IndexEntity::Feed,
+            Some("track") => IndexEntity::Track,
+            Some("publisher") => IndexEntity::Publisher,
+            other => panic!("a case has no entity: {other:?}"),
+        };
+        let query = SearchQuery::parse(text);
+        let plan = IndexSearchPlan::for_query(&query);
+        let note = scope_note(&query, &plan, entity)
+            .map(|note| json!({ "title": note.title, "text": note.text }));
+        assert_eq!(
+            note.as_ref().unwrap_or(&Value::Null),
+            &case["note"],
+            "musicindex ADR 0052 R-QUERY-8: the scope note of {text:?} for {entity:?} differs. \
+             Correct note::scope_note, or change the case with the ADR that owns the rule."
         );
     }
 }

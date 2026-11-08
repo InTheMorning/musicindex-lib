@@ -91,25 +91,12 @@ impl IndexSearchRequest {
     /// duration. A feed row has no duration. A track takes each filter.
     #[must_use]
     pub fn for_entity(&self, entity: IndexEntity) -> Option<IndexSearchRequest> {
+        if self.filters.refused_by(entity) {
+            return None;
+        }
         let mut filters = self.filters.clone();
-        match entity {
-            IndexEntity::Track => {}
-            IndexEntity::Feed => {
-                if filters.has_duration() {
-                    return None;
-                }
-            }
-            IndexEntity::Publisher => {
-                if filters.release.is_some()
-                    || !filters.kinds.is_empty()
-                    || filters.after.is_some()
-                    || filters.before.is_some()
-                    || filters.has_duration()
-                {
-                    return None;
-                }
-                filters.not_release.clear();
-            }
+        if entity == IndexEntity::Publisher {
+            filters.not_release.clear();
         }
         let request = IndexSearchRequest {
             q: self.q.clone(),
@@ -271,6 +258,22 @@ impl IndexFilters {
             || !self.not_q.is_empty()
     }
 
+    /// `true` when `entity` does not take a positive filter of these filters.
+    /// Stophammer gives `400` for such a request.
+    fn refused_by(&self, entity: IndexEntity) -> bool {
+        match entity {
+            IndexEntity::Track => false,
+            IndexEntity::Feed => self.has_duration(),
+            IndexEntity::Publisher => {
+                self.release.is_some()
+                    || !self.kinds.is_empty()
+                    || self.after.is_some()
+                    || self.before.is_some()
+                    || self.has_duration()
+            }
+        }
+    }
+
     /// `true` when `min_duration` or `max_duration` applies.
     fn has_duration(&self) -> bool {
         self.min_duration.is_some() || self.max_duration.is_some()
@@ -371,8 +374,30 @@ impl UnsupportedIndexTerms {
     }
 }
 
+/// The token of each field term of `query` whose filter `entity` does not take, in
+/// text order, each token one time (musicindex ADR 0052 R-QUERY-8). A term with
+/// `-` and a term whose value gives no filter have no token.
+pub(crate) fn refused_tokens(query: &SearchQuery, entity: IndexEntity) -> Vec<&'static str> {
+    let mut tokens: Vec<&'static str> = Vec::new();
+    for term in query.terms().iter().filter(|term| !term.excluded) {
+        let TermKind::Field(field) = &term.kind else {
+            continue;
+        };
+        let FieldValueState::Valid(value) = &field.value else {
+            continue;
+        };
+        let mut alone = IndexFilters::default();
+        alone.add_field(field.name, value, false, term.quoted);
+        let token = field.name.info().token;
+        if alone.refused_by(entity) && !tokens.contains(&token) {
+            tokens.push(token);
+        }
+    }
+    tokens
+}
+
 /// Joins the tokens: `a`, `a and b`, or `a, b and c`.
-fn token_list(tokens: &[&str]) -> String {
+pub(crate) fn token_list(tokens: &[&str]) -> String {
     match tokens {
         [] => String::new(),
         [one] => (*one).to_owned(),

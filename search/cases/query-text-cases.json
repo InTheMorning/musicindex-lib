@@ -13086,5 +13086,265 @@
       "run": "command",
       "sort": "date"
     }
+  ],
+  "scope_note_cases": [
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "haleen"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen kind:single"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen kind:single"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "kind: does not apply to artists and labels"
+      },
+      "text": "haleen kind:single"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen kind:single after:2026-10 release:x"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen kind:single after:2026-10 release:x"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the fields to search artists and labels.",
+        "title": "kind:, after: and release: do not apply to artists and labels"
+      },
+      "text": "haleen kind:single after:2026-10 release:x"
+    },
+    {
+      "entity": "feed",
+      "note": {
+        "text": "Remove the field to search releases.",
+        "title": "duration: does not apply to releases"
+      },
+      "text": "haleen duration:>5m"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen duration:>5m"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "duration: does not apply to artists and labels"
+      },
+      "text": "haleen duration:>5m"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen kind:single kind:single,album"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen kind:single kind:single,album"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "kind: does not apply to artists and labels"
+      },
+      "text": "haleen kind:single kind:single,album"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen -release:x"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen -release:x"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "haleen -release:x"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen release:\\ kind:single"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen release:\\ kind:single"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "kind: does not apply to artists and labels"
+      },
+      "text": "haleen release:\\ kind:single"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "kind:ep"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "kind:ep"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "kind:ep"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "kind:lp"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "kind:lp"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "kind:lp"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "in:index haleen kind:single"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "in:index haleen kind:single"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "kind: does not apply to artists and labels"
+      },
+      "text": "in:index haleen kind:single"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "release:x"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "release:x"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "release: does not apply to artists and labels"
+      },
+      "text": "release:x"
+    },
+    {
+      "entity": "feed",
+      "note": {
+        "text": "Remove the field to search releases.",
+        "title": "duration: does not apply to releases"
+      },
+      "text": "haleen before:2026-10 duration:<3:30"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen before:2026-10 duration:<3:30"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the fields to search artists and labels.",
+        "title": "before: and duration: do not apply to artists and labels"
+      },
+      "text": "haleen before:2026-10 duration:<3:30"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "artist:x title:y"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "artist:x title:y"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "artist:x title:y"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "-remix kind:single"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "-remix kind:single"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "kind: does not apply to artists and labels"
+      },
+      "text": "-remix kind:single"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "haleen kind:single -kind:album"
+    },
+    {
+      "entity": "track",
+      "note": null,
+      "text": "haleen kind:single -kind:album"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "haleen kind:single -kind:album"
+    }
   ]
 }
