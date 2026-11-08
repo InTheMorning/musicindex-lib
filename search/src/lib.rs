@@ -6,6 +6,7 @@
 
 pub mod field_list;
 pub mod kind;
+pub mod name_order;
 pub mod note;
 pub mod plan;
 pub mod query;

@@ -19,9 +19,11 @@ fn adr_0049_r_query_4_item_2_the_crate_has_no_http_dependency() {
         .collect();
     assert_eq!(
         names,
-        ["chrono"],
+        ["chrono", "serde_json", "unicode-normalization"],
         "musicindex ADR 0049 R-QUERY-4 item 2: the crate has no HTTP dependency. Keep the HTTP \
-         code in the app, and give the app the parameters."
+         code in the app, and give the app the parameters. unicode-normalization is the \
+         dependency of Stophammer ADR 0090 §5 for the order key, and serde_json reads \
+         its vector file."
     );
 }
 
