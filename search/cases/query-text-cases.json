@@ -12142,27 +12142,30 @@
   "field_table": [
     {
       "description": "The track artist or the album artist",
-      "example": "artist:jsmovie",
+      "example": "artist:\"artist name\"",
       "fixed_values": [],
       "library_only": false,
+      "placeholder": "artist name",
       "token": "artist:",
       "value_kind": "text",
       "values": "an artist name"
     },
     {
       "description": "The track title or the release title",
-      "example": "title:\"night drive\"",
+      "example": "title:\"track title\"",
       "fixed_values": [],
       "library_only": false,
+      "placeholder": "track title",
       "token": "title:",
       "value_kind": "text",
       "values": "a title"
     },
     {
       "description": "The release title",
-      "example": "release:\"aged friends\"",
+      "example": "release:\"release title\"",
       "fixed_values": [],
       "library_only": false,
+      "placeholder": "release title",
       "token": "release:",
       "value_kind": "text",
       "values": "a release title"
@@ -12185,6 +12188,7 @@
         }
       ],
       "library_only": false,
+      "placeholder": null,
       "token": "kind:",
       "value_kind": "kind_list",
       "values": "album, ep, single"
@@ -12203,6 +12207,7 @@
         }
       ],
       "library_only": false,
+      "placeholder": null,
       "token": "in:",
       "value_kind": "scope",
       "values": "library, index"
@@ -12212,6 +12217,7 @@
       "example": "after:2026-10-01",
       "fixed_values": [],
       "library_only": false,
+      "placeholder": null,
       "token": "after:",
       "value_kind": "date",
       "values": "a date or a month"
@@ -12221,6 +12227,7 @@
       "example": "before:2026-10",
       "fixed_values": [],
       "library_only": false,
+      "placeholder": null,
       "token": "before:",
       "value_kind": "date",
       "values": "a date or a month"
@@ -12230,6 +12237,7 @@
       "example": "duration:3m..5m",
       "fixed_values": [],
       "library_only": false,
+      "placeholder": null,
       "token": "duration:",
       "value_kind": "duration",
       "values": ">5m, <3:30, 3m..5m"
@@ -12256,15 +12264,17 @@
         }
       ],
       "library_only": true,
+      "placeholder": null,
       "token": "is:",
       "value_kind": "library_state",
       "values": "downloaded, partial, ready, removed"
     },
     {
       "description": "The tracks of a playlist",
-      "example": "playlist:\"friday show\"",
+      "example": "playlist:\"playlist name\"",
       "fixed_values": [],
       "library_only": true,
+      "placeholder": "playlist name",
       "token": "playlist:",
       "value_kind": "text",
       "values": "a playlist name"
@@ -12283,6 +12293,7 @@
         }
       ],
       "library_only": true,
+      "placeholder": null,
       "token": "has:",
       "value_kind": "content",
       "values": "split, image"
@@ -13085,6 +13096,68 @@
       "reverse": true,
       "run": "command",
       "sort": "date"
+    }
+  ],
+  "quote_cases": [
+    {
+      "text": "jsmovie",
+      "value": "jsmovie"
+    },
+    {
+      "text": "aged friends",
+      "value": "\"aged friends\""
+    },
+    {
+      "text": "a \"b\" \\c",
+      "value": "\"a \\\"b\\\" \\\\c\""
+    },
+    {
+      "text": "a\\b",
+      "value": "a\\b"
+    },
+    {
+      "text": "",
+      "value": ""
+    },
+    {
+      "text": "Beyoncé",
+      "value": "Beyoncé"
+    },
+    {
+      "text": "Sigur Rós",
+      "value": "\"Sigur Rós\""
+    },
+    {
+      "text": "AC/DC",
+      "value": "AC/DC"
+    },
+    {
+      "text": "tab\there",
+      "value": "\"tab\there\""
+    },
+    {
+      "text": "x　y",
+      "value": "\"x　y\""
+    },
+    {
+      "text": "xy",
+      "value": "\"xy\""
+    },
+    {
+      "text": "x﻿y",
+      "value": "x﻿y"
+    },
+    {
+      "text": "a\"",
+      "value": "\"a\\\"\""
+    },
+    {
+      "text": "🖖 x",
+      "value": "\"🖖 x\""
+    },
+    {
+      "text": "artist name",
+      "value": "\"artist name\""
     }
   ],
   "scope_note_cases": [

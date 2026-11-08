@@ -34,30 +34,44 @@ const fixed = (...pairs) => pairs.map(([word, description]) => ({ word, descript
 // The field table, in the order of v4vmm ADR 0087 Decision 2 (musicindex ADR 0052
 // R-QUERY-7). The crate holds the same table.
 export const fieldTable = Object.freeze([
-  { token: 'artist:', value_kind: 'text', values: 'an artist name', example: 'artist:jsmovie', description: 'The track artist or the album artist', library_only: false, fixed_values: [] },
-  { token: 'title:', value_kind: 'text', values: 'a title', example: 'title:"night drive"', description: 'The track title or the release title', library_only: false, fixed_values: [] },
-  { token: 'release:', value_kind: 'text', values: 'a release title', example: 'release:"aged friends"', description: 'The release title', library_only: false, fixed_values: [] },
+  { token: 'artist:', value_kind: 'text', values: 'an artist name', example: 'artist:"artist name"', placeholder: 'artist name', description: 'The track artist or the album artist', library_only: false, fixed_values: [] },
+  { token: 'title:', value_kind: 'text', values: 'a title', example: 'title:"track title"', placeholder: 'track title', description: 'The track title or the release title', library_only: false, fixed_values: [] },
+  { token: 'release:', value_kind: 'text', values: 'a release title', example: 'release:"release title"', placeholder: 'release title', description: 'The release title', library_only: false, fixed_values: [] },
   {
-    token: 'kind:', value_kind: 'kind_list', values: 'album, ep, single', example: 'kind:single', description: 'The release kind. Use commas for more than one kind', library_only: false,
+    token: 'kind:', value_kind: 'kind_list', values: 'album, ep, single', example: 'kind:single', placeholder: null, description: 'The release kind. Use commas for more than one kind', library_only: false,
     fixed_values: fixed(['album', 'A release with many tracks'], ['ep', 'A short release'], ['single', 'A release with one track']),
   },
   {
-    token: 'in:', value_kind: 'scope', values: 'library, index', example: 'in:library', description: 'Search only the Library or only the Index', library_only: false,
+    token: 'in:', value_kind: 'scope', values: 'library, index', example: 'in:library', placeholder: null, description: 'Search only the Library or only the Index', library_only: false,
     fixed_values: fixed(['library', 'Only the Library'], ['index', 'Only Music Index']),
   },
-  { token: 'after:', value_kind: 'date', values: 'a date or a month', example: 'after:2026-10-01', description: 'Released on this date or after it', library_only: false, fixed_values: [] },
-  { token: 'before:', value_kind: 'date', values: 'a date or a month', example: 'before:2026-10', description: 'Released on this date or before it', library_only: false, fixed_values: [] },
-  { token: 'duration:', value_kind: 'duration', values: '>5m, <3:30, 3m..5m', example: 'duration:3m..5m', description: 'The track duration', library_only: false, fixed_values: [] },
+  { token: 'after:', value_kind: 'date', values: 'a date or a month', example: 'after:2026-10-01', placeholder: null, description: 'Released on this date or after it', library_only: false, fixed_values: [] },
+  { token: 'before:', value_kind: 'date', values: 'a date or a month', example: 'before:2026-10', placeholder: null, description: 'Released on this date or before it', library_only: false, fixed_values: [] },
+  { token: 'duration:', value_kind: 'duration', values: '>5m, <3:30, 3m..5m', example: 'duration:3m..5m', placeholder: null, description: 'The track duration', library_only: false, fixed_values: [] },
   {
-    token: 'is:', value_kind: 'library_state', values: 'downloaded, partial, ready, removed', example: 'is:downloaded', description: 'The Library state of the track', library_only: true,
+    token: 'is:', value_kind: 'library_state', values: 'downloaded, partial, ready, removed', example: 'is:downloaded', placeholder: null, description: 'The Library state of the track', library_only: true,
     fixed_values: fixed(['downloaded', 'Each track is downloaded'], ['partial', 'Some tracks are downloaded'], ['ready', 'Ready for a show'], ['removed', 'Removed from its feed']),
   },
-  { token: 'playlist:', value_kind: 'text', values: 'a playlist name', example: 'playlist:"friday show"', description: 'The tracks of a playlist', library_only: true, fixed_values: [] },
+  { token: 'playlist:', value_kind: 'text', values: 'a playlist name', example: 'playlist:"playlist name"', placeholder: 'playlist name', description: 'The tracks of a playlist', library_only: true, fixed_values: [] },
   {
-    token: 'has:', value_kind: 'content', values: 'split, image', example: 'has:split', description: 'A value split or an image of its own', library_only: true,
+    token: 'has:', value_kind: 'content', values: 'split, image', example: 'has:split', placeholder: null, description: 'A value split or an image of its own', library_only: true,
     fixed_values: fixed(['split', 'A value block with payment routes'], ['image', 'An image of its own']),
   },
 ].map((row) => Object.freeze({ ...row, fixed_values: Object.freeze(row.fixed_values.map(Object.freeze)) })));
+
+// The text of a value for a query, with quotes when it needs them (musicindex ADR
+// 0058 R-QUERY-12). A value with white space or a double quote gets double quotes.
+// A backslash goes before each double quote and each backslash inside. Other text
+// does not change. The crate has the same function.
+export const quoteFieldValue = (text) => {
+  let needsQuotes = false;
+  let quoted = '"';
+  for (const ch of text) {
+    if (defaultRules.isSpace(ch) || ch === '"') needsQuotes = true;
+    quoted += ch === '"' || ch === '\\' ? `\\${ch}` : ch;
+  }
+  return needsQuotes ? `${quoted}"` : text;
+};
 
 // The rows of the field table by the field name without its colon.
 const FIELDS = Object.fromEntries(fieldTable.map((row) => [row.token.slice(0, -1), row]));

@@ -14,6 +14,7 @@ import {
   indexOrderPairs,
   kindLabel,
   kindPairs,
+  quoteFieldValue,
 } from '../web/query-text.mjs';
 
 const moduleUrl = new URL('../web/query-text.mjs', import.meta.url);
@@ -25,6 +26,7 @@ const {
   label_cases: labelCases,
   note_cases: noteCases,
   order_cases: orderCases,
+  quote_cases: quoteCases,
   scope_note_cases: scopeNoteCases,
 } = file;
 
@@ -102,6 +104,27 @@ test('musicindex ADR 0052 R-QUERY-7: the module gives the field table of the cas
     fieldTableCases,
     'musicindex ADR 0052 R-QUERY-7: correct fieldTable, or change the case with the ADR that owns the rule.',
   );
+});
+
+test('musicindex ADR 0058 R-QUERY-12: the module gives each quote case', () => {
+  assert.ok(quoteCases.length > 0);
+  for (const { text, value } of quoteCases) {
+    assert.equal(
+      quoteFieldValue(text),
+      value,
+      `musicindex ADR 0058 R-QUERY-12: quoteFieldValue(${JSON.stringify(text)}) must give ${JSON.stringify(value)}. Correct quoteFieldValue.`,
+    );
+  }
+});
+
+test('musicindex ADR 0058 R-QUERY-11: a placeholder is the quoted value of its example', () => {
+  for (const row of fieldTable.filter((entry) => entry.placeholder !== null)) {
+    assert.equal(
+      row.example,
+      row.token + quoteFieldValue(row.placeholder),
+      `musicindex ADR 0058 R-QUERY-11: the example of ${row.token} must be the token and the quoted placeholder. Correct the row.`,
+    );
+  }
 });
 
 test('musicindex ADR 0052 R-QUERY-7: the module gives each cursor case', () => {

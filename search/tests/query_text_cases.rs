@@ -12,7 +12,7 @@ use musicindex_search::note::{scope_note, search_note};
 use musicindex_search::plan::{IndexEntity, IndexSearchPlan, IndexSearchRequest, IndexSkip};
 use musicindex_search::query::{
     ContentValue, FieldValue, FieldValueError, FieldValueKind, FieldValueState, LibraryStateValue,
-    QUERY_FIELDS, QueryScope, QueryTerm, ScopeValue, SearchQuery, TermKind,
+    QUERY_FIELDS, QueryScope, QueryTerm, ScopeValue, SearchQuery, TermKind, quote_field_value,
 };
 use musicindex_search::request::{IndexOrder, IndexRun, index_filter_pairs, index_order_pairs};
 use serde_json::{Value, json};
@@ -296,6 +296,7 @@ fn adr_0052_r_query_7_the_crate_gives_the_field_table_of_the_case_file() {
                 "example": info.example,
                 "description": info.description,
                 "library_only": info.library_only,
+                "placeholder": info.placeholder,
                 "fixed_values": fixed,
             })
         })
@@ -394,6 +395,41 @@ fn adr_0052_r_query_8_the_crate_gives_each_scope_note_case() {
             &case["note"],
             "musicindex ADR 0052 R-QUERY-8: the scope note of {text:?} for {entity:?} differs. \
              Correct note::scope_note, or change the case with the ADR that owns the rule."
+        );
+    }
+}
+
+/// The example of a field with a placeholder is the token and the quoted
+/// placeholder, so the range that an app selects is always correct.
+#[test]
+fn adr_0058_r_query_11_a_placeholder_is_the_quoted_value_of_its_example() {
+    for info in &QUERY_FIELDS {
+        if let Some(placeholder) = info.placeholder {
+            assert_eq!(
+                info.example,
+                format!("{}{}", info.token, quote_field_value(placeholder)),
+                "musicindex ADR 0058 R-QUERY-11: the example of {} must be its token and its quoted \
+                 placeholder. Correct the row of query::QUERY_FIELDS.",
+                info.token
+            );
+        }
+    }
+}
+
+#[test]
+fn adr_0058_r_query_12_the_crate_gives_each_quote_case() {
+    let file = case_file();
+    let cases = file["quote_cases"]
+        .as_array()
+        .expect("the file has quote cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let text = case["text"].as_str().expect("a case has a text");
+        assert_eq!(
+            Some(quote_field_value(text).as_str()),
+            case["value"].as_str(),
+            "musicindex ADR 0058 R-QUERY-12: the form of {text:?} differs. Correct \
+             query::quote_field_value, or change the case with the ADR that owns the rule."
         );
     }
 }
