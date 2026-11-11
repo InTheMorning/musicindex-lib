@@ -11128,6 +11128,1423 @@
         }
       ],
       "text": "duration:>=9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999s"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "host:wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "Wavlake.COM"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "Wavlake.COM"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "Wavlake.COM"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "HOST:Wavlake.COM",
+          "state": "valid",
+          "value": {
+            "text": "Wavlake.COM"
+          }
+        }
+      ],
+      "text": "HOST:Wavlake.COM"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "wavlake.com."
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "wavlake.com."
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "wavlake.com."
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com.",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com."
+          }
+        }
+      ],
+      "text": "host:wavlake.com."
+    },
+    {
+      "index_q": "\"host:wavlake.com\"",
+      "plan": {
+        "feed": {
+          "params": [],
+          "q": "\"host:wavlake.com\""
+        },
+        "publisher": {
+          "params": [],
+          "q": "\"host:wavlake.com\""
+        },
+        "track": {
+          "params": [],
+          "q": "\"host:wavlake.com\""
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "phrase",
+          "raw": "\"host:wavlake.com\"",
+          "text": "host:wavlake.com"
+        }
+      ],
+      "text": "\"host:wavlake.com\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:\"wavlake.com\"",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "host:\"wavlake.com\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "[::1]"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "[::1]"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "[::1]"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:[::1]",
+          "state": "valid",
+          "value": {
+            "text": "[::1]"
+          }
+        }
+      ],
+      "text": "host:[::1]"
+    },
+    {
+      "index_q": "night",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": "night"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "night",
+          "text": "night"
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "night host:wavlake.com"
+    },
+    {
+      "index_q": "night",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "not_host",
+              "wavlake.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "publisher": {
+          "params": [
+            [
+              "not_host",
+              "wavlake.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "track": {
+          "params": [
+            [
+              "not_host",
+              "wavlake.com"
+            ]
+          ],
+          "q": "night"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "night",
+          "text": "night"
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "night -host:wavlake.com"
+    },
+    {
+      "index_q": "night",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "not_host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "publisher": {
+          "params": [
+            [
+              "not_host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "track": {
+          "params": [
+            [
+              "not_host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": "night"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "night",
+          "text": "night"
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:b.com",
+          "state": "valid",
+          "value": {
+            "text": "b.com"
+          }
+        }
+      ],
+      "text": "night -host:a.com -host:b.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "exclusions_only"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "-host:wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": {
+            "code": "one_host_only",
+            "message": "host: takes one host only. Use -host: to exclude a host"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:b.com",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:a.com host:b.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a.com,b.com",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:a.com,b.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:https://wavlake.com",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:https://wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com/feed",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:wavlake.com/feed"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com:443",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:wavlake.com:443"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:user@wavlake.com",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:user@wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:",
+          "state": "incomplete",
+          "value": null
+        }
+      ],
+      "text": "host:"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "release",
+              "x"
+            ],
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": null,
+        "track": {
+          "params": [
+            [
+              "release",
+              "x"
+            ],
+            [
+              "host",
+              "wavlake.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "release:",
+          "kind": "field",
+          "raw": "release:x",
+          "state": "valid",
+          "value": {
+            "text": "x"
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "release:x host:wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ],
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": null,
+        "track": {
+          "params": [
+            [
+              "host",
+              "wavlake.com"
+            ],
+            [
+              "kind",
+              "unknown"
+            ],
+            [
+              "tracks",
+              "1"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "kind:",
+          "kind": "field",
+          "raw": "kind:single",
+          "state": "valid",
+          "value": {
+            "kinds": [
+              "single"
+            ]
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "kind:single host:wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "library_only"
+      },
+      "runnable": true,
+      "scope": "library_only",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "in:",
+          "kind": "field",
+          "raw": "in:library",
+          "state": "valid",
+          "value": {
+            "scope": "library"
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com",
+          "state": "valid",
+          "value": {
+            "text": "wavlake.com"
+          }
+        }
+      ],
+      "text": "in:library host:wavlake.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:[::1]:443",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:[::1]:443"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:\"wav lake.com\"",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:\"wav lake.com\""
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com?a",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:wavlake.com?a"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:wavlake.com#a",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:wavlake.com#a"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "skip": "no_index_part"
+      },
+      "runnable": false,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a\\b.com",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:a\\b.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "c.com"
+            ],
+            [
+              "not_host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "c.com"
+            ],
+            [
+              "not_host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "c.com"
+            ],
+            [
+              "not_host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:b.com",
+          "state": "valid",
+          "value": {
+            "text": "b.com"
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:c.com",
+          "state": "valid",
+          "value": {
+            "text": "c.com"
+          }
+        }
+      ],
+      "text": "-host:a.com -host:b.com host:c.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ],
+            [
+              "not_host",
+              "b.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:b.com",
+          "state": "valid",
+          "value": {
+            "text": "b.com"
+          }
+        }
+      ],
+      "text": "host:a.com -host:b.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "c.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "c.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "c.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a/b",
+          "state": "invalid",
+          "value": null
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:c.com",
+          "state": "valid",
+          "value": {
+            "text": "c.com"
+          }
+        }
+      ],
+      "text": "host:a/b host:c.com"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:",
+          "state": "incomplete",
+          "value": null
+        }
+      ],
+      "text": "host:a.com host:"
+    },
+    {
+      "index_q": null,
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "a.com"
+            ]
+          ],
+          "q": null
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:b/c",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "host:a.com host:b/c"
+    },
+    {
+      "index_q": "night",
+      "plan": {
+        "feed": {
+          "params": [],
+          "q": "night"
+        },
+        "publisher": {
+          "params": [],
+          "q": "night"
+        },
+        "track": {
+          "params": [],
+          "q": "night"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "error": {
+            "code": "not_a_host",
+            "message": "host: needs a host name with no scheme, path, port or user"
+          },
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:a/b",
+          "state": "invalid",
+          "value": null
+        },
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "night",
+          "text": "night"
+        }
+      ],
+      "text": "-host:a/b night"
+    },
+    {
+      "index_q": "night",
+      "plan": {
+        "feed": {
+          "params": [
+            [
+              "host",
+              "b.com"
+            ],
+            [
+              "not_host",
+              "a.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "publisher": {
+          "params": [
+            [
+              "host",
+              "b.com"
+            ],
+            [
+              "not_host",
+              "a.com"
+            ]
+          ],
+          "q": "night"
+        },
+        "track": {
+          "params": [
+            [
+              "host",
+              "b.com"
+            ],
+            [
+              "not_host",
+              "a.com"
+            ]
+          ],
+          "q": "night"
+        }
+      },
+      "runnable": true,
+      "scope": "everything",
+      "terms": [
+        {
+          "excluded": false,
+          "kind": "word",
+          "raw": "night",
+          "text": "night"
+        },
+        {
+          "error": null,
+          "excluded": true,
+          "field": "host:",
+          "kind": "field",
+          "raw": "-host:a.com",
+          "state": "valid",
+          "value": {
+            "text": "a.com"
+          }
+        },
+        {
+          "error": null,
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:b.com",
+          "state": "valid",
+          "value": {
+            "text": "b.com"
+          }
+        },
+        {
+          "error": {
+            "code": "one_host_only",
+            "message": "host: takes one host only. Use -host: to exclude a host"
+          },
+          "excluded": false,
+          "field": "host:",
+          "kind": "field",
+          "raw": "host:c.com",
+          "state": "invalid",
+          "value": null
+        }
+      ],
+      "text": "night -host:a.com host:b.com host:c.com"
     }
   ],
   "cursor_cases": [
@@ -11164,6 +12581,9 @@
         },
         {
           "field": "duration:"
+        },
+        {
+          "field": "host:"
         },
         {
           "field": "is:"
@@ -11207,6 +12627,9 @@
         },
         {
           "field": "duration:"
+        },
+        {
+          "field": "host:"
         }
       ],
       "text": ""
@@ -11345,6 +12768,9 @@
       "names": null,
       "rows": [
         {
+          "field": "host:"
+        },
+        {
           "field": "has:"
         }
       ],
@@ -11359,7 +12785,11 @@
       "error": null,
       "library": "absent",
       "names": null,
-      "rows": [],
+      "rows": [
+        {
+          "field": "host:"
+        }
+      ],
       "text": "h"
     },
     {
@@ -11407,6 +12837,9 @@
         },
         {
           "field": "duration:"
+        },
+        {
+          "field": "host:"
         },
         {
           "field": "is:"
@@ -11592,6 +13025,9 @@
         },
         {
           "field": "duration:"
+        },
+        {
+          "field": "host:"
         },
         {
           "field": "is:"
@@ -12137,6 +13573,98 @@
       "names": null,
       "rows": [],
       "text": "-in:index"
+    },
+    {
+      "before": "ho",
+      "edit": {
+        "before": "",
+        "text": "ho"
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [
+        {
+          "field": "host:"
+        }
+      ],
+      "text": "ho"
+    },
+    {
+      "before": "ho",
+      "edit": {
+        "before": "",
+        "text": "ho"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [
+        {
+          "field": "host:"
+        }
+      ],
+      "text": "ho"
+    },
+    {
+      "before": "host:",
+      "edit": {
+        "before": "host:",
+        "text": ""
+      },
+      "error": null,
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "host:"
+    },
+    {
+      "before": "host:wav",
+      "edit": {
+        "before": "host:",
+        "text": "wav"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "host:wav"
+    },
+    {
+      "before": "host:a.com host:b.com",
+      "edit": {
+        "before": "host:a.com host:",
+        "text": "b.com"
+      },
+      "error": "host: takes one host only. Use -host: to exclude a host",
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "host:a.com host:b.com"
+    },
+    {
+      "before": "host:a.com",
+      "edit": {
+        "before": "host:",
+        "text": "a.com"
+      },
+      "error": null,
+      "library": "absent",
+      "names": null,
+      "rows": [],
+      "text": "host:a.com host:b.com"
+    },
+    {
+      "before": "host:wavlake.com/feed",
+      "edit": {
+        "before": "host:",
+        "text": "wavlake.com/feed"
+      },
+      "error": "host: needs a host name with no scheme, path, port or user",
+      "library": "present",
+      "names": null,
+      "rows": [],
+      "text": "host:wavlake.com/feed"
     }
   ],
   "field_table": [
@@ -12243,6 +13771,16 @@
       "values": ">5m, <3:30, 3m..5m"
     },
     {
+      "description": "The host of the feed URL",
+      "example": "host:\"host name\"",
+      "fixed_values": [],
+      "library_only": false,
+      "placeholder": "host name",
+      "token": "host:",
+      "value_kind": "text",
+      "values": "a host name"
+    },
+    {
       "description": "The Library state of the track",
       "example": "is:downloaded",
       "fixed_values": [
@@ -12297,6 +13835,92 @@
       "token": "has:",
       "value_kind": "content",
       "values": "split, image"
+    }
+  ],
+  "host_cases": [
+    {
+      "feed_host": "wavlake.com",
+      "host_keeps": true,
+      "matches": true,
+      "not_host_keeps": false,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "feeds.wavlake.com",
+      "host_keeps": true,
+      "matches": true,
+      "not_host_keeps": false,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "notwavlake.com",
+      "host_keeps": false,
+      "matches": false,
+      "not_host_keeps": true,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "feeds.wavlake.com",
+      "host_keeps": true,
+      "matches": true,
+      "not_host_keeps": false,
+      "value": "Wavlake.COM."
+    },
+    {
+      "feed_host": "wavlake.com.",
+      "host_keeps": true,
+      "matches": true,
+      "not_host_keeps": false,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "wavlake.com",
+      "host_keeps": false,
+      "matches": false,
+      "not_host_keeps": true,
+      "value": "feeds.wavlake.com"
+    },
+    {
+      "feed_host": null,
+      "host_keeps": false,
+      "matches": null,
+      "not_host_keeps": true,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "FEEDS.WAVLAKE.COM",
+      "host_keeps": true,
+      "matches": true,
+      "not_host_keeps": false,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "wavlake.com.evil.example",
+      "host_keeps": false,
+      "matches": false,
+      "not_host_keeps": true,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "",
+      "host_keeps": false,
+      "matches": false,
+      "not_host_keeps": true,
+      "value": "wavlake.com"
+    },
+    {
+      "feed_host": "[::1]",
+      "host_keeps": true,
+      "matches": true,
+      "not_host_keeps": false,
+      "value": "[::1]"
+    },
+    {
+      "feed_host": "key.example",
+      "host_keeps": false,
+      "matches": false,
+      "not_host_keeps": true,
+      "value": "Key.example"
     }
   ],
   "label_cases": [
@@ -12796,6 +14420,87 @@
         "title": "This search uses a Library field"
       },
       "text": "haleen in:library"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "night -host:wavlake.com"
+    },
+    {
+      "library": "absent",
+      "note": null,
+      "text": "night -host:wavlake.com"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "-host:wavlake.com"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Add a word, a phrase or a field.",
+        "title": "Music Index needs a word or a field to search for"
+      },
+      "text": "-host:wavlake.com"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "host: takes one host only. Use -host: to exclude a host",
+        "title": "This search cannot run"
+      },
+      "text": "host:a.com host:b.com"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "host: takes one host only. Use -host: to exclude a host",
+        "title": "This search cannot run"
+      },
+      "text": "host:a.com host:b.com"
+    },
+    {
+      "library": "present",
+      "note": {
+        "text": "host: needs a host name with no scheme, path, port or user",
+        "title": "This search cannot run"
+      },
+      "text": "host:wavlake.com:443"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "host: needs a host name with no scheme, path, port or user",
+        "title": "This search cannot run"
+      },
+      "text": "host:wavlake.com:443"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "in:library host:wavlake.com"
+    },
+    {
+      "library": "absent",
+      "note": {
+        "text": "Remove is:, playlist:, has: or in:library to search Music Index.",
+        "title": "This search uses a Library field"
+      },
+      "text": "in:library host:wavlake.com"
+    },
+    {
+      "library": "present",
+      "note": null,
+      "text": "host:a.com host:"
+    },
+    {
+      "library": "absent",
+      "note": null,
+      "text": "host:a.com host:"
     }
   ],
   "order_cases": [
@@ -13418,6 +15123,24 @@
       "entity": "publisher",
       "note": null,
       "text": "haleen kind:single -kind:album"
+    },
+    {
+      "entity": "publisher",
+      "note": {
+        "text": "Remove the field to search artists and labels.",
+        "title": "release: does not apply to artists and labels"
+      },
+      "text": "release:x host:wavlake.com"
+    },
+    {
+      "entity": "feed",
+      "note": null,
+      "text": "release:x host:wavlake.com"
+    },
+    {
+      "entity": "publisher",
+      "note": null,
+      "text": "host:wavlake.com"
     }
   ]
 }

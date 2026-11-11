@@ -11,6 +11,8 @@ import {
   createQueryText,
   defaultRules,
   fieldTable,
+  hostKeepsRow,
+  hostMatches,
   indexOrderPairs,
   kindLabel,
   kindPairs,
@@ -23,6 +25,7 @@ const {
   cases,
   cursor_cases: cursorCases,
   field_table: fieldTableCases,
+  host_cases: hostCases,
   label_cases: labelCases,
   note_cases: noteCases,
   order_cases: orderCases,
@@ -175,6 +178,24 @@ test('musicindex ADR 0052 R-QUERY-8: the module gives each scope note case', () 
       queryText.scopeNote(terms, queryText.plan(terms), entity),
       note,
       `musicindex ADR 0052 R-QUERY-8: ${JSON.stringify({ text, entity })}. Correct scopeNote.`,
+    );
+  }
+});
+
+test('musicindex ADR 0062 R-QUERY-16: the module gives each host case', () => {
+  assert.ok(hostCases.length > 0);
+  for (const expected of hostCases) {
+    const { value, feed_host: feedHost } = expected;
+    assert.deepEqual(
+      {
+        value,
+        feed_host: feedHost,
+        matches: feedHost === null ? null : hostMatches(value, feedHost),
+        host_keeps: hostKeepsRow(value, false, feedHost),
+        not_host_keeps: hostKeepsRow(value, true, feedHost),
+      },
+      expected,
+      `musicindex ADR 0062 R-QUERY-16: ${JSON.stringify({ value, feedHost })}. Correct hostMatches or hostKeepsRow.`,
     );
   }
 });

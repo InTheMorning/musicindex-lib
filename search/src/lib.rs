@@ -5,6 +5,7 @@
 //! request with its own HTTP code.
 
 pub mod field_list;
+pub mod host;
 pub mod kind;
 pub mod name_order;
 pub mod note;

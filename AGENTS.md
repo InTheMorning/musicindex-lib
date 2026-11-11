@@ -22,6 +22,9 @@ toolbar field uses that copy. The [search move plan](docs/plans/search-move-phas
 gives the state of each phase. The crate and the module also give the field list rows and
 the note words of musicindex ADR 0052. The three apps use them.
 
+The crate and the module also read the field `host:` of musicindex ADR 0062. They give the
+host match function of its rule R-QUERY-16. No app pins or copies that change at this time.
+
 The module `name_order` of the crate is the client side of the name sort of Stophammer
 ADR 0090. Stophammer keeps its own copy of the two functions. Its file
 `tests/fixtures/order-key-vectors.json` is the contract, and

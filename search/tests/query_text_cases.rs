@@ -7,6 +7,7 @@ use std::fs;
 use std::path::Path;
 
 use musicindex_search::field_list::{FieldListRow, Library, field_list_rows};
+use musicindex_search::host::{host_keeps_row, host_matches};
 use musicindex_search::kind::ReleaseKind;
 use musicindex_search::note::{scope_note, search_note};
 use musicindex_search::plan::{IndexEntity, IndexSearchPlan, IndexSearchRequest, IndexSkip};
@@ -60,6 +61,8 @@ fn error_code(error: &FieldValueError) -> &'static str {
         FieldValueError::NotADate { .. } => "not_a_date",
         FieldValueError::NotADuration => "not_a_duration",
         FieldValueError::ExcludedScope => "excluded_scope",
+        FieldValueError::NotAHost => "not_a_host",
+        FieldValueError::OneHostOnly => "one_host_only",
     }
 }
 
@@ -430,6 +433,31 @@ fn adr_0058_r_query_12_the_crate_gives_each_quote_case() {
             case["value"].as_str(),
             "musicindex ADR 0058 R-QUERY-12: the form of {text:?} differs. Correct \
              query::quote_field_value, or change the case with the ADR that owns the rule."
+        );
+    }
+}
+
+#[test]
+fn adr_0062_r_query_16_the_crate_gives_each_host_case() {
+    let file = case_file();
+    let cases = file["host_cases"]
+        .as_array()
+        .expect("the file has host cases");
+    assert!(!cases.is_empty());
+    for case in cases {
+        let value = case["value"].as_str().expect("a case has a value");
+        let feed_host = case["feed_host"].as_str();
+        let actual = json!({
+            "value": value,
+            "feed_host": feed_host,
+            "matches": feed_host.map(|feed_host| host_matches(value, feed_host)),
+            "host_keeps": host_keeps_row(value, false, feed_host),
+            "not_host_keeps": host_keeps_row(value, true, feed_host),
+        });
+        assert_eq!(
+            &actual, case,
+            "musicindex ADR 0062 R-QUERY-16: a host case differs. Correct host::host_matches or \
+             host::host_keeps_row, or change the case with the ADR that owns the rule."
         );
     }
 }

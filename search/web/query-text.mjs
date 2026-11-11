@@ -48,6 +48,7 @@ export const fieldTable = Object.freeze([
   { token: 'after:', value_kind: 'date', values: 'a date or a month', example: 'after:2026-10-01', placeholder: null, description: 'Released on this date or after it', library_only: false, fixed_values: [] },
   { token: 'before:', value_kind: 'date', values: 'a date or a month', example: 'before:2026-10', placeholder: null, description: 'Released on this date or before it', library_only: false, fixed_values: [] },
   { token: 'duration:', value_kind: 'duration', values: '>5m, <3:30, 3m..5m', example: 'duration:3m..5m', placeholder: null, description: 'The track duration', library_only: false, fixed_values: [] },
+  { token: 'host:', value_kind: 'text', values: 'a host name', example: 'host:"host name"', placeholder: 'host name', description: 'The host of the feed URL', library_only: false, fixed_values: [] },
   {
     token: 'is:', value_kind: 'library_state', values: 'downloaded, partial, ready, removed', example: 'is:downloaded', placeholder: null, description: 'The Library state of the track', library_only: true,
     fixed_values: fixed(['downloaded', 'Each track is downloaded'], ['partial', 'Some tracks are downloaded'], ['ready', 'Ready for a show'], ['removed', 'Removed from its feed']),
@@ -159,6 +160,29 @@ export const indexOrderPairs = (order, run, capabilities) => {
   if (order.reverse === true) pairs.push(['reverse', 'true']);
   return pairs;
 };
+
+// The host in ASCII lowercase, with no trailing dot.
+const hostKey = (host) => defaultRules.lowerAscii(host.endsWith('.') ? host.slice(0, -1) : host);
+
+// `true` when `feedHost` is the host of `value` or a subdomain of it (musicindex ADR
+// 0062 R-QUERY-16 item 2, Stophammer ADR 0080 section 5). ASCII letters fold, and
+// one trailing dot on each side has no effect. Other letters do not fold. An empty
+// value or an empty feed host matches nothing. The app gives the host of the feed
+// URL, and this function parses no URL. The crate has the same function.
+export const hostMatches = (value, feedHost) => {
+  const key = hostKey(value);
+  const feed = hostKey(feedHost);
+  if (key === '' || feed === '') return false;
+  return feed === key || (feed.endsWith(key) && feed[feed.length - key.length - 1] === '.');
+};
+
+// `true` when a Library row stays for one `host:` term (musicindex ADR 0062
+// R-QUERY-16 item 3). `excluded` is `true` for `-host:`. `feedHost` is the host of
+// the feed URL of the row, or null when the row has no such host. A row with no
+// host does not match `host:`, and `-host:` does not remove it.
+export const hostKeepsRow = (value, excluded, feedHost) => (feedHost === null
+  ? excluded
+  : hostMatches(value, feedHost) !== excluded);
 
 const pad = (number, width) => String(number).padStart(width, '0');
 const dayText = (year, month, day) => `${pad(year, 4)}-${pad(month, 2)}-${pad(day, 2)}`;
@@ -356,10 +380,40 @@ export function createQueryText(overrides = {}) {
     return { state: 'invalid', error: unknownValue(name, value) };
   };
 
+  // `true` when `value` has no white space, `/`, `\`, `?`, `#`, `@` or `,`, and no
+  // `:` that is not in square brackets (musicindex ADR 0062 R-QUERY-14). Stophammer does
+  // each other check.
+  const isHostValue = (value) => {
+    let inBrackets = false;
+    for (const ch of value) {
+      if (ch === '[') inBrackets = true;
+      else if (ch === ']') inBrackets = false;
+      else if (ch === ':' ? !inBrackets : '/\\?#@,'.includes(ch) || rules.isSpace(ch)) return false;
+    }
+    return true;
+  };
+
+  // A second correct `host:` term with no `-` is a field error, because Stophammer
+  // refuses a second `host` value (musicindex ADR 0062 R-QUERY-13 item 4). `seen`
+  // records a correct `host:` term of the text before this one.
+  const hostRule = (seen, name, excluded, state) => {
+    if (name !== 'host' || excluded || state.state !== 'valid') return state;
+    if (seen.host) {
+      return { state: 'invalid', error: { code: 'one_host_only', message: 'host: takes one host only. Use -host: to exclude a host' } };
+    }
+    seen.host = true;
+    return state;
+  };
+
   const exampleValue = (name) => FIELDS[name].example.slice(name.length + 1);
 
   const valueState = (name, value, excluded) => {
     if (trim(value) === '') return { state: 'incomplete' };
+    if (name === 'host') {
+      return isHostValue(value)
+        ? { state: 'valid', value: { text: value } }
+        : { state: 'invalid', error: { code: 'not_a_host', message: 'host: needs a host name with no scheme, path, port or user' } };
+    }
     switch (FIELDS[name].value_kind) {
       case 'text':
         return { state: 'valid', value: { text: value } };
@@ -392,13 +446,15 @@ export function createQueryText(overrides = {}) {
     }
   };
 
-  const fieldTerm = (raw, excluded, name, value) => {
-    const { state, value: typed = null, error = null } = valueState(name, value, excluded);
+  const fieldTerm = (seen, raw, excluded, name, value) => {
+    const checked = hostRule(seen, name, excluded, valueState(name, value, excluded));
+    const { state, value: typed = null, error = null } = checked;
     return { raw, excluded, kind: 'field', field: `${name}:`, state, value: typed, error };
   };
 
   const parse = (text) => {
     const terms = [];
+    const seen = { host: false };
     let pos = 0;
     while (pos < text.length) {
       if (rules.isSpace(text[pos])) {
@@ -428,10 +484,10 @@ export function createQueryText(overrides = {}) {
         const valueStart = start + colon + 1;
         if (text[valueStart] === '"') {
           const quoted = readQuoted(text, valueStart);
-          terms.push(fieldTerm(text.slice(pos, quoted.end), excluded, name, quoted.content));
+          terms.push(fieldTerm(seen, text.slice(pos, quoted.end), excluded, name, quoted.content));
           pos = quoted.end;
         } else {
-          terms.push(fieldTerm(text.slice(pos, wordEnd), excluded, name, text.slice(valueStart, wordEnd)));
+          terms.push(fieldTerm(seen, text.slice(pos, wordEnd), excluded, name, text.slice(valueStart, wordEnd)));
           pos = wordEnd;
         }
         continue;
@@ -533,9 +589,11 @@ export function createQueryText(overrides = {}) {
     before: null,
     min_duration: null,
     max_duration: null,
+    host: null,
     not_artist: [],
     not_title: [],
     not_release: [],
+    not_host: [],
     not_q: [],
   });
 
@@ -556,6 +614,11 @@ export function createQueryText(overrides = {}) {
         if (text === null) continue;
         if (term.excluded) filters[`not_${name}`].push(text);
         else filters[name] = filters[name] === null ? text : `${filters[name]} ${text}`;
+      } else if (name === 'host') {
+        // The value goes as the person typed it. The parser gives one correct
+        // `host:` term with no `-` at most.
+        if (term.excluded) filters.not_host.push(term.value.text);
+        else filters.host = term.value.text;
       } else if (term.excluded) {
         continue;
       } else if (name === 'kind') {
@@ -585,19 +648,21 @@ export function createQueryText(overrides = {}) {
     || filters.kinds.length > 0
     || filters.after !== null
     || filters.before !== null
-    || hasDuration(filters);
+    || hasDuration(filters)
+    || filters.host !== null;
 
   const hasExclusion = (filters) => filters.not_artist.length > 0
     || filters.not_title.length > 0
     || filters.not_release.length > 0
+    || filters.not_host.length > 0
     || filters.not_q.length > 0;
 
   const pairsOf = (filters) => {
     const pairs = [];
-    for (const name of ['artist', 'title', 'release']) {
+    for (const name of ['artist', 'title', 'release', 'host']) {
       if (filters[name] !== null) pairs.push([name, filters[name]]);
     }
-    for (const name of ['not_artist', 'not_title', 'not_release', 'not_q']) {
+    for (const name of ['not_artist', 'not_title', 'not_release', 'not_host', 'not_q']) {
       for (const value of filters[name]) pairs.push([name, value]);
     }
     pairs.push(...(kindPairs(filters.kinds) ?? []));
@@ -759,10 +824,12 @@ export function createQueryText(overrides = {}) {
     showsField(library, 'artist');
     const term = cursorTerm(text, cursor);
     let error = null;
+    const seen = { host: false };
     for (const raw of rawTerms(text)) {
-      if (raw.shape !== 'field' || raw.start > term.cursor || term.cursor > raw.end) continue;
+      if (raw.shape !== 'field') continue;
+      const state = hostRule(seen, raw.name, raw.excluded, valueState(raw.name, raw.value, raw.excluded));
+      if (raw.start > term.cursor || term.cursor > raw.end) continue;
       if (!showsField(library, raw.name)) continue;
-      const state = valueState(raw.name, raw.value, raw.excluded);
       if (state.state === 'invalid') {
         error = state.error.message;
         break;

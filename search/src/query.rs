@@ -36,6 +36,7 @@ pub enum QueryFieldName {
     After,
     Before,
     Duration,
+    Host,
     Is,
     Playlist,
     Has,
@@ -94,7 +95,7 @@ pub struct FixedValueInfo {
 }
 
 /// The field table, in the order of v4vmm ADR 0087 Decision 2.
-pub const QUERY_FIELDS: [QueryFieldInfo; 11] = [
+pub const QUERY_FIELDS: [QueryFieldInfo; 12] = [
     QueryFieldInfo {
         name: QueryFieldName::Artist,
         token: "artist:",
@@ -176,6 +177,16 @@ pub const QUERY_FIELDS: [QueryFieldInfo; 11] = [
         library_only: false,
     },
     QueryFieldInfo {
+        name: QueryFieldName::Host,
+        token: "host:",
+        value_kind: FieldValueKind::Text,
+        values_text: "a host name",
+        example: "host:\"host name\"",
+        placeholder: Some("host name"),
+        description: "The host of the feed URL",
+        library_only: false,
+    },
+    QueryFieldInfo {
         name: QueryFieldName::Is,
         token: "is:",
         value_kind: FieldValueKind::LibraryState,
@@ -209,7 +220,7 @@ pub const QUERY_FIELDS: [QueryFieldInfo; 11] = [
 
 /// The field table as a static, so that a row reference lives for the
 /// full program.
-static FIELD_ROWS: [QueryFieldInfo; 11] = QUERY_FIELDS;
+static FIELD_ROWS: [QueryFieldInfo; 12] = QUERY_FIELDS;
 
 const KIND_VALUES: &[FixedValueInfo] = &[
     FixedValueInfo {
@@ -310,6 +321,7 @@ impl QueryFieldName {
             | Self::After
             | Self::Before
             | Self::Duration
+            | Self::Host
             | Self::Playlist => &[],
         }
     }
@@ -474,6 +486,12 @@ pub enum FieldValueError {
     NotADuration,
     /// `in:` has a `-` (packet decision D6).
     ExcludedScope,
+    /// The value of `host:` has a character that a host name cannot have
+    /// (musicindex ADR 0062 R-QUERY-14).
+    NotAHost,
+    /// A second `host:` term with no `-` (musicindex ADR 0062 R-QUERY-13
+    /// item 4).
+    OneHostOnly,
 }
 
 impl FieldValueError {
@@ -510,6 +528,18 @@ impl FieldValueError {
                 format!(
                     "{} cannot have a -. Use {}library or {}index",
                     field.token(),
+                    field.token(),
+                    field.token()
+                )
+            }
+            Self::NotAHost => format!(
+                "{} needs a host name with no scheme, path, port or user",
+                QueryFieldName::Host.token()
+            ),
+            Self::OneHostOnly => {
+                let field = QueryFieldName::Host;
+                format!(
+                    "{} takes one host only. Use -{} to exclude a host",
                     field.token(),
                     field.token()
                 )
@@ -598,10 +628,11 @@ impl SearchQuery {
     /// Parses the query text into its terms, in text order.
     #[must_use]
     pub fn parse(text: &str) -> Self {
-        let terms = lex(text)
+        let mut terms: Vec<QueryTerm> = lex(text)
             .into_iter()
             .filter_map(RawTerm::into_term)
             .collect();
+        refuse_second_host(&mut terms);
         Self { terms }
     }
 
@@ -695,6 +726,25 @@ impl SearchQuery {
             }
             _ => None,
         })
+    }
+}
+
+/// Gives [`FieldValueError::OneHostOnly`] to each correct `host:` term with no
+/// `-` after the first one, because Stophammer refuses a second `host` value
+/// (musicindex ADR 0062 R-QUERY-13 item 4).
+fn refuse_second_host(terms: &mut [QueryTerm]) {
+    let mut seen = false;
+    for term in terms.iter_mut().filter(|term| !term.excluded) {
+        let TermKind::Field(field) = &mut term.kind else {
+            continue;
+        };
+        if field.name != QueryFieldName::Host || !matches!(field.value, FieldValueState::Valid(_)) {
+            continue;
+        }
+        if seen {
+            field.value = FieldValueState::Invalid(FieldValueError::OneHostOnly);
+        }
+        seen = true;
     }
 }
 
@@ -1104,6 +1154,13 @@ fn field_value_state(name: QueryFieldName, value: &str, excluded: bool) -> Field
     if value.trim().is_empty() {
         return FieldValueState::Incomplete;
     }
+    if name == QueryFieldName::Host {
+        return if is_host_value(value) {
+            FieldValueState::Valid(FieldValue::Text(value.to_owned()))
+        } else {
+            FieldValueState::Invalid(FieldValueError::NotAHost)
+        };
+    }
     match name.info().value_kind {
         FieldValueKind::Text => FieldValueState::Valid(FieldValue::Text(value.to_owned())),
         FieldValueKind::KindList => kinds_state(value),
@@ -1124,6 +1181,26 @@ fn field_value_state(name: QueryFieldName, value: &str, excluded: bool) -> Field
         }
         FieldValueKind::Content => one_value_state(name, value, read_content, FieldValue::Content),
     }
+}
+
+/// `true` when `value` has no white space, `/`, `\`, `?`, `#`, `@` or `,`, and
+/// no `:` that is not in square brackets (musicindex ADR 0062 R-QUERY-14). Stophammer
+/// does each other check.
+fn is_host_value(value: &str) -> bool {
+    let mut in_brackets = false;
+    value.chars().all(|ch| match ch {
+        '[' => {
+            in_brackets = true;
+            true
+        }
+        ']' => {
+            in_brackets = false;
+            true
+        }
+        ':' => in_brackets,
+        '/' | BACKSLASH | '?' | '#' | '@' | ',' => false,
+        _ => !ch.is_whitespace(),
+    })
 }
 
 /// Reads the comma list of `kind:`. Empty items are ignored, and a
@@ -1748,7 +1825,7 @@ mod tests {
             .map(|info| info.token)
             .collect();
         assert_eq!(tokens, vec!["artist:"]);
-        assert_eq!(fields_with_prefix("").len(), 11);
+        assert_eq!(fields_with_prefix("").len(), 12);
     }
 
     #[test]
@@ -1851,6 +1928,7 @@ mod tests {
                 QueryFieldName::After,
                 QueryFieldName::Before,
                 QueryFieldName::Duration,
+                QueryFieldName::Host,
                 QueryFieldName::Is,
                 QueryFieldName::Playlist,
                 QueryFieldName::Has,

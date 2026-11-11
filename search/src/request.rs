@@ -79,6 +79,7 @@ pub fn index_filter_pairs(filters: &IndexFilters) -> Vec<(&'static str, String)>
         ("artist", &filters.artist),
         ("title", &filters.title),
         ("release", &filters.release),
+        ("host", &filters.host),
     ];
     for (name, value) in texts {
         if let Some(value) = value {
@@ -89,6 +90,7 @@ pub fn index_filter_pairs(filters: &IndexFilters) -> Vec<(&'static str, String)>
         ("not_artist", &filters.not_artist),
         ("not_title", &filters.not_title),
         ("not_release", &filters.not_release),
+        ("not_host", &filters.not_host),
         ("not_q", &filters.not_q),
     ] {
         pairs.extend(values.iter().map(|value| (name, value.clone())));

@@ -137,12 +137,18 @@ pub struct IndexFilters {
     pub min_duration: Option<u32>,
     /// The longest track duration, in seconds, of `max_duration`.
     pub max_duration: Option<u32>,
+    /// The value of `host`, as the person typed it (musicindex ADR 0062
+    /// R-QUERY-15).
+    pub host: Option<String>,
     /// The values of `not_artist`. Each value is one exclusion.
     pub not_artist: Vec<String>,
     /// The values of `not_title`. Each value is one exclusion.
     pub not_title: Vec<String>,
     /// The values of `not_release`. Each value is one exclusion.
     pub not_release: Vec<String>,
+    /// The values of `not_host`, as the person typed them. Each value is one
+    /// exclusion.
+    pub not_host: Vec<String>,
     /// The values of `not_q`. Each value is one excluded word or phrase.
     pub not_q: Vec<String>,
 }
@@ -233,13 +239,20 @@ impl IndexFilters {
                 self.min_duration = self.min_duration.into_iter().chain(range.min_secs).max();
                 self.max_duration = self.max_duration.into_iter().chain(range.max_secs).min();
             }
+            // The parser gives one correct `host:` term with no `-` at most.
+            (QueryFieldName::Host, FieldValue::Text(text), false) => {
+                self.host = Some(text.clone());
+            }
+            (QueryFieldName::Host, FieldValue::Text(text), true) => {
+                self.not_host.push(text.clone());
+            }
             _ => {}
         }
         true
     }
 
-    /// `true` when a filter is a word, a phrase, a `kind`, a date, a duration
-    /// or a text filter without `-`.
+    /// `true` when a filter is a word, a phrase, a `kind`, a date, a duration,
+    /// a host or a text filter without `-`.
     fn has_positive_field(&self) -> bool {
         self.artist.is_some()
             || self.title.is_some()
@@ -248,6 +261,7 @@ impl IndexFilters {
             || self.after.is_some()
             || self.before.is_some()
             || self.has_duration()
+            || self.host.is_some()
     }
 
     /// `true` when a `not_` filter has a value.
@@ -255,6 +269,7 @@ impl IndexFilters {
         !self.not_artist.is_empty()
             || !self.not_title.is_empty()
             || !self.not_release.is_empty()
+            || !self.not_host.is_empty()
             || !self.not_q.is_empty()
     }
 
