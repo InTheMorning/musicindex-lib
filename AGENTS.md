@@ -3,7 +3,7 @@
 ## What This Repository Is
 
 This repository is for code that two or more apps of the suite use. These apps
-are musicindex.org, musicindex-studio and v4vmm. It has one folder for each
+are musicindex.org, musicindex-studio and HitIt. It has one folder for each
 subject.
 
 Code that only one app uses stays in that app. A player, an audio decoder and a
@@ -16,7 +16,7 @@ repository that owns the subject. musicindex owns the shared interface rules.
 ## Where The Work Stands
 
 `search/` holds the crate `musicindex-search`, the JavaScript module
-`web/query-text.mjs` and the case file. musicindex ADR 0049 accepts `search/`. v4vmm and
+`web/query-text.mjs` and the case file. musicindex ADR 0049 accepts `search/`. HitIt and
 Studio pin the crate at commit `634e4cc`. The website keeps a copy of the module, and its
 toolbar field uses that copy. The [search move plan](docs/plans/search-move-phase-plan.md)
 gives the state of each phase. The crate and the module also give the field list rows and
@@ -36,8 +36,8 @@ No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |
 | --- | --- | --- |
-| `search/` | The query crate for v4vmm and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
-| `moodbar/` | The analysis crate for Studio and v4vmm, the browser drawing code, and the test data | No research document |
+| `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
+| `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
 ## How An App Uses This Code
 

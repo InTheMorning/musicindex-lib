@@ -1,0 +1,3 @@
+# HitIt is the display name of an app (HitIt ADR 0096), not code. ".." keeps the
+# default list of clippy.
+doc-valid-idents = ["HitIt", ".."]

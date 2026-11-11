@@ -31,7 +31,7 @@ export const defaultRules = {
 
 const fixed = (...pairs) => pairs.map(([word, description]) => ({ word, description }));
 
-// The field table, in the order of v4vmm ADR 0087 Decision 2 (musicindex ADR 0052
+// The field table, in the order of HitIt ADR 0087 Decision 2 (musicindex ADR 0052
 // R-QUERY-7). The crate holds the same table.
 export const fieldTable = Object.freeze([
   { token: 'artist:', value_kind: 'text', values: 'an artist name', example: 'artist:"artist name"', placeholder: 'artist name', description: 'The track artist or the album artist', library_only: false, fixed_values: [] },

@@ -2,7 +2,7 @@
 //!
 //! This is the round trip test of `tools/query-text` in `musicindex-research`,
 //! with the rule of musicindex ADR 0049 R-QUERY-5. `sanitize` is a copy of
-//! `sanitize_api_query_value` in v4vmm `src/api.rs`. `fts5_phrases` and
+//! `sanitize_api_query_value` in HitIt `src/api.rs`. `fts5_phrases` and
 //! `push_words` are copies from Stophammer `src/search.rs`.
 
 use std::fs;

@@ -1,7 +1,7 @@
 //! The plan of the Index part of one query (musicindex ADR 0049 R-QUERY-1).
 //!
 //! The source is the plan and the filters of
-//! `src/view_models/search_results/search_run.rs` of v4vmm. The `q` of a
+//! `src/view_models/search_results/search_run.rs` of HitIt. The `q` of a
 //! request holds only the words and the phrases of the query. Each Index field
 //! is one filter of the request. Only [`IndexSearchPlan::for_query`] builds an
 //! [`IndexSearchRequest`]. [`IndexSearchRequest::for_entity`] gives the request
@@ -28,7 +28,7 @@ pub enum IndexSearchPlan {
 }
 
 impl IndexSearchPlan {
-    /// The plan of `query` (v4vmm ADR 0087 Decision 5). Each correct field gives
+    /// The plan of `query` (HitIt ADR 0087 Decision 5). Each correct field gives
     /// one filter. Each word and phrase stays in `q`.
     #[must_use]
     pub fn for_query(query: &SearchQuery) -> IndexSearchPlan {
@@ -106,8 +106,8 @@ impl IndexSearchRequest {
     }
 }
 
-/// The entity types that an app asks `GET /v1/search` for (v4vmm ADR 0087
-/// Decision 5, v4vmm ADR 0084 packet 029).
+/// The entity types that an app asks `GET /v1/search` for (HitIt ADR 0087
+/// Decision 5, HitIt ADR 0084 packet 029).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IndexEntity {
     Feed,
@@ -340,7 +340,7 @@ pub enum IndexSkip {
     Unsupported(UnsupportedIndexTerms),
 }
 
-/// The excluded fields that the Index cannot apply (v4vmm ADR 0087 Decision 5).
+/// The excluded fields that the Index cannot apply (HitIt ADR 0087 Decision 5).
 /// The contract has no `not_` form for `kind`, `after`, `before` or
 /// `duration`.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -377,7 +377,7 @@ impl UnsupportedIndexTerms {
     }
 
     /// The title of the note, for example "Music Index cannot exclude kind:
-    /// and after: yet" (v4vmm ADR 0087 Decision 5).
+    /// and after: yet" (HitIt ADR 0087 Decision 5).
     #[must_use]
     pub fn note_title(&self) -> String {
         let tokens = token_list(&self.field_tokens);
@@ -525,7 +525,7 @@ mod tests {
         assert_eq!(plan("is:"), IndexSearchPlan::Skip(IndexSkip::NoIndexPart));
     }
 
-    /// R87-11-01: each correct field gives its own filter (v4vmm ADR 0087 Decisions
+    /// R87-11-01: each correct field gives its own filter (HitIt ADR 0087 Decisions
     /// 2 and 5). The words stay in `q`. A phrase keeps its double quotes.
     #[test]
     fn adr_0087_index_fields_r87_11_01_each_field_gives_its_filter() {

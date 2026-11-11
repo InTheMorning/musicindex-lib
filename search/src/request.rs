@@ -1,7 +1,7 @@
 //! The parameters of one Index request (musicindex ADR 0049 R-QUERY-4).
 //!
 //! The source is `index_filter_pairs` of `src/application/queries/search.rs` of
-//! v4vmm. An app sends these parameters with its own HTTP code.
+//! HitIt. An app sends these parameters with its own HTTP code.
 
 use crate::kind::index_kind_pairs;
 use crate::plan::IndexFilters;
@@ -69,7 +69,7 @@ pub fn index_order_pairs(
     pairs
 }
 
-/// The `GET /v1/search` filter parameters of one request (v4vmm ADR 0087
+/// The `GET /v1/search` filter parameters of one request (HitIt ADR 0087
 /// Decision 5, Stophammer ADR 0080 section 2). Each field is its own
 /// parameter. A date is `YYYY-MM-DD`, and a duration is whole seconds.
 #[must_use]

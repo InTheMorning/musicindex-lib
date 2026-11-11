@@ -1,6 +1,6 @@
 //! The kind of a release (musicindex ADR 0020 R-WORD-1, ADR 0049 R-QUERY-6).
 //!
-//! The source is `src/view_models/release_kind.rs` of v4vmm. A release is an
+//! The source is `src/view_models/release_kind.rs` of HitIt. A release is an
 //! Album, an EP or a Single. The stated value from the feed wins when it names
 //! one of the three. Without a stated value, the track count decides.
 //!
@@ -38,7 +38,7 @@ impl TrackCounts {
     }
 }
 
-/// The kind of a release (v4vmm ADR 0084 Decision 5).
+/// The kind of a release (HitIt ADR 0084 Decision 5).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ReleaseKind {
     Album,
@@ -47,7 +47,7 @@ pub enum ReleaseKind {
 }
 
 impl ReleaseKind {
-    /// Resolves the kind of a release (v4vmm ADR 0084 Decision 5).
+    /// Resolves the kind of a release (HitIt ADR 0084 Decision 5).
     ///
     /// `stated` is the free-text value that the feed states for its
     /// release kind, after trim, read without case. It wins when it names
@@ -99,7 +99,7 @@ impl ReleaseKind {
         }
     }
 
-    /// The release kind of one `kind:` value of the search query (v4vmm ADR 0087
+    /// The release kind of one `kind:` value of the search query (HitIt ADR 0087
     /// Decision 2). The map is in this file, because the kind rule stays in one
     /// place (musicindex ADR 0049 R-QUERY-6).
     #[must_use]
@@ -131,7 +131,7 @@ impl ReleaseKind {
         }
     }
 
-    /// `true` for a Single (v4vmm ADR 0085 Decision 3).
+    /// `true` for a Single (HitIt ADR 0085 Decision 3).
     #[must_use]
     pub const fn is_single(self) -> bool {
         matches!(self, Self::Single)

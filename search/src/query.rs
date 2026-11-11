@@ -1,6 +1,6 @@
 //! The parser of the query text (musicindex ADR 0049 R-QUERY-1).
 //!
-//! The source is `src/view_models/search_query.rs` of v4vmm. The query text
+//! The source is `src/view_models/search_query.rs` of HitIt. The query text
 //! holds words, phrases and fields. This module gives a typed query: the
 //! words, the phrases, the fields, the exclusions and one typed error for each
 //! field value that is not correct.
@@ -25,7 +25,7 @@ const BACKSLASH: char = '\\';
 /// The number of seconds in one day.
 const SECONDS_PER_DAY: i64 = 86_400;
 
-/// The name of one query field (v4vmm ADR 0087 Decision 2).
+/// The name of one query field (HitIt ADR 0087 Decision 2).
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum QueryFieldName {
     Artist,
@@ -94,7 +94,7 @@ pub struct FixedValueInfo {
     pub description: &'static str,
 }
 
-/// The field table, in the order of v4vmm ADR 0087 Decision 2.
+/// The field table, in the order of HitIt ADR 0087 Decision 2.
 pub const QUERY_FIELDS: [QueryFieldInfo; 12] = [
     QueryFieldInfo {
         name: QueryFieldName::Artist,
@@ -362,7 +362,7 @@ pub fn fields_with_prefix(prefix: &str) -> Vec<&'static QueryFieldInfo> {
         .collect()
 }
 
-/// One release kind that `kind:` reads (v4vmm ADR 0084 Decision 5).
+/// One release kind that `kind:` reads (HitIt ADR 0084 Decision 5).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum KindValue {
     Album,
@@ -605,7 +605,7 @@ impl QueryTerm {
     }
 }
 
-/// The scope of a query (v4vmm ADR 0087 Decision 2).
+/// The scope of a query (HitIt ADR 0087 Decision 2).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum QueryScope {
     /// The Library and the Index.
@@ -618,7 +618,7 @@ pub enum QueryScope {
     Conflict,
 }
 
-/// The typed query of one query text (v4vmm ADR 0087 Decision 1).
+/// The typed query of one query text (HitIt ADR 0087 Decision 1).
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct SearchQuery {
     terms: Vec<QueryTerm>,
@@ -695,7 +695,7 @@ impl SearchQuery {
 
     /// `true` when the query holds one term without `-` that can run: a word
     /// or a phrase with an alphanumeric character, or a correct field other
-    /// than `in:` (v4vmm ADR 0087 Decision 4).
+    /// than `in:` (HitIt ADR 0087 Decision 4).
     #[must_use]
     pub fn has_runnable_content(&self) -> bool {
         self.terms
@@ -798,7 +798,7 @@ fn quote_phrase(phrase: &str) -> String {
     out
 }
 
-/// Writes `text` as one field value (v4vmm ADR 0087 Decision 3, packet 005).
+/// Writes `text` as one field value (HitIt ADR 0087 Decision 3, packet 005).
 ///
 /// A text with a whitespace character or a quote gets double quotes.
 /// Inside the quotes, each backslash and each quote gets a backslash before
@@ -813,7 +813,7 @@ pub fn quote_field_value(text: &str) -> String {
     }
 }
 
-/// Gives the text of a value prefix that the curator types (v4vmm ADR 0087
+/// Gives the text of a value prefix that the curator types (HitIt ADR 0087
 /// packet 005).
 ///
 /// When the prefix starts with a quote, the function removes that quote.
@@ -976,7 +976,7 @@ enum RawShape {
         colon: usize,
         /// The byte range of the value text. A quoted value starts at its
         /// opening quote and ends after its closing quote, or at the text
-        /// end (v4vmm ADR 0087 packet 005).
+        /// end (HitIt ADR 0087 packet 005).
         value_raw: Range<usize>,
         /// `true` when the value starts with a quote.
         quoted: bool,
@@ -1149,7 +1149,7 @@ fn read_quoted(text: &str, quote_at: usize) -> Quoted {
     }
 }
 
-/// Checks the value of one field (v4vmm ADR 0087 Decision 2).
+/// Checks the value of one field (HitIt ADR 0087 Decision 2).
 fn field_value_state(name: QueryFieldName, value: &str, excluded: bool) -> FieldValueState {
     if value.trim().is_empty() {
         return FieldValueState::Incomplete;
