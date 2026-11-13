@@ -32,11 +32,17 @@ ADR 0090. Stophammer keeps its own copy of the two functions. Its file
 place on 2026-11-08. If Stophammer uses this crate, that change needs its own record.
 No JavaScript port exists, because the website holds no list that merges rows by name.
 
+`fit/` holds the JavaScript module `web/fit-check.mjs` of musicindex ADR 0065 R-FIT-5 and its
+browser test. Its three helpers find an edge cut, an overflow and a break inside a word. A text that
+must break inside a word has the attribute `data-fit-allow-break`. The website and Studio keep a copy
+of the module from one commit. No app copies it at this time.
+
 No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |
 | --- | --- | --- |
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
+| `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |
 | `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
 ## How An App Uses This Code
@@ -46,6 +52,8 @@ musicindex ADR 0049 R-QUERY-4 owns these rules for `search/`:
 - A Rust app uses a crate as a Git dependency, pinned to a commit.
 - The website keeps a copy of each JavaScript file, because it has no build step. A
   check finds a copy with other bytes.
+
+musicindex ADR 0065 R-FIT-5 item 3 gives the same procedure to `fit/` for the website and Studio.
 
 The orchestrator session decided this item on 2026-11-08, and no ADR states it:
 
@@ -58,5 +66,6 @@ These rules are advisory. The `project-baseline` skill owns them.
 
 - Add a code folder only when an ADR accepts its subject and the code for it exists.
 - Run the gate of `project-baseline` in each crate that you change.
+- Run `node --test fit/tests/fit_check.test.mjs` when you change `fit/`. It needs Node.js 22 and Chromium.
 - A crate must build with the lowest Rust version of an app that uses it.
 - Write prose in ASD-STE100 Simplified Technical English.
