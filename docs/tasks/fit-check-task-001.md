@@ -71,3 +71,16 @@ Mechanical, proved by `fit/tests/fit_check.test.mjs`:
 7. On a page with a disabled button on a text field, `overlaps` returns one finding, and the other helpers return none.
 8. On the same page with an open modal dialog, `overlaps` returns no finding.
 9. The correct page has segments, buttons and a field that do not overlap, and each helper returns no finding.
+
+## Amendment Of 2026-11-13: A Control In The Padding Of A Field
+
+The website session amends R-FIT-3: a control that is fully in the padding of a text field is not an overlap. The
+website walk found the Clear button of `input#q` in the right padding of 44 px, and the text never goes under it.
+
+- For an input or a textarea, `overlaps` uses the content box: the border box without the border and the padding.
+- A control on the content box of a field is still an overlap.
+
+Mechanical, proved by `fit/tests/fit_check.test.mjs`:
+
+10. On a page with a button of 32 px in the right padding of 44 px of a field, each helper returns no finding.
+11. The overlap page still gives one finding.

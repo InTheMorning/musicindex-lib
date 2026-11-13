@@ -160,6 +160,15 @@ test('a control overflow finding names the control', async () => {
   assert.equal(finding.text, 'Releases 20+');
 });
 
+test('a clear button in the padding of a field is not an overlap', async () => {
+  await open(page(`
+    <div style="position: relative; width: 200px">
+      <input id="q" placeholder="Search" style="width: 200px; padding-right: 44px">
+      <button style="position: absolute; right: 0; top: 0; width: 32px">X</button>
+    </div>`));
+  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
+});
+
 test('an open dialog is a layer over the controls under it', async () => {
   await open(pages.overlap.replace('</body>', '<dialog id="layer"><button>Close</button></dialog></body>'));
   await evaluate(`document.getElementById('layer').showModal()`);
