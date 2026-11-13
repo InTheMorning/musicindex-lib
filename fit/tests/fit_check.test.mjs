@@ -1,6 +1,7 @@
 // Runs the three fit helpers in headless Chromium (musicindex ADR 0065, How This Decision
 // Is Checked). Each fault page has one fault. The helper for that fault must give one
-// finding, and the other helpers must give none. The correct page must give no finding.
+// finding, and the other helpers must give none. The two pages control-overflow and
+// overlap come from the website at 761 px on 2026-11-13. The correct page must give no finding.
 //
 // The test sends each helper to the page as source text, as a walk script of an app does.
 // It needs Node.js 22 or later and Chromium. Set CHROMIUM to the path of the browser
@@ -14,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 
-import { ALLOW_BREAK_ATTRIBUTE, edgeCuts, fitMessage, overflows, wordBreaks } from '../web/fit-check.mjs';
+import { ALLOW_BREAK_ATTRIBUTE, edgeCuts, fitMessage, overflows, overlaps, wordBreaks } from '../web/fit-check.mjs';
 
 const WIDTH = 400;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -23,6 +24,8 @@ const style = `<style>
   * { box-sizing: border-box; }
   body { margin: 0; font: 16px/1.25 sans-serif; }
   .group { margin: 0 16px; padding: 16px; border: 1px solid; }
+  .segmented { display: flex; gap: 8px; }
+  .segment { display: block; white-space: nowrap; padding: 0 8px; }
 </style>`;
 const page = (body) => `<!doctype html><meta charset="utf-8">${style}<body>${body}</body>`;
 
@@ -35,7 +38,21 @@ const pages = {
     </div>
     <p ${ALLOW_BREAK_ATTRIBUTE} style="overflow-wrap: anywhere">https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p>
     <div style="overflow-x: auto"><table style="width: 900px"><tr><td>A wide table in a scroll area</td></tr></table></div>
-    <p>A self-titled release</p>`),
+    <p>A self-titled release</p>
+    <div class="segmented" role="radiogroup">
+      <span class="segment" role="radio">Releases 20+</span><span class="segment" role="radio">Tracks</span>
+    </div>
+    <p><button>Back</button> <button disabled style="opacity: 0.4">Forward</button> <input placeholder="Search"></p>
+    <dialog id="layer"><button>Close</button></dialog>`),
+  'control-overflow': page(`
+    <div class="segmented" role="radiogroup">
+      <span class="segment" role="radio" style="width: 60px">Releases 20+</span><span class="segment" role="radio">Tracks</span>
+    </div>`),
+  overlap: page(`
+    <div style="position: relative; height: 48px">
+      <input placeholder="Search" style="position: absolute; left: 0; width: 200px">
+      <button disabled style="position: absolute; left: 150px; opacity: 0.4">Forward</button>
+    </div>`),
   'edge-cut': page(`
     <div class="group">
       <p>Text with inner space</p>
@@ -78,6 +95,7 @@ const open = async (html) => {
 const run = async () => ({
   'edge-cut': await evaluate(`(${edgeCuts})()`),
   overflow: await evaluate(`(${overflows})()`),
+  overlap: await evaluate(`(${overlaps})()`),
   'word-break': await evaluate(`(${wordBreaks})()`),
 });
 
@@ -119,19 +137,34 @@ after(async () => {
 
 test('the correct page gives no finding', async () => {
   await open(pages.correct);
-  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], 'word-break': [] });
+  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
 });
 
-for (const fault of ['edge-cut', 'overflow', 'word-break']) {
-  test(`the ${fault} page gives one ${fault} finding and no other finding`, async () => {
-    await open(pages[fault]);
+for (const [name, fault] of [
+  ['edge-cut', 'edge-cut'], ['overflow', 'overflow'], ['control-overflow', 'overflow'], ['overlap', 'overlap'], ['word-break', 'word-break'],
+]) {
+  test(`the ${name} page gives one ${fault} finding and no other finding`, async () => {
+    await open(pages[name]);
     const found = await run();
     for (const [helper, list] of Object.entries(found)) {
-      assert.equal(list.length, helper === fault ? 1 : 0, `${helper} on the ${fault} page: ${JSON.stringify(list)}`);
+      assert.equal(list.length, helper === fault ? 1 : 0, `${helper} on the ${name} page: ${JSON.stringify(list)}`);
     }
     assert.equal(found[fault][0].fault, fault);
   });
 }
+
+test('a control overflow finding names the control', async () => {
+  await open(pages['control-overflow']);
+  const [finding] = await evaluate(`(${overflows})()`);
+  assert.equal(finding.box, 'control');
+  assert.equal(finding.text, 'Releases 20+');
+});
+
+test('an open dialog is a layer over the controls under it', async () => {
+  await open(pages.overlap.replace('</body>', '<dialog id="layer"><button>Close</button></dialog></body>'));
+  await evaluate(`document.getElementById('layer').showModal()`);
+  assert.deepEqual(await evaluate(`(${overlaps})()`), []);
+});
 
 test('the opt-out attribute removes a break inside a word', async () => {
   await open(page(`<p style="width: 40px; overflow-wrap: anywhere">Releases</p>
@@ -145,7 +178,9 @@ test('the failure message names the record, the width and the fix', () => {
   assert.match(message, /^musicindex ADR 0065 R-FIT-3: at 761 px the text "Releases" breaks inside a word/);
   assert.match(message, /ADR 0020 R-FIT-1 item 2/);
   assert.match(message, new RegExp(ALLOW_BREAK_ATTRIBUTE));
-  for (const fault of ['edge-cut', 'overflow']) {
+  assert.match(fitMessage({ fault: 'overflow', box: 'control', text: 'Releases 20+', detail: 'content 94 px in a box of 82 px' }, 761),
+    /^musicindex ADR 0065 R-FIT-3: at 761 px the content of the control "Releases 20\+" is wider than the control/);
+  for (const fault of ['edge-cut', 'overflow', 'overlap']) {
     assert.match(fitMessage({ fault, text: 'x', detail: '3 px' }, 390), /^musicindex ADR 0065 R-FIT-3: at 390 px .*\n\S/);
   }
 });

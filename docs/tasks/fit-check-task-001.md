@@ -50,3 +50,24 @@ Mechanical, proved by `fit/tests/fit_check.test.mjs`:
 5. `fitMessage` gives a text that names musicindex ADR 0065 R-FIT-3, the width and the fix.
 
 Visual: none. The apps own the visual checks of ADR 0065.
+
+## Amendment Of 2026-11-13: Two Faults On The Website
+
+The orchestrator session sent this change on 2026-11-13. The website session adds the two faults to R-FIT-3 in an
+amendment of musicindex ADR 0065. The website showed the two faults at 761 px.
+
+- `overflows` also gives each visible control with content that is wider than the control, when the control does not
+  clip its content. The finding has `box: 'control'`. On the website, the segment "Releases 20+" had content of 94 px in a
+  box of 82 px, and the count went into the segment "Tracks".
+- The new helper `overlaps` gives each pair of visible controls with boxes that intersect by more than 1 px. A disabled
+  control counts. A control under an open dialog or popover does not count. On the website, Back and Forward were on the
+  search field from 761 px to about 1100 px.
+- `fitMessage` gives a fix for the two faults.
+
+Mechanical, proved by `fit/tests/fit_check.test.mjs`:
+
+6. On a page with one segment that is too narrow, `overflows` returns one finding with `box: 'control'`, and the other
+   helpers return none.
+7. On a page with a disabled button on a text field, `overlaps` returns one finding, and the other helpers return none.
+8. On the same page with an open modal dialog, `overlaps` returns no finding.
+9. The correct page has segments, buttons and a field that do not overlap, and each helper returns no finding.
