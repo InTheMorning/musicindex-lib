@@ -169,6 +169,29 @@ test('a clear button in the padding of a field is not an overlap', async () => {
   assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
 });
 
+// The case of Studio Settings at 761 px on 2026-11-14: a row below the end of the
+// scroll area of the side panel is not visible, and it is not an overlap.
+const scrollPage = (top) => page(`
+  <div style="position: relative">
+    <div style="height: 100px; overflow-y: auto">
+      <div style="height: ${top}px"></div>
+      <button style="display: block; height: 30px">In the scroll area</button>
+      <div style="height: 200px"></div>
+    </div>
+    <button style="position: absolute; left: 0; top: ${top}px; height: 30px">Below</button>
+  </div>`);
+
+test('a control below the end of a scroll area is not an overlap', async () => {
+  await open(scrollPage(150));
+  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
+});
+
+test('a visible control in a scroll area is still an overlap', async () => {
+  await open(scrollPage(20));
+  const found = await evaluate(`(${overlaps})()`);
+  assert.equal(found.length, 1, JSON.stringify(found));
+});
+
 test('an open dialog is a layer over the controls under it', async () => {
   await open(pages.overlap.replace('</body>', '<dialog id="layer"><button>Close</button></dialog></body>'));
   await evaluate(`document.getElementById('layer').showModal()`);

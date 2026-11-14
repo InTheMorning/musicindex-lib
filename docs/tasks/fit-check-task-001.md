@@ -84,3 +84,19 @@ Mechanical, proved by `fit/tests/fit_check.test.mjs`:
 
 10. On a page with a button of 32 px in the right padding of 44 px of a field, each helper returns no finding.
 11. The overlap page still gives one finding.
+
+## Correction Of 2026-11-14: Only The Visible Part Of A Control
+
+Studio commit `888e2e0` found four false overlaps on Studio Settings at 761 px. The rows of the left panel below the
+end of `.sidebar-scroll` (overflow-y: auto) were not visible, but `overlaps` used their full boxes.
+
+- `overlaps` cuts the box of each control to each ancestor with an overflow value that is not `visible`, on the axis of
+  that value. It cuts after the content box of a field.
+- A control with no visible part is not in the list. The pair loop compares the cut boxes.
+- `edgeCuts` and `overflows` do not change.
+
+Mechanical, proved by `fit/tests/fit_check.test.mjs`:
+
+12. A button below the end of a scroll area of 100 px, and a second button at the same layout position outside the
+    scroll area, give no finding from each helper.
+13. The same page with the button visible in the scroll area gives one overlap.
