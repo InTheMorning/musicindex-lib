@@ -1,8 +1,8 @@
-//! The percentages of the shares method of musicindex ADR 0075.
+//! The percentages of the shares method of musicindex ADR 0075 R-VALUE-5.
 
 use musicindex_value::{parse_share, percentages};
 
-const ADR: &str = "musicindex ADR 0075: the percentage of a share is n / S × 100";
+const ADR: &str = "musicindex ADR 0075 R-VALUE-5 item 2: the percentage of a share is n / S × 100";
 
 /// Compare each percentage with `expected` to 1e-9.
 fn assert_near(shares: &[Option<f64>], expected: &[Option<f64>], why: &str) {
@@ -35,7 +35,7 @@ fn one_recipient_gets_100_whatever_its_share() {
         assert_eq!(
             percentages(&[share]),
             [Some(100.0)],
-            "musicindex ADR 0075: one recipient gets 100 % (value.md line 172), share {share:?}"
+            "musicindex ADR 0075 R-VALUE-5 item 5: one recipient gets 100 % (value.md lines 173 to 176), share {share:?}"
         );
     }
 }
@@ -57,7 +57,7 @@ fn a_share_that_is_not_valid_gives_no_percentage_and_counts_as_0() {
         assert_near(
             &[Some(1.0), Some(3.0), bad],
             &[Some(25.0), Some(75.0), None],
-            "musicindex ADR 0075: a share that is not valid counts as 0",
+            "musicindex ADR 0075 R-VALUE-5 item 3: a share that is not valid counts as 0",
         );
     }
 }
@@ -67,7 +67,7 @@ fn a_total_of_0_gives_no_percentage() {
     assert_eq!(
         percentages(&[Some(0.0), Some(0.0), None]),
         [None, None, None],
-        "musicindex ADR 0075: when S is 0, each item is None"
+        "musicindex ADR 0075 R-VALUE-5 item 4: when S is 0, each item is None"
     );
     assert_eq!(percentages(&[]), Vec::<Option<f64>>::new());
 }
@@ -98,4 +98,26 @@ fn the_text_of_a_split_gives_a_share_as_studio_reads_it() {
     assert_eq!(parse_share("   "), Some(0.0));
     assert_eq!(parse_share(""), None);
     assert_eq!(parse_share("x"), None);
+}
+
+/// Each percentage of `shares` with one decimal place (R-VALUE-5 item 1).
+fn shown(shares: &[Option<f64>]) -> Vec<String> {
+    percentages(shares)
+        .into_iter()
+        .map(|p| format!("{:.1}", p.expect("each share is valid")))
+        .collect()
+}
+
+#[test]
+fn r_value_5_item_6_the_two_examples() {
+    assert_eq!(
+        shown(&[Some(100.0), Some(100.0), Some(10.0)]),
+        ["47.6", "47.6", "4.8"],
+        "musicindex ADR 0075 R-VALUE-5 item 6: the shares 100, 100 and a fee of 10"
+    );
+    assert_eq!(
+        shown(&[Some(10.0)]),
+        ["100.0"],
+        "musicindex ADR 0075 R-VALUE-5 item 6: a block with only a fee of 10"
+    );
 }

@@ -1,9 +1,9 @@
-//! The split of a `podcast:value` block (musicindex ADR 0075).
+//! The split of a `podcast:value` block (musicindex ADR 0075 R-VALUE-5).
 //!
 //! This crate gives the percentage of each recipient of one value block with
-//! the shares method of ADR 0075. A fee recipient has the same arithmetic as
+//! the shares method of ADR 0075 R-VALUE-5. A fee recipient has the same arithmetic as
 //! each other recipient, so the crate does not read the fee flag. The crate
-//! has no I/O and no type of an app (musicindex ADR 0074 R-VALUE-4 item 3).
+//! has no I/O and no type of an app (musicindex ADR 0075 R-VALUE-4 item 3).
 
 /// The share in the text of a `split` attribute.
 ///
@@ -22,7 +22,7 @@ pub fn parse_share(text: &str) -> Option<f64> {
     text.parse::<f64>().ok()
 }
 
-/// The percentage of each recipient of one value block (musicindex ADR 0075).
+/// The percentage of each recipient of one value block (musicindex ADR 0075 R-VALUE-5).
 ///
 /// `shares` has the share of each recipient, fees included. The result has one
 /// item for each share, in the same sequence.
@@ -32,7 +32,7 @@ pub fn parse_share(text: &str) -> Option<f64> {
 /// - A share that is not valid gives `None`, and counts as 0 in S.
 /// - When S is 0, each item is `None`.
 /// - A block with one recipient gives `Some(100.0)` to it, whatever its share
-///   (`podcast:value` specification, `value.md` line 172).
+///   (`podcast:value` specification, `value.md` lines 173 to 176).
 ///
 /// The app shows a percentage with one decimal place.
 #[must_use]

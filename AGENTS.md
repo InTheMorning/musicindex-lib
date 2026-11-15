@@ -38,12 +38,12 @@ break inside a word. A text that
 must break inside a word has the attribute `data-fit-allow-break`. The website and Studio keep a copy
 of the module from one commit. No app copies it at this time.
 
-`value/` holds the crate `musicindex-value` of musicindex ADR 0074 R-VALUE-4. Its function
+`value/` holds the crate `musicindex-value` of musicindex ADR 0075 R-VALUE-4. Its function
 `percentages` gives the percentage of each recipient of a value block with the shares method
-of musicindex ADR 0075. A fee share is in the total, and the fee flag does not change the
+of musicindex ADR 0075 R-VALUE-5. A fee share is in the total, and the fee flag does not change the
 arithmetic. Its function `parse_share` reads the text of a split as Studio reads it. No app
 pins the crate at this time. Studio removes its own copy when it pins the crate. The
-JavaScript copy in Studio stays open in ADR 0074, and `value/` has no JavaScript module.
+JavaScript copy in Studio stays open in ADR 0075, and `value/` has no JavaScript module.
 
 No ADR accepts `moodbar/`, and it has no folder.
 
@@ -63,7 +63,7 @@ musicindex ADR 0049 R-QUERY-4 owns these rules for `search/`:
   check finds a copy with other bytes.
 
 musicindex ADR 0065 R-FIT-5 item 3 gives the same procedure to `fit/` for the website and Studio.
-musicindex ADR 0074 R-VALUE-4 item 4 gives the procedure for a Rust app to `value/`.
+musicindex ADR 0075 R-VALUE-4 item 5 gives the procedure for a Rust app to `value/`.
 
 The orchestrator session decided this item on 2026-11-08, and no ADR states it:
 
