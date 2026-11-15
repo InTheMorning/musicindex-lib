@@ -38,11 +38,18 @@ break inside a word. A text that
 must break inside a word has the attribute `data-fit-allow-break`. The website and Studio keep a copy
 of the module from one commit. No app copies it at this time.
 
+`value/` holds the crate `musicindex-value` of musicindex ADR 0074 R-VALUE-4. Its function
+`percentages` gives the percentage of each recipient of a value block, with a fee off the top
+(R-VALUE-3). Its function `parse_share` reads the text of a split as Studio reads it. No app
+pins the crate at this time. Studio removes its own copy when it pins the crate. The
+JavaScript copy in Studio stays open in ADR 0074, and `value/` has no JavaScript module.
+
 No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |
 | --- | --- | --- |
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
+| `value/` | The split crate for Studio and HitIt | `sources/podcast-apps/boostmebitch/docs/money-boosts.md` in `../musicindex-research` |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |
 | `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
@@ -55,6 +62,7 @@ musicindex ADR 0049 R-QUERY-4 owns these rules for `search/`:
   check finds a copy with other bytes.
 
 musicindex ADR 0065 R-FIT-5 item 3 gives the same procedure to `fit/` for the website and Studio.
+musicindex ADR 0074 R-VALUE-4 item 4 gives the procedure for a Rust app to `value/`.
 
 The orchestrator session decided this item on 2026-11-08, and no ADR states it:
 
