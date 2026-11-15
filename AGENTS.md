@@ -39,8 +39,9 @@ must break inside a word has the attribute `data-fit-allow-break`. The website a
 of the module from one commit. No app copies it at this time.
 
 `value/` holds the crate `musicindex-value` of musicindex ADR 0074 R-VALUE-4. Its function
-`percentages` gives the percentage of each recipient of a value block, with a fee off the top
-(R-VALUE-3). Its function `parse_share` reads the text of a split as Studio reads it. No app
+`percentages` gives the percentage of each recipient of a value block with the shares method
+of musicindex ADR 0075. A fee share is in the total, and the fee flag does not change the
+arithmetic. Its function `parse_share` reads the text of a split as Studio reads it. No app
 pins the crate at this time. Studio removes its own copy when it pins the crate. The
 JavaScript copy in Studio stays open in ADR 0074, and `value/` has no JavaScript module.
 
@@ -49,7 +50,7 @@ No ADR accepts `moodbar/`, and it has no folder.
 | Subject | Content | Research |
 | --- | --- | --- |
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
-| `value/` | The split crate for Studio and HitIt | `sources/podcast-apps/boostmebitch/docs/money-boosts.md` in `../musicindex-research` |
+| `value/` | The split crate for Studio and HitIt | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |
 | `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
