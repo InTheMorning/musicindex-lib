@@ -41,6 +41,9 @@ dependencies = [
 [[package]]
 name = "musicindex-value"
 version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "num-traits"

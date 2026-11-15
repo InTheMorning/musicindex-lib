@@ -45,6 +45,11 @@ arithmetic. Its function `parse_share` reads the text of a split as Studio reads
 pins the crate at this time. Studio removes its own copy when it pins the crate. The
 JavaScript copy in Studio stays open in ADR 0075, and `value/` has no JavaScript module.
 
+The function `short_address` of the same crate gives the short form of a node address or a
+Nostr public key (musicindex ADR 0076 R-ADDRESS-2). The file
+`value/tests/short_address.json` holds its vectors. Each JavaScript copy of the function in an
+app tests against a copy of that file.
+
 No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |

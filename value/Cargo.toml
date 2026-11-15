@@ -8,5 +8,8 @@ publish = false
 
 [dependencies]
 
+[dev-dependencies]
+serde_json = "1"
+
 [lints.clippy]
 pedantic = "warn"
