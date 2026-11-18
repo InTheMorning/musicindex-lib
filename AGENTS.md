@@ -3,8 +3,9 @@
 ## What This Repository Is
 
 This repository is for code that two or more apps of the suite use. These apps
-are musicindex.org, musicindex-studio and HitIt. It has one folder for each
-subject.
+are musicindex.org, musicindex-studio and HitIt. `build-info/` is also for
+stophammer, musicindex-live-relay and musicindex-live-publisher. The repository
+has one folder for each subject.
 
 Code that only one app uses stays in that app. A player, an audio decoder and a
 GPUI renderer are examples. Brand files, fonts, icons and tokens stay in
@@ -50,12 +51,23 @@ Nostr public key (musicindex ADR 0076 R-ADDRESS-2). The file
 `value/tests/short_address.json` holds its vectors. Each JavaScript copy of the function in an
 app tests against a copy of that file.
 
+`build-info/` holds the crate `musicindex-build-info`. It gives the version, the git revision and
+the build time of a Rust app. The build script of the app calls `build::emit`, and the app
+code calls the macro `build_info!`. `BuildInfo::version_line` gives the line for
+`--version`, and the serde form of `BuildInfo` is the JSON object of the info route.
+
+The request is [the build info request](docs/plans/research-build-info-request.md). The
+operator agreed to the design on 2026-11-18. The musicindex ADR for the version of each app is
+not written at this time. No app pins the crate before that ADR. If the ADR changes a name, the crate
+follows the ADR.
+
 No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |
 | --- | --- | --- |
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
 | `value/` | The split crate for Studio and HitIt | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
+| `build-info/` | The build values crate for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |
 | `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
