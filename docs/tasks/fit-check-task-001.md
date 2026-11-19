@@ -87,7 +87,7 @@ Mechanical, proved by `fit/tests/fit_check.test.mjs`:
 
 ## Correction Of 2026-11-14: Only The Visible Part Of A Control
 
-Studio commit `888e2e0` found four false overlaps on Studio Settings at 761 px. The rows of the left panel below the
+Studio commit `4fdbc5f` found four false overlaps on Studio Settings at 761 px. The rows of the left panel below the
 end of `.sidebar-scroll` (overflow-y: auto) were not visible, but `overlaps` used their full boxes.
 
 - `overlaps` cuts the box of each control to each ancestor with an overflow value that is not `visible`, on the axis of
