@@ -34,9 +34,9 @@ place on 2026-11-08. If Stophammer uses this crate, that change needs its own re
 No JavaScript port exists, because the website holds no list that merges rows by name.
 
 `fit/` holds the JavaScript module `web/fit-check.mjs` of musicindex ADR 0065 R-FIT-5 and its
-browser test. Its four helpers find an edge cut, an overflow, an overlap of two controls and a
-break inside a word. A text that
-must break inside a word has the attribute `data-fit-allow-break`. The website and Studio keep a copy
+browser test. Its four helpers of R-FIT-3 find an edge cut, an overflow, an overlap of two
+controls and a break inside a word. The fifth helper `unsizedIcons` of R-FIT-7 finds an `svg`
+element with no author width or height. A text that must break inside a word has the attribute `data-fit-allow-break`. The website and Studio keep a copy
 of the module from one commit. No app copies it at this time.
 
 `value/` holds the crate `musicindex-value` of musicindex ADR 0075 R-VALUE-4. Its function

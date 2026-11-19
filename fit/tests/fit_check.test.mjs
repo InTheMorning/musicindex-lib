@@ -1,4 +1,4 @@
-// Runs the three fit helpers in headless Chromium (musicindex ADR 0065, How This Decision
+// Runs the five fit helpers in headless Chromium (musicindex ADR 0065, How This Decision
 // Is Checked). Each fault page has one fault. The helper for that fault must give one
 // finding, and the other helpers must give none. The two pages control-overflow and
 // overlap come from the website at 761 px on 2026-11-13. The correct page must give no finding.
@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 
-import { ALLOW_BREAK_ATTRIBUTE, edgeCuts, fitMessage, overflows, overlaps, wordBreaks } from '../web/fit-check.mjs';
+import { ALLOW_BREAK_ATTRIBUTE, edgeCuts, fitMessage, overflows, overlaps, unsizedIcons, wordBreaks } from '../web/fit-check.mjs';
 
 const WIDTH = 400;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -64,6 +64,9 @@ const pages = {
   'word-break': page(`
     <p>Text in the window</p>
     <p style="width: 40px; overflow-wrap: anywhere">Releases</p>`),
+  // Studio finding 9 of the rc.27 human check: an icon with no size (R-FIT-7).
+  'unsized-icon': page(`
+    <p>Value routes <svg class="icon" viewBox="0 0 24 24"></svg></p>`),
 };
 
 let chrome;
@@ -97,7 +100,9 @@ const run = async () => ({
   overflow: await evaluate(`(${overflows})()`),
   overlap: await evaluate(`(${overlaps})()`),
   'word-break': await evaluate(`(${wordBreaks})()`),
+  'unsized-icon': await evaluate(`(${unsizedIcons})()`),
 });
+const none = { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [], 'unsized-icon': [] };
 
 before(async () => {
   profile = mkdtempSync(join(tmpdir(), 'fit-check-'));
@@ -135,13 +140,42 @@ after(async () => {
   if (profile) rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
+// musicindex ADR 0065 R-FIT-7 item 4: the method to confirm. In Chromium,
+// computedStyleMap() gives the keyword `auto` for the width and the height of an svg
+// element when no attribute and no CSS rule sets them.
+test('R-FIT-7 item 4: computedStyleMap gives auto only for an svg size with no author value', async () => {
+  await open(page(`
+    <style>
+      .sized { width: 20px; height: 20px; }
+      .defaulted :where(svg:not([width])) { width: 1em; }
+      .defaulted :where(svg:not([height])) { height: 1em; }
+    </style>
+    <svg id="none" viewBox="0 0 24 24"></svg>
+    <svg id="attributes" width="16" height="16" viewBox="0 0 24 24"></svg>
+    <svg id="only-width" width="16" viewBox="0 0 24 24"></svg>
+    <svg id="css" class="sized" viewBox="0 0 24 24"></svg>
+    <div class="defaulted"><svg id="default-rule" viewBox="0 0 24 24"></svg></div>`));
+  const sizes = await evaluate(`Object.fromEntries([...document.querySelectorAll('svg')].map((e) => {
+    const m = e.computedStyleMap();
+    return [e.id, [String(m.get('width')), String(m.get('height'))]];
+  }))`);
+  assert.deepEqual(sizes, {
+    none: ['auto', 'auto'],
+    attributes: ['16px', '16px'],
+    'only-width': ['16px', 'auto'],
+    css: ['20px', '20px'],
+    'default-rule': ['16px', '16px'],
+  });
+});
+
 test('the correct page gives no finding', async () => {
   await open(pages.correct);
-  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
+  assert.deepEqual(await run(), none);
 });
 
 for (const [name, fault] of [
   ['edge-cut', 'edge-cut'], ['overflow', 'overflow'], ['control-overflow', 'overflow'], ['overlap', 'overlap'], ['word-break', 'word-break'],
+  ['unsized-icon', 'unsized-icon'],
 ]) {
   test(`the ${name} page gives one ${fault} finding and no other finding`, async () => {
     await open(pages[name]);
@@ -166,7 +200,7 @@ test('a clear button in the padding of a field is not an overlap', async () => {
       <input id="q" placeholder="Search" style="width: 200px; padding-right: 44px">
       <button style="position: absolute; right: 0; top: 0; width: 32px">X</button>
     </div>`));
-  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
+  assert.deepEqual(await run(), none);
 });
 
 // The case of Studio Settings at 761 px on 2026-11-14: a row below the end of the
@@ -183,7 +217,7 @@ const scrollPage = (top) => page(`
 
 test('a control below the end of a scroll area is not an overlap', async () => {
   await open(scrollPage(150));
-  assert.deepEqual(await run(), { 'edge-cut': [], overflow: [], overlap: [], 'word-break': [] });
+  assert.deepEqual(await run(), none);
 });
 
 test('a visible control in a scroll area is still an overlap', async () => {
@@ -215,4 +249,37 @@ test('the failure message names the record, the width and the fix', () => {
   for (const fault of ['edge-cut', 'overflow', 'overlap']) {
     assert.match(fitMessage({ fault, text: 'x', detail: '3 px' }, 390), /^musicindex ADR 0065 R-FIT-3: at 390 px .*\n\S/);
   }
+});
+
+// R-FIT-7 items 1 and 2: each svg element of this page has an author size, or is not in the rule.
+test('an svg element with an author size, in an other svg element or not visible is not unsized', async () => {
+  await open(page(`
+    <style>
+      :where(svg:not([width])) { width: 1em; }
+      :where(svg:not([height])) { height: 1em; }
+      .sized { width: 20px; height: 20px; }
+      .outer { width: 40px; height: 40px; }
+    </style>
+    <p>Attributes <svg width="16" height="16" viewBox="0 0 24 24"></svg></p>
+    <p>A CSS rule <svg class="sized" viewBox="0 0 24 24"></svg></p>
+    <p>The default rule <svg class="icon" viewBox="0 0 24 24"></svg></p>
+    <p>Nested <svg class="outer" viewBox="0 0 24 24"><svg viewBox="0 0 24 24"></svg></svg></p>`));
+  assert.deepEqual(await evaluate(`(${unsizedIcons})()`), []);
+  await open(page(`<div style="display: none"><svg class="icon" viewBox="0 0 24 24"></svg></div>`));
+  assert.deepEqual(await evaluate(`(${unsizedIcons})()`), []);
+});
+
+test('an svg element with only a width attribute is unsized', async () => {
+  await open(page(`<p>Width only <svg width="16" viewBox="0 0 24 24"></svg></p>`));
+  const found = await evaluate(`(${unsizedIcons})()`);
+  assert.deepEqual(found, [{ fault: 'unsized-icon', text: 'svg', detail: 'Width only' }]);
+});
+
+test('the R-FIT-7 failure message names the record, the svg and the fix', async () => {
+  await open(pages['unsized-icon']);
+  const [finding] = await evaluate(`(${unsizedIcons})()`);
+  assert.deepEqual(finding, { fault: 'unsized-icon', text: 'icon', detail: 'Value routes' });
+  assert.equal(fitMessage(finding, 761),
+    'musicindex ADR 0065 R-FIT-7: at 761 px the svg "icon" in "Value routes" has no width or height.\n'
+    + 'Give it a size in CSS or with the width and height attributes.');
 });
