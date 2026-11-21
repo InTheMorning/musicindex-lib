@@ -34,8 +34,8 @@ These facts come from the repositories and the live node on 2026-11-07.
 | --- | --- |
 | 0 | Complete: v4vmm ADR 0091 and Studio ADR 0151 |
 | 1, 1a and 3a | Complete |
-| 2 | Complete: v4vmm commits `bebfe97` and `c433582` |
-| 3 | Complete. The operator passed the visual check, as v4vmm commit `9aed106` records (v4vmm ADR 0087, Operator Answers item 8). |
+| 2 | Complete: v4vmm commits `72b31e6` and `e401956` |
+| 3 | Complete. The operator passed the visual check, as v4vmm commit `c68eca6` records (v4vmm ADR 0087, Operator Answers item 8). |
 | 4 | Complete: Studio commit `2ecd7e9`. Studio records that the visual checks passed. |
 | 5 | Complete. The operator passed the two visual gates of musicindex ADR 0049, as musicindex commit `6b8e824` records. |
 | 6 | Complete, with no change to the crate |
