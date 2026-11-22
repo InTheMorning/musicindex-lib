@@ -10,7 +10,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use id3::{Frame, Tag, TagLike, Version};
+use id3::{Content, Frame, Tag, TagLike, Version};
 
 use crate::frames;
 
@@ -494,10 +494,41 @@ fn decode_frame(
     single.extend_from_slice(&frame_header);
     single.extend_from_slice(&data);
     let tag = Tag::read_from2(Cursor::new(single)).map_err(|err| err.to_string())?;
-    tag.frames()
+    let frame = tag
+        .frames()
         .next()
         .cloned()
-        .ok_or_else(|| "the frame gives no content".to_owned())
+        .ok_or_else(|| "the frame gives no content".to_owned())?;
+    Ok(if major < 4 {
+        join_slash_values(frame)
+    } else {
+        frame
+    })
+}
+
+/// The ID3v2.2 and ID3v2.3 frames whose "/" the `id3` crate changes to a
+/// NUL, with their ID3v2.3 IDs. The `id3` crate gives an ID3v2.2 frame its
+/// ID3v2.3 ID.
+const SLASH_VALUE_FRAMES: [&str; 5] = ["TCOM", "TEXT", "TOLY", "TOPE", "TPE1"];
+
+/// Gives the text of a frame of [`SLASH_VALUE_FRAMES`] its "/" again.
+///
+/// Orchestrator choice of 2026-11-22 under musicindex ADR 0090 R-TAG-9 item
+/// 1: a "/" can be a separator or a part of a name, for example "AC/DC". The
+/// division of the value is thus not sure, so the read keeps one value with
+/// each byte of the text. In ID3v2.2 and ID3v2.3, the `id3` crate stops the
+/// text at the first NUL of the frame. Thus each NUL in the text comes from a
+/// "/", and the change back keeps each byte.
+fn join_slash_values(frame: Frame) -> Frame {
+    if !SLASH_VALUE_FRAMES.contains(&frame.id()) {
+        return frame;
+    }
+    match frame.content().text() {
+        Some(text) if text.contains('\0') => {
+            Frame::with_content(frame.id(), Content::Text(text.replace('\0', "/")))
+        }
+        _ => frame,
+    }
 }
 
 /// The suite label of a bad frame when its ID and its description read

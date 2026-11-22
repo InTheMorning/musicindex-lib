@@ -669,3 +669,53 @@ fn the_display_read_of_a_bad_tag_header_shows_no_id3v1_data() -> Result<()> {
     assert!(!has_value(&display, "Old ID3v1 title"), "{display:?}");
     Ok(())
 }
+
+/// Orchestrator choice of 2026-11-22 under R-TAG-9 item 1: a "/" in an
+/// ID3v2.2 or ID3v2.3 artist is not a sure separator. The reads and the
+/// write keep one value with the "/".
+#[test]
+fn a_slash_in_a_v23_artist_stays_one_value() -> Result<()> {
+    let dir = TempDir::new()?;
+    let mut body = frame23("TPE1", &latin1("AC/DC"));
+    body.extend(frame23("TCOM", &utf16_text("A/B")));
+    let path = mp3(&dir, "slash.mp3", &tag(3, 0, &body), false);
+
+    let read = read_id3v2(&path)?;
+    assert_eq!(read.tag.artist(), Some("AC/DC"));
+    let (display, _) = read_tags_checked(&path)?;
+    assert!(has_value(&display, "AC/DC"), "{display:?}");
+    assert!(!has_value(&display, "AC"), "{display:?}");
+    assert!(!has_value(&display, "DC"), "{display:?}");
+
+    write_id3v24_edits(&path, &[], &NoReferences)?;
+    let tag = strict(&path);
+    assert_eq!(tag.version(), Version::Id3v24);
+    let artists = tag
+        .get("TPE1")
+        .and_then(|frame| frame.content().text_values());
+    assert_eq!(
+        artists.map(Iterator::collect::<Vec<_>>),
+        Some(vec!["AC/DC"])
+    );
+    let composers = tag
+        .get("TCOM")
+        .and_then(|frame| frame.content().text_values());
+    assert_eq!(
+        composers.map(Iterator::collect::<Vec<_>>),
+        Some(vec!["A/B"])
+    );
+    Ok(())
+}
+
+/// The same choice for an ID3v2.2 artist.
+#[test]
+fn a_slash_in_a_v22_artist_stays_one_value() -> Result<()> {
+    let dir = TempDir::new()?;
+    let data = latin1("AC/DC");
+    let mut body = b"TP1".to_vec();
+    body.extend(&plain(data.len())[1..]);
+    body.extend(data);
+    let path = mp3(&dir, "slash-v22.mp3", &tag(2, 0, &body), false);
+    assert_eq!(read_id3v2(&path)?.tag.artist(), Some("AC/DC"));
+    Ok(())
+}
