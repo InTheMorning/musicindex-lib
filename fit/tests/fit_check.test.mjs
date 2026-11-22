@@ -242,7 +242,7 @@ test('the opt-out attribute removes a break inside a word', async () => {
 test('the failure message names the record, the width and the fix', () => {
   const message = fitMessage({ fault: 'word-break', text: 'Releases', detail: 'Releases' }, 761);
   assert.match(message, /^musicindex ADR 0065 R-FIT-3: at 761 px the text "Releases" breaks inside a word/);
-  assert.match(message, /ADR 0020 R-FIT-1 item 2/);
+  assert.match(message, /musicindex ADR 0080 R-FIT-1 item 2/);
   assert.match(message, new RegExp(ALLOW_BREAK_ATTRIBUTE));
   assert.match(fitMessage({ fault: 'overflow', box: 'control', text: 'Releases 20+', detail: 'content 94 px in a box of 82 px' }, 761),
     /^musicindex ADR 0065 R-FIT-3: at 761 px the content of the control "Releases 20\+" is wider than the control/);
