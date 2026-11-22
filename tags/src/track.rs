@@ -1,0 +1,335 @@
+use std::path::Path;
+use std::time::Duration;
+
+use anyhow::{Context, Result};
+use lofty::file::TaggedFile;
+use lofty::picture::{Picture, PictureType};
+use lofty::prelude::*;
+use lofty::tag::{ItemKey, ItemValue, Tag};
+use serde::Serialize;
+
+pub const MUSICINDEX_VOCABULARY: &[MusicIndexFrame] = &[
+    MusicIndexFrame::new("Publisher", "TXXX:V4V_PUBLISHER"),
+    MusicIndexFrame::new("Feed Guid", "TXXX:Podcast Feed Guid"),
+    MusicIndexFrame::new("Track Guid", "TXXX:Podcast Item Guid"),
+    MusicIndexFrame::new("Nostr Handle", "TXXX:RSS Nostr Handle"),
+    MusicIndexFrame::new("Website", "WOAR"),
+    MusicIndexFrame::new("Description", "COMM:Podcast Description"),
+    MusicIndexFrame::new("Contributors", "TXXX:Podcast Contributors"),
+    MusicIndexFrame::new("Value Routes", "TXXX:Podcast Value Routes"),
+    MusicIndexFrame::new("MusicBrainz Recording", "UFID:http://musicbrainz.org"),
+    MusicIndexFrame::new("MusicBrainz Release", "TXXX:MusicBrainz Album Id"),
+    MusicIndexFrame::new(
+        "MusicBrainz Release Group",
+        "TXXX:MusicBrainz Release Group Id",
+    ),
+    MusicIndexFrame::new("Release Country", "TXXX:MusicBrainz Album Release Country"),
+    MusicIndexFrame::new("Release Status", "TXXX:MusicBrainz Album Status"),
+    MusicIndexFrame::new("Barcode", "TXXX:BARCODE"),
+    MusicIndexFrame::new("Release Type", "TXXX:MusicBrainz Album Type"),
+    MusicIndexFrame::new("Disc Subtitle", "TSST"),
+    MusicIndexFrame::new("Image", "TXXX:Podcast Image"),
+    MusicIndexFrame::new("Chapters", "TXXX:Podcast Chapters"),
+];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MusicIndexFrame {
+    pub canonical: &'static str,
+    pub frame_label: &'static str,
+}
+
+impl MusicIndexFrame {
+    const fn new(canonical: &'static str, frame_label: &'static str) -> Self {
+        Self {
+            canonical,
+            frame_label,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct TrackTags {
+    pub musicindex: Vec<TagText>,
+    pub tags: Vec<TagText>,
+    pub duration: Option<Duration>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct TagText {
+    pub key: String,
+    pub value: String,
+}
+
+impl TagText {
+    pub fn new(key: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            key: key.into(),
+            value: value.into(),
+        }
+    }
+}
+
+impl TrackTags {
+    #[must_use]
+    pub fn musicindex_value(&self, key: &str) -> Option<&str> {
+        self.musicindex
+            .iter()
+            .find(|item| item.key == key)
+            .map(|item| item.value.as_str())
+    }
+
+    pub fn set_musicindex_value(&mut self, key: &str, value: impl Into<String>) {
+        let value = value.into();
+        if let Some(item) = self.musicindex.iter_mut().find(|item| item.key == key) {
+            item.value = value;
+            return;
+        }
+        self.musicindex.push(TagText::new(key, value));
+    }
+
+    pub fn remove_musicindex_value(&mut self, key: &str) {
+        self.musicindex.retain(|item| item.key != key);
+    }
+}
+
+/// Reads the tags of `path` for the now-playing display. The binary picture
+/// data is not kept.
+///
+/// # Errors
+///
+/// Returns an error when the file cannot be read or its tag cannot be parsed.
+pub fn read_tags(path: &Path) -> Result<TrackTags> {
+    let tagged_file = lofty::read_from_path(path)
+        .with_context(|| format!("read tags from {}", path.display()))?;
+    Ok(track_tags(&tagged_file))
+}
+
+/// Reads the tags and the display picture of `path` in one read of the
+/// file.
+///
+/// The tags are the same as the tags of [`read_tags`]. The picture is the
+/// front cover, else the first picture (ADR 0008 §The Embedded Image).
+///
+/// # Errors
+///
+/// Returns an error when `lofty` cannot read the file.
+pub fn read_tags_with_picture(path: &Path) -> Result<(TrackTags, Option<Vec<u8>>)> {
+    let mut tagged_file = lofty::read_from_path(path)
+        .with_context(|| format!("read tags from {}", path.display()))?;
+    let tags = track_tags(&tagged_file);
+    let picture = take_picture(&mut tagged_file);
+    Ok((tags, picture))
+}
+
+/// Selects the display picture: the front cover, else the first picture
+/// (ADR 0008 §The Embedded Image). The tags are examined in their order.
+fn select_picture<'a, I>(tags: I) -> Option<(usize, usize)>
+where
+    I: IntoIterator<Item = &'a [Picture]>,
+    I::IntoIter: Clone,
+{
+    let tags = tags.into_iter();
+    let front = tags.clone().enumerate().find_map(|(tag_index, pictures)| {
+        pictures
+            .iter()
+            .position(|picture| picture.pic_type() == PictureType::CoverFront)
+            .map(|index| (tag_index, index))
+    });
+    front.or_else(|| {
+        tags.enumerate()
+            .find_map(|(tag_index, pictures)| (!pictures.is_empty()).then_some((tag_index, 0)))
+    })
+}
+
+/// Removes the selected picture from `tagged_file` and gives its data. The
+/// removal prevents a copy of the data.
+fn take_picture(tagged_file: &mut TaggedFile) -> Option<Vec<u8>> {
+    let (tag_index, index) =
+        select_picture(tagged_file.tags().iter().map(lofty::tag::Tag::pictures))?;
+    let tag_type = tagged_file.tags().get(tag_index)?.tag_type();
+    let tag = tagged_file.tag_mut(tag_type)?;
+    (index < tag.pictures().len()).then(|| tag.remove_picture(index).into_data())
+}
+
+fn track_tags(tagged_file: &TaggedFile) -> TrackTags {
+    let duration = nonzero_duration(tagged_file.properties().duration());
+    let mut track_tags = TrackTags {
+        musicindex: Vec::new(),
+        tags: Vec::new(),
+        duration,
+    };
+
+    for tag in tagged_file.tags() {
+        collect_tag_items(tag, &mut track_tags);
+        collect_pictures(tag, &mut track_tags);
+    }
+
+    track_tags
+}
+
+fn nonzero_duration(duration: Duration) -> Option<Duration> {
+    if duration.is_zero() {
+        None
+    } else {
+        Some(duration)
+    }
+}
+
+fn collect_tag_items(tag: &Tag, track_tags: &mut TrackTags) {
+    for item in tag.items() {
+        let key = item_key(tag, item.key(), item.description());
+        if is_transcript_key(&key) {
+            continue;
+        }
+
+        let value = render_item_value(&key, item.value());
+        push_tag_text(track_tags, key, value);
+    }
+}
+
+fn collect_pictures(tag: &Tag, track_tags: &mut TrackTags) {
+    for picture in tag.pictures() {
+        track_tags
+            .tags
+            .push(TagText::new("APIC", render_picture_summary(picture)));
+    }
+}
+
+fn item_key(tag: &Tag, key: &ItemKey, description: &str) -> String {
+    match key {
+        ItemKey::Unknown(unknown) => unknown.clone(),
+        ItemKey::Comment if !description.is_empty() => format!("COMM:{description}"),
+        _ => key
+            .map_key(tag.tag_type(), true)
+            .map_or_else(|| format!("{key:?}"), str::to_string),
+    }
+}
+
+fn push_tag_text(track_tags: &mut TrackTags, key: String, value: String) {
+    if let Some(canonical) = canonical_musicindex_key(&key) {
+        track_tags.musicindex.push(TagText::new(canonical, value));
+    } else {
+        track_tags.tags.push(TagText::new(key, value));
+    }
+}
+
+fn canonical_musicindex_key(key: &str) -> Option<&'static str> {
+    let normalized = normalize_key(key);
+    MUSICINDEX_VOCABULARY
+        .iter()
+        .find(|entry| normalize_key(frame_match_key(entry.frame_label)) == normalized)
+        .map(|entry| entry.canonical)
+}
+
+fn frame_match_key(frame_label: &str) -> &str {
+    frame_label
+        .rsplit_once(':')
+        .map_or(frame_label, |(_, key)| key)
+}
+
+fn normalize_key(key: &str) -> String {
+    key.split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_uppercase()
+}
+
+fn is_transcript_key(key: &str) -> bool {
+    let normalized = normalize_key(frame_match_key(key));
+    normalized == "USLT" || normalized == "PODCAST TRANSCRIPT"
+}
+
+fn render_item_value(key: &str, value: &ItemValue) -> String {
+    if is_binary_summary_key(key) {
+        return binary_summary(key, value);
+    }
+
+    match value {
+        ItemValue::Text(text) | ItemValue::Locator(text) => text.clone(),
+        ItemValue::Binary(binary) => format!("{} bytes", binary.len()),
+    }
+}
+
+fn is_binary_summary_key(key: &str) -> bool {
+    let normalized = normalize_key(key);
+    normalized == "APIC" || normalized == "PRIV" || normalized == "UFID"
+}
+
+fn binary_summary(key: &str, value: &ItemValue) -> String {
+    match value {
+        ItemValue::Binary(binary) => format!("{} bytes", binary.len()),
+        ItemValue::Text(text) | ItemValue::Locator(text) => {
+            if text.is_empty() {
+                "0 bytes".to_string()
+            } else {
+                format!("{key} text, {} bytes", text.len())
+            }
+        }
+    }
+}
+
+fn render_picture_summary(picture: &Picture) -> String {
+    let mime_type = picture
+        .mime_type()
+        .map_or_else(|| "unknown".to_string(), ToString::to_string);
+    format!("{mime_type}, {}", render_kib(picture.data().len()))
+}
+
+#[allow(
+    clippy::cast_precision_loss,
+    reason = "a display value with one decimal"
+)]
+fn render_kib(bytes: usize) -> String {
+    format!("{:.1} KB", bytes as f64 / 1024.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tags_normalizes_musicindex_keys() {
+        assert_eq!(
+            canonical_musicindex_key("Podcast Feed Guid"),
+            Some("Feed Guid")
+        );
+        assert_eq!(
+            canonical_musicindex_key("PODCAST   FEED   GUID"),
+            Some("Feed Guid")
+        );
+        assert_eq!(
+            canonical_musicindex_key("Podcast Value Routes"),
+            Some("Value Routes")
+        );
+        assert_eq!(
+            canonical_musicindex_key("Podcast Chapters"),
+            Some("Chapters")
+        );
+    }
+
+    /// Musicindex ADR 0086 R-TAG-2 item 2: the reader does not accept an old
+    /// name.
+    #[test]
+    fn tags_does_not_read_old_names() {
+        assert_eq!(canonical_musicindex_key("MusicIndex Feed Guid"), None);
+        assert_eq!(canonical_musicindex_key("MusicIndex Track Guid"), None);
+        assert_eq!(canonical_musicindex_key("MusicIndex Value Routes"), None);
+    }
+
+    #[test]
+    fn tags_identifies_transcript_keys() {
+        assert!(is_transcript_key("USLT"));
+        assert!(is_transcript_key("SYLT:Podcast Transcript"));
+        assert!(is_transcript_key("Podcast Transcript"));
+        assert!(!is_transcript_key("Podcast Description"));
+    }
+
+    #[test]
+    fn tags_summarizes_binary_payload_keys() {
+        let binary = ItemValue::Binary(vec![0, 1, 2, 3]);
+
+        assert_eq!(render_item_value("PRIV", &binary), "4 bytes");
+        assert_eq!(render_item_value("UFID", &binary), "4 bytes");
+        assert_eq!(render_item_value("APIC", &binary), "4 bytes");
+    }
+}

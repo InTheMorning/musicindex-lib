@@ -60,6 +60,20 @@ The request is [the build info request](docs/plans/research-build-info-request.m
 operator agreed to the design on 2026-11-18. musicindex ADR 0083 has the status Proposed. No app
 pins the crate before ADR 0083 is accepted. If the ADR changes a name, the crate follows the ADR.
 
+`tags/` holds the crate `musicindex-tags` of musicindex ADR 0086 R-TAG-1. It writes and reads
+the podcast frames of an audio file with the names of R-TAG-2. `write_song_tags` writes the
+GUIDs of a song file (R-TAG-3). `write_episode_tags` writes the GUIDs, the value routes and
+the chapters of an episode file (R-TAG-4). Each write removes the frames with the
+"MusicIndex " names of R-TAG-2 item 5.
+
+`read_podcast_tags` and `track::read_tags` read only the new names.
+`write_id3v24_edits` writes the field edits of HitIt, and the trait `ReferenceSource` gives it
+the pictures and the transcripts, because the app owns the network.
+
+The test `tests/words.rs` is the check of musicindex ADR 0087 R-WORD-14. No app pins the
+crate at this time. HitIt and musicindex-live-publisher remove their own copies when they
+pin it.
+
 No ADR accepts `moodbar/`, and it has no folder.
 
 | Subject | Content | Research |
@@ -67,6 +81,7 @@ No ADR accepts `moodbar/`, and it has no folder.
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
 | `value/` | The split crate for Studio and HitIt | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
 | `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 (Proposed) for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
+| `tags/` | The tag crate of musicindex ADR 0086 for HitIt and musicindex-live-publisher | No research document |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |
 | `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
