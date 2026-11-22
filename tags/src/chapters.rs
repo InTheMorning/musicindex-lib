@@ -48,6 +48,13 @@ pub enum SplitTarget {
         /// The attribute `itemGuid`. `None` when the attribute is missing.
         /// The writer does not make a GUID (R-TAG-4 item 5).
         item_guid: Option<String>,
+        /// The value block of the song item, or of the song feed channel when
+        /// the item has none, in the value form of `TXXX:Podcast Value
+        /// Routes` (musicindex ADR 0089 R-TAG-6 item 1). `None` when the
+        /// writer cannot get the block (R-TAG-6 item 2). The app reads the
+        /// song feed. This crate does not read a feed or make routes
+        /// (R-TAG-6 item 4).
+        value_routes: Option<serde_json::Value>,
     },
     /// A local split: its own `podcast:valueRecipient` elements, in the value
     /// form of `TXXX:Podcast Value Routes`.
@@ -77,7 +84,8 @@ pub struct ChapterEntry {
     pub item_guid: Option<String>,
     /// The attribute `remotePercentage`. It is 100 when the attribute is missing.
     pub remote_percentage: u32,
-    /// The recipients of a local split, or `None` for a remote split.
+    /// The recipients of a local split, or the routes of the song of a remote
+    /// split (musicindex ADR 0089 R-TAG-6). `None` gives JSON `null`.
     pub value_routes: Option<serde_json::Value>,
 }
 
@@ -205,7 +213,12 @@ fn chapter_entry(split: &Split) -> Result<ChapterEntry> {
         SplitTarget::Remote {
             feed_guid,
             item_guid,
-        } => (Some(feed_guid.clone()), item_guid.clone(), None),
+            value_routes,
+        } => (
+            Some(feed_guid.clone()),
+            item_guid.clone(),
+            value_routes.clone(),
+        ),
         SplitTarget::Local { value_routes } => (None, None, Some(value_routes.clone())),
     };
     Ok(ChapterEntry {
@@ -328,6 +341,7 @@ mod tests {
             target: SplitTarget::Remote {
                 feed_guid: "feed".into(),
                 item_guid: None,
+                value_routes: None,
             },
         }
     }

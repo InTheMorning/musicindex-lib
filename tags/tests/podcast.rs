@@ -97,21 +97,33 @@ fn split(start_time: f64, duration: f64, title: Option<&str>, target: SplitTarge
     }
 }
 
-fn remote(feed_guid: &str, item_guid: Option<&str>) -> SplitTarget {
+fn remote(
+    feed_guid: &str,
+    item_guid: Option<&str>,
+    value_routes: Option<serde_json::Value>,
+) -> SplitTarget {
     SplitTarget::Remote {
         feed_guid: feed_guid.into(),
         item_guid: item_guid.map(str::to_owned),
+        value_routes,
     }
 }
 
-/// Three splits out of time order: a remote split with both GUIDs, a local
-/// split and a remote split with no item GUID.
+/// The value block of the song `item-a`, in the value form of
+/// `TXXX:Podcast Value Routes`.
+fn song_routes() -> serde_json::Value {
+    json!([{"recipient_name": "Song Artist", "route_type": "node", "split": 100}])
+}
+
+/// Three splits out of time order: a remote split with both GUIDs and the
+/// routes of its song, a local split and a remote split with no item GUID and
+/// so no routes.
 fn episode() -> EpisodeTags {
     let mut first = split(
         10.0,
         180.5,
         Some("First Song"),
-        remote("feed-a", Some("item-a")),
+        remote("feed-a", Some("item-a"), Some(song_routes())),
     );
     first.remote_percentage = Some(90);
     first.author = Some("Feed Author".into());
@@ -123,7 +135,12 @@ fn episode() -> EpisodeTags {
             value_routes: json!([{"address": "host@example.com", "split": 100, "type": "lnaddress"}]),
         },
     );
-    let third = split(200.25, 120.0, Some("Second Song"), remote("feed-b", None));
+    let third = split(
+        200.25,
+        120.0,
+        Some("Second Song"),
+        remote("feed-b", None, None),
+    );
     EpisodeTags {
         feed_guid: "show-feed-guid".into(),
         item_guid: "episode-item-guid".into(),
@@ -143,7 +160,7 @@ fn expected_entries() -> Vec<ChapterEntry> {
             feed_guid: Some("feed-a".into()),
             item_guid: Some("item-a".into()),
             remote_percentage: 90,
-            value_routes: None,
+            value_routes: Some(song_routes()),
         },
         ChapterEntry {
             start_ms: 200_250,
@@ -275,7 +292,38 @@ fn episode_chapter_json_has_author_only_when_given() -> Result<()> {
     assert!(entries[1].get("author").is_none());
     assert!(entries[1]["artist"].is_string());
     assert!(entries[2]["artist"].is_null());
-    assert!(entries[0]["value_routes"].is_null());
+    Ok(())
+}
+
+/// Musicindex ADR 0089 R-TAG-6: a remote entry holds the routes of its song,
+/// or JSON `null` when the writer has no routes. A local entry holds its own
+/// recipients. The reader gives back the same entries in MP3 and FLAC.
+#[test]
+fn remote_entry_holds_the_routes_of_its_song_or_null() -> Result<()> {
+    let dir = TempDir::new()?;
+    for name in ["old-frames.mp3", "old-frames.flac"] {
+        let path = copy_fixture(&dir, name);
+        write_episode_tags(&path, &episode(), &[], &NoReferences)?;
+        let tags = read_podcast_tags(&path)?;
+
+        let json = tags.chapters_json.as_deref().expect("chapters frame");
+        let value: serde_json::Value = serde_json::from_str(json)?;
+        let entries = value.as_array().expect("array");
+        assert_eq!(entries[0]["value_routes"], song_routes(), "{name}");
+        let remote_without_routes = entries[1].as_object().expect("object");
+        assert_eq!(
+            remote_without_routes.get("value_routes"),
+            Some(&serde_json::Value::Null),
+            "{name}"
+        );
+        assert_eq!(
+            entries[2]["value_routes"],
+            json!([{"address": "host@example.com", "split": 100, "type": "lnaddress"}]),
+            "{name}"
+        );
+
+        assert_eq!(tags.chapters()?, expected_entries(), "{name}");
+    }
     Ok(())
 }
 
@@ -335,7 +383,7 @@ fn episode_with_256_splits_is_an_error_and_writes_nothing() -> Result<()> {
                 f64::from(index) * 10.0,
                 10.0,
                 Some("Song"),
-                remote("feed", Some("item")),
+                remote("feed", Some("item"), None),
             )
         })
         .collect();

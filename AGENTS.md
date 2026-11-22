@@ -63,7 +63,8 @@ pins the crate before ADR 0083 is accepted. If the ADR changes a name, the crate
 `tags/` holds the crate `musicindex-tags` of musicindex ADR 0086 R-TAG-1. It writes and reads
 the podcast frames of an audio file with the names of R-TAG-2. `write_song_tags` writes the
 GUIDs of a song file (R-TAG-3). `write_episode_tags` writes the GUIDs, the value routes and
-the chapters of an episode file (R-TAG-4). Each write removes the frames with the
+the chapters of an episode file (R-TAG-4). A remote chapter entry holds the routes of its
+song when the app gives them (musicindex ADR 0089 R-TAG-6). Each write removes the frames with the
 "MusicIndex " names of R-TAG-2 item 5.
 
 `read_podcast_tags` and `track::read_tags` read only the new names.
