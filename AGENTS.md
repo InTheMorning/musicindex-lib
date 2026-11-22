@@ -81,6 +81,9 @@ A write keeps the `TLEN` of the file and ignores a `TLEN` edit (musicindex ADR 0
 R-TAG-11). When the file has no good `TLEN`, the MP3 write gives the length that lofty
 measures, and else no `TLEN`.
 
+`involved_people_value` gives the edit value of a `TIPL` or `TMCL` frame from (role, name)
+pairs. The crate owns the separators of that value (musicindex ADR 0086 R-TAG-1 item 4).
+
 `read_podcast_tags` and `track::read_tags` read only the new names.
 `write_id3v24_edits` writes the field edits of HitIt, and the trait `ReferenceSource` gives it
 the pictures and the transcripts, because the app owns the network.

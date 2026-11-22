@@ -1507,12 +1507,142 @@ fn extended_text_value(value: &str) -> String {
     value.trim_end_matches('\0').to_string()
 }
 
-fn format_involved_people_list(list: &InvolvedPeopleList) -> String {
-    list.items
-        .iter()
-        .map(|item| format!("{}: {}", item.involvement.trim(), item.involvee.trim()))
+/// The text between two pairs of a `TIPL` or `TMCL` edit value.
+const INVOLVED_PEOPLE_SEPARATOR: &str = " / ";
+
+/// The text between the role and the name of one pair.
+const INVOLVED_ROLE_SEPARATOR: &str = ": ";
+
+/// The cause of a [`BadInvolvedPerson`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum InvolvedPersonCause {
+    /// The role is empty after the trim.
+    EmptyRole,
+    /// The name is empty after the trim.
+    EmptyName,
+    /// The role or the name contains `" / "`, the text between two pairs.
+    ContainsPairSeparator,
+    /// The role contains `": "`, the text between the role and the name.
+    RoleContainsRoleSeparator,
+    /// The value does not read back as the same pairs for another cause,
+    /// for example a name that ends with `" /"`.
+    NoSameReadBack,
+}
+
+/// A (role, name) pair that does not read back the same from a `TIPL` or
+/// `TMCL` edit value. [`involved_people_value`] gives this error.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BadInvolvedPerson {
+    /// The position of the pair in the input, from 0.
+    pub index: usize,
+    /// The role of the pair, after the trim.
+    pub role: String,
+    /// The name of the pair, after the trim.
+    pub name: String,
+    /// Why the pair does not read back the same.
+    pub cause: InvolvedPersonCause,
+}
+
+impl std::fmt::Display for BadInvolvedPerson {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let cause = match self.cause {
+            InvolvedPersonCause::EmptyRole => "the role is empty",
+            InvolvedPersonCause::EmptyName => "the name is empty",
+            InvolvedPersonCause::ContainsPairSeparator => "the role or the name contains \" / \"",
+            InvolvedPersonCause::RoleContainsRoleSeparator => "the role contains \": \"",
+            InvolvedPersonCause::NoSameReadBack => "the value does not read back as the same pairs",
+        };
+        write!(
+            f,
+            "involved person {} (role {:?}, name {:?}): {cause}",
+            self.index, self.role, self.name
+        )
+    }
+}
+
+impl std::error::Error for BadInvolvedPerson {}
+
+/// Gives the edit value of a `TIPL` or `TMCL` frame from (role, name) pairs,
+/// for example `"bass: Josh Moroz / vocals: Josh Moroz / vocals: Alex Nicol"`.
+/// The crate owns the text of this value (musicindex ADR 0086 R-TAG-1 item 4),
+/// so an app does not join the pairs itself.
+///
+/// The function trims each role and each name. Two people with the same role
+/// give two pairs with that role.
+///
+/// # Errors
+///
+/// Gives [`BadInvolvedPerson`] for the first pair that does not read back the
+/// same: an empty role or name, a role or name that contains `" / "`, or a
+/// role that contains `": "`.
+pub fn involved_people_value<'a, I>(pairs: I) -> Result<String, BadInvolvedPerson>
+where
+    I: IntoIterator<Item = (&'a str, &'a str)>,
+{
+    let pairs: Vec<(&str, &str)> = pairs
+        .into_iter()
+        .map(|(role, name)| (role.trim(), name.trim()))
+        .collect();
+    let bad = |index: usize, cause| {
+        let (role, name) = pairs[index];
+        BadInvolvedPerson {
+            index,
+            role: role.to_string(),
+            name: name.to_string(),
+            cause,
+        }
+    };
+    for (index, (role, name)) in pairs.iter().enumerate() {
+        let cause = if role.is_empty() {
+            InvolvedPersonCause::EmptyRole
+        } else if name.is_empty() {
+            InvolvedPersonCause::EmptyName
+        } else if role.contains(INVOLVED_PEOPLE_SEPARATOR)
+            || name.contains(INVOLVED_PEOPLE_SEPARATOR)
+        {
+            InvolvedPersonCause::ContainsPairSeparator
+        } else if role.contains(INVOLVED_ROLE_SEPARATOR) {
+            InvolvedPersonCause::RoleContainsRoleSeparator
+        } else {
+            continue;
+        };
+        return Err(bad(index, cause));
+    }
+    let value = join_involved_people(pairs.iter().copied());
+    let read_back = parse_involved_people_list(&value).items;
+    let first_difference = (0..pairs.len()).find(|&index| {
+        read_back
+            .get(index)
+            .is_none_or(|item| (item.involvement.as_str(), item.involvee.as_str()) != pairs[index])
+    });
+    match first_difference {
+        Some(index) => Err(bad(index, InvolvedPersonCause::NoSameReadBack)),
+        None if read_back.len() != pairs.len() => Err(bad(
+            pairs.len().saturating_sub(1),
+            InvolvedPersonCause::NoSameReadBack,
+        )),
+        None => Ok(value),
+    }
+}
+
+/// Joins the pairs with the two separators. Only this function and
+/// [`parse_involved_people_list`] use the separators.
+fn join_involved_people<'a>(pairs: impl Iterator<Item = (&'a str, &'a str)>) -> String {
+    pairs
+        .map(|(role, name)| format!("{role}{INVOLVED_ROLE_SEPARATOR}{name}"))
         .collect::<Vec<_>>()
-        .join(" / ")
+        .join(INVOLVED_PEOPLE_SEPARATOR)
+}
+
+/// The display value of a `TIPL` or `TMCL` frame of a file. The data of a
+/// file is not checked, so this uses [`join_involved_people`] directly.
+fn format_involved_people_list(list: &InvolvedPeopleList) -> String {
+    join_involved_people(
+        list.items
+            .iter()
+            .map(|item| (item.involvement.trim(), item.involvee.trim())),
+    )
 }
 
 fn descriptor_frame_label(frame_id: &str, descriptor: &str) -> String {
@@ -1627,9 +1757,9 @@ fn required_frame_descriptor(frame_id: &str, descriptor: Option<String>) -> Resu
 /// Parse a `"role: name / role: name"` display string back into an [`InvolvedPeopleList`].
 fn parse_involved_people_list(value: &str) -> InvolvedPeopleList {
     let items = value
-        .split(" / ")
+        .split(INVOLVED_PEOPLE_SEPARATOR)
         .filter_map(|entry| {
-            let (involvement, involvee) = entry.split_once(": ")?;
+            let (involvement, involvee) = entry.split_once(INVOLVED_ROLE_SEPARATOR)?;
             Some(InvolvedPeopleListItem {
                 involvement: involvement.trim().to_string(),
                 involvee: involvee.trim().to_string(),

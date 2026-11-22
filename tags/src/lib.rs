@@ -24,10 +24,10 @@ mod source;
 pub mod track;
 
 pub use audio::{
-    AudioTags, EmbeddedArtwork, Id3Field, Id3v24Edit, LICENSE_LIST_FRAME, LICENSE_NAME_FRAME,
-    LICENSE_URL_FRAME, TagWriteResult, id3v24_edit_label_is_writable, read_audio_tags,
-    read_audio_tags_checked, sanitize_title_text, split_license_list, vorbis_storage_key,
-    write_id3v24_edits,
+    AudioTags, BadInvolvedPerson, EmbeddedArtwork, Id3Field, Id3v24Edit, InvolvedPersonCause,
+    LICENSE_LIST_FRAME, LICENSE_NAME_FRAME, LICENSE_URL_FRAME, TagWriteResult,
+    id3v24_edit_label_is_writable, involved_people_value, read_audio_tags, read_audio_tags_checked,
+    sanitize_title_text, split_license_list, vorbis_storage_key, write_id3v24_edits,
 };
 pub use chapters::{ChapterEntry, ChapterFrame, Split, SplitTarget, TooManyChapters};
 pub use id3v2::{BadFrame, BadFrameAction, BadTag, KnownBadFrame, TagProblems, read_id3v2};
