@@ -67,6 +67,16 @@ the chapters of an episode file (R-TAG-4). A remote chapter entry holds the rout
 song when the app gives them (musicindex ADR 0089 R-TAG-6). Each write removes the frames with the
 "MusicIndex " names of R-TAG-2 item 5.
 
+Each read of an ID3v2 tag uses the frame loop of `tags/src/id3v2.rs` (musicindex ADR 0090
+R-TAG-7). The loop keeps each good frame and returns the bad frames in `TagProblems`. Each
+MP3 write gives an ID3v2.4 tag with ID3v2.4 frames only, and removes the ID3v1 tag (R-TAG-8).
+The table `OLD_FRAME_IDS` in `tags/src/audio.rs` converts or removes the frames of an older
+version.
+
+A write removes a bad frame, and writes a bad frame of the suite again from the data of the
+app (R-TAG-9). `KnownBadFrame` is the list of known bad frames. Each entry needs a test file in
+`tags/tests/id3v2.rs`.
+
 `read_podcast_tags` and `track::read_tags` read only the new names.
 `write_id3v24_edits` writes the field edits of HitIt, and the trait `ReferenceSource` gives it
 the pictures and the transcripts, because the app owns the network.

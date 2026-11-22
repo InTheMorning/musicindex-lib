@@ -1,3 +1,4 @@
-# HitIt is the display name of an app (HitIt ADR 0096), not code. ".." keeps the
-# default list of clippy.
-doc-valid-idents = ["HitIt", ".."]
+# HitIt is the display name of an app (HitIt ADR 0096), not code. ID3v1 and
+# ID3v2 are the names of tag formats, not code. ".." keeps the default list of
+# clippy.
+doc-valid-idents = ["HitIt", "ID3v1", "ID3v2", ".."]

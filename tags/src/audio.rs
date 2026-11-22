@@ -8,11 +8,12 @@ use id3::frame::{
     Picture, PictureType, SynchronisedLyrics, SynchronisedLyricsType, TimestampFormat,
     UniqueFileIdentifier,
 };
-use id3::{Content, Frame, Tag, TagLike, Version, no_tag_ok};
+use id3::{Content, Frame, Tag, TagLike, Version};
 
 use crate::chapters::ChapterFrames;
 use crate::format::AudioFormat;
 use crate::frames;
+use crate::id3v2::{BadFrame, BadTag, TagProblems, read_id3v2};
 use crate::source::ReferenceSource;
 
 const WRITABLE_TEXT_FRAMES: &[&str] = &[
@@ -165,18 +166,30 @@ pub struct Id3v24Edit {
     pub value: String,
 }
 
-/// Reads the tags of `path`: with `id3` for MP3, with `lofty` for other
-/// formats (HitIt ADR 0004).
+/// Reads the tags of `path`: with the ID3v2 frame loop for MP3, with `lofty`
+/// for other formats (HitIt ADR 0004). An MP3 file gives each good frame
+/// (musicindex ADR 0090 R-TAG-7).
 ///
 /// # Errors
 ///
 /// Returns an error when the file cannot be read or its tag cannot be parsed.
 pub fn read_audio_tags(path: &Path) -> Result<AudioTags> {
+    read_audio_tags_checked(path).map(|(tags, _)| tags)
+}
+
+/// Reads the tags of `path` as [`read_audio_tags`] does, and also gives the
+/// problems of the ID3v2 tag (musicindex ADR 0090 R-TAG-7 item 2). A format
+/// other than MP3 gives no problem.
+///
+/// # Errors
+///
+/// Returns an error when the file cannot be read or its tag cannot be parsed.
+pub fn read_audio_tags_checked(path: &Path) -> Result<(AudioTags, TagProblems)> {
     match AudioFormat::detect_from_file(path) {
         // Unknown format — fall back to id3 so we don't regress on files whose
         // magic bytes weren't recognised (e.g. unusual MP3 headers).
         Ok(AudioFormat::Mp3) | Err(_) => read_mp3_tags(path),
-        Ok(_) => read_lofty_tags(path),
+        Ok(_) => Ok((read_lofty_tags(path)?, TagProblems::default())),
     }
 }
 
@@ -384,6 +397,11 @@ pub struct TagWriteResult {
     /// Each edit that the write did not apply, with the reason. A picture
     /// that the reference source cannot give is an example.
     pub skipped: Vec<String>,
+    /// Each bad frame that the write removed (musicindex ADR 0090 R-TAG-9).
+    pub bad_frames: Vec<BadFrame>,
+    /// True when the write removed an ID3v1 tag (musicindex ADR 0090 R-TAG-8
+    /// item 5).
+    pub removed_id3v1: bool,
 }
 
 /// Writes `edits` into the tag of `path` (HitIt ADR 0008). The function uses
@@ -428,7 +446,7 @@ pub(crate) fn write_tags(
             source,
         ),
         Ok(AudioFormat::Mp4) => {
-            let edits = mp4_single_date_edits(edits);
+            let edits = single_date_edits(edits);
             write_lofty_edits(path, &edits, chapters, lofty::tag::TagType::Mp4Ilst, source)
         }
         Ok(AudioFormat::Wav) if edits.is_empty() && chapters.is_none() => {
@@ -446,7 +464,10 @@ pub(crate) fn write_tags(
 /// both atoms as `TDRC`, so two atoms could not be told apart. This keeps
 /// the `TDRC` edit, drops the `TYER` edit when a `TDRC` edit exists, and
 /// stores a lone `TYER` edit under the `TDRC` atom.
-fn mp4_single_date_edits(edits: &[Id3v24Edit]) -> Vec<Id3v24Edit> {
+///
+/// An MP3 write uses the same edits, because an ID3v2.4 tag has no `TYER`
+/// frame (musicindex ADR 0090 R-TAG-8 item 1).
+fn single_date_edits(edits: &[Id3v24Edit]) -> Vec<Id3v24Edit> {
     let has_full_date = edits.iter().any(|edit| edit.frame_label == "TDRC");
     edits
         .iter()
@@ -470,14 +491,25 @@ fn write_mp3_edits(
     chapters: Option<&ChapterFrames>,
     source: &dyn ReferenceSource,
 ) -> Result<TagWriteResult> {
-    let mut tag = no_tag_ok(Tag::read_from_path(path))
-        .with_context(|| format!("read embedded MP3 tags from {}", path.display()))?
-        .unwrap_or_default();
-    let removed_frames = convert_old_v22_frames(&mut tag);
+    let read = read_id3v2(path)?;
+    if let Some(cause) = read.problems.bad_tag {
+        return Err(BadTag { cause }.into());
+    }
+    let mut tag = read.tag;
+    let old_frames = convert_old_frames(&mut tag, read.version);
     let removed_old_frames = remove_old_id3_frames(&mut tag);
-    if is_empty_write(edits, chapters, &removed_old_frames) {
+    let repairs = Repairs {
+        bad_frames: !read.problems.bad_frames.is_empty() || read.plain_frame_sizes,
+        old_frames: !old_frames.is_empty() || !removed_old_frames.is_empty(),
+        old_version: read.version.is_some_and(|major| major != 4),
+        id3v1: read.has_id3v1,
+    };
+    if is_empty_write(edits, chapters, repairs) {
         return Ok(TagWriteResult::default());
     }
+    let removed_frames = old_frames.removed;
+    let edits = single_date_edits(edits);
+    let edits = edits.as_slice();
     remove_stale_id3_website_frames(&mut tag, edits);
     remove_stale_id3_description_frames(&mut tag, edits);
     let license = resolve_id3_license_edits(&mut tag, edits);
@@ -493,23 +525,45 @@ fn write_mp3_edits(
         chapters.replace_id3_frames(&mut tag);
     }
 
-    write_id3_tag_safely(path, &tag)?;
+    write_id3_tag_safely(path, &tag, read.tag_len, read.has_id3v1)?;
     Ok(TagWriteResult {
         applied,
         removed_frames,
         removed_old_frames,
         skipped: Vec::new(),
+        bad_frames: read.problems.bad_frames,
+        removed_id3v1: read.has_id3v1,
     })
 }
 
-/// True when a write has no edit, no chapters and no old frame to remove.
-/// Then the file does not change, so the writer does not write it.
+/// The changes of a write that are not edits. Musicindex ADR 0090 R-TAG-8
+/// item 4: a bad frame, an old frame, an older tag version and an ID3v1 tag
+/// are each a change. An old frame is a frame of an older version or a
+/// frame of ADR 0086 R-TAG-2 item 5. A plain ID3v2.4 frame size counts as a
+/// bad frame (R-TAG-7 item 4).
+#[derive(Clone, Copy, Default)]
+#[allow(clippy::struct_excessive_bools)]
+struct Repairs {
+    bad_frames: bool,
+    old_frames: bool,
+    old_version: bool,
+    id3v1: bool,
+}
+
+/// True when a write has no edit, no chapters and no repair. Then the file
+/// does not change, so the writer does not write it.
 fn is_empty_write(
     edits: &[Id3v24Edit],
     chapters: Option<&ChapterFrames>,
-    removed_old_frames: &[String],
+    repairs: Repairs,
 ) -> bool {
-    edits.is_empty() && chapters.is_none() && removed_old_frames.is_empty()
+    let Repairs {
+        bad_frames,
+        old_frames,
+        old_version,
+        id3v1,
+    } = repairs;
+    edits.is_empty() && chapters.is_none() && !(bad_frames || old_frames || old_version || id3v1)
 }
 
 /// Musicindex ADR 0086 R-TAG-2 item 5: removes each `TXXX`, `COMM`, `USLT`
@@ -553,62 +607,221 @@ fn resolve_id3_license_edits(tag: &mut Tag, edits: &[Id3v24Edit]) -> LicenseReso
     resolution
 }
 
-/// The ID3v2.2 frames from iTunes that the conversion table of the id3
-/// crate does not convert, with their ID3v2.4 IDs (HitIt ADR 0080 task 004).
-const OLD_ITUNES_FRAME_IDS: [(&str, &str); 6] = [
-    ("TSP", "TSOP"),
-    ("TSA", "TSOA"),
-    ("TST", "TSOT"),
-    ("TS2", "TSO2"),
-    ("TSC", "TSOC"),
-    ("TCP", "TCMP"),
+/// What a write does with a frame of ID3v2.2 or ID3v2.3 (musicindex ADR 0090
+/// R-TAG-8 item 2).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum OldFrame {
+    /// The frame gets the ID3v2.4 ID and keeps its content.
+    Rename(&'static str),
+    /// `TYER`, `TDAT` and `TIME` merge into one `TDRC`.
+    MergeIntoTdrc,
+    /// The frame has no sure ID3v2.4 equivalent, so the write removes it
+    /// (R-TAG-8 item 3).
+    Remove,
+}
+
+/// The frames of ID3v2.2 and ID3v2.3 with no ID3v2.4 ID. The `id3` crate
+/// gives an ID3v2.2 frame its ID3v2.3 ID when it knows one, so this table
+/// has the ID3v2.2 IDs from iTunes that the `id3` table does not convert
+/// (HitIt ADR 0080 task 004) and the ID3v2.3 IDs.
+const OLD_FRAME_IDS: [(&str, OldFrame); 15] = [
+    ("TSP", OldFrame::Rename("TSOP")),
+    ("TSA", OldFrame::Rename("TSOA")),
+    ("TST", OldFrame::Rename("TSOT")),
+    ("TS2", OldFrame::Rename("TSO2")),
+    ("TSC", OldFrame::Rename("TSOC")),
+    ("TCP", OldFrame::Rename("TCMP")),
+    ("TORY", OldFrame::Rename("TDOR")),
+    ("IPLS", OldFrame::Rename("TIPL")),
+    ("TYER", OldFrame::MergeIntoTdrc),
+    ("TDAT", OldFrame::MergeIntoTdrc),
+    ("TIME", OldFrame::MergeIntoTdrc),
+    ("TRDA", OldFrame::Remove),
+    ("TSIZ", OldFrame::Remove),
+    ("EQUA", OldFrame::Remove),
+    ("RVAD", OldFrame::Remove),
 ];
 
-/// HitIt ADR 0080 Decision 6: a write keeps each value from another tool. This
-/// function gives each old iTunes frame its ID3v2.4 ID and keeps its value.
-/// It removes each other frame whose ID is not 4 bytes long, because an
-/// ID3v2.4 tag cannot hold that frame. It returns the ID of each removed
-/// frame.
-fn convert_old_v22_frames(tag: &mut Tag) -> Vec<String> {
+/// Musicindex ADR 0090 R-TAG-8 items 2 and 3: gives each old frame its
+/// ID3v2.4 equivalent, or removes it. A frame of ID3v2.2 whose ID is not 4
+/// bytes long has no equivalent. The `id3` crate gives the ID3v2.2 `RVA`
+/// frame the ID `RVA2`, but the content of `RVA2` is different, so the write
+/// removes it. `version` is the major version of the tag that the file held.
+pub(crate) fn convert_old_frames(tag: &mut Tag, version: Option<u8>) -> OldFrameChanges {
     let mut removed = Vec::new();
+    let mut converted_ids = Vec::new();
     let mut converted = Vec::new();
+    let mut date = OldDate::default();
     tag.frames_vec_mut().retain(|frame| {
-        if frame.id().len() == 4 {
-            return true;
+        let id = frame.id();
+        if version == Some(2) && id == "RVA2" {
+            removed.push(id.to_owned());
+            return false;
         }
-        match OLD_ITUNES_FRAME_IDS
-            .iter()
-            .find(|(old_id, _)| *old_id == frame.id())
-        {
-            Some((_, new_id)) => {
+        let row = OLD_FRAME_IDS.iter().find(|(old_id, _)| *old_id == id);
+        match row {
+            Some((_, OldFrame::Rename(new_id))) => {
+                converted_ids.push(id.to_owned());
                 converted.push(Frame::with_content(*new_id, frame.content().clone()));
             }
-            None => removed.push(frame.id().to_owned()),
+            Some((_, OldFrame::MergeIntoTdrc)) => {
+                date.set(id, frame.content().text());
+            }
+            None if id.len() == 4 => return true,
+            Some((_, OldFrame::Remove)) | None => removed.push(id.to_owned()),
         }
         false
     });
     for frame in converted {
         tag.add_frame(frame);
     }
-    removed
+    match date.tdrc() {
+        Some((tdrc, used)) if tag.get("TDRC").is_none() => {
+            tag.add_frame(Frame::text("TDRC", tdrc));
+            for id in date.ids() {
+                if used.contains(&id.as_str()) {
+                    converted_ids.push(id);
+                } else {
+                    removed.push(id);
+                }
+            }
+        }
+        _ => removed.extend(date.ids()),
+    }
+    OldFrameChanges {
+        removed,
+        converted: converted_ids,
+    }
+}
+
+/// The old frames that [`convert_old_frames`] changed.
+pub(crate) struct OldFrameChanges {
+    /// The ID of each frame that the conversion removed.
+    pub(crate) removed: Vec<String>,
+    /// The ID of each frame that the conversion changed to its ID3v2.4
+    /// equivalent.
+    pub(crate) converted: Vec<String>,
+}
+
+impl OldFrameChanges {
+    /// True when the conversion changed no frame.
+    pub(crate) fn is_empty(&self) -> bool {
+        self.removed.is_empty() && self.converted.is_empty()
+    }
+}
+
+/// The values of `TYER`, `TDAT` and `TIME` in one tag.
+#[derive(Default)]
+struct OldDate {
+    year: Option<String>,
+    day_month: Option<String>,
+    time: Option<String>,
+}
+
+impl OldDate {
+    fn set(&mut self, id: &str, text: Option<&str>) {
+        let value = text.map(|text| text.trim().to_owned());
+        match id {
+            "TYER" => self.year = value,
+            "TDAT" => self.day_month = value,
+            _ => self.time = value,
+        }
+    }
+
+    fn ids(&self) -> Vec<String> {
+        [
+            ("TYER", &self.year),
+            ("TDAT", &self.day_month),
+            ("TIME", &self.time),
+        ]
+        .into_iter()
+        .filter(|(_, value)| value.is_some())
+        .map(|(id, _)| id.to_owned())
+        .collect()
+    }
+
+    /// The `TDRC` text: `yyyy`, `yyyy-MM-dd` or `yyyy-MM-ddTHH:mm`, and the
+    /// IDs of the frames that it uses. `TDAT` is `DDMM` and `TIME` is `HHMM`.
+    /// A part that is not 4 digits or not a valid date or time stops the
+    /// merge there, because its reading is not sure (R-TAG-9 item 1). `None`
+    /// when the year is not 4 digits.
+    fn tdrc(&self) -> Option<(String, Vec<&'static str>)> {
+        let digits = |value: &Option<String>| {
+            value
+                .as_deref()
+                .filter(|value| value.len() == 4 && value.bytes().all(|byte| byte.is_ascii_digit()))
+                .map(|value| (value[..2].to_owned(), value[2..].to_owned()))
+        };
+        let in_range = |part: &str, low: u8, high: u8| {
+            part.parse::<u8>()
+                .is_ok_and(|number| (low..=high).contains(&number))
+        };
+        let year = self
+            .year
+            .as_deref()
+            .filter(|year| year.len() == 4 && year.bytes().all(|byte| byte.is_ascii_digit()))?;
+        let mut tdrc = year.to_owned();
+        let mut used = vec!["TYER"];
+        let Some((day, month)) = digits(&self.day_month)
+            .filter(|(day, month)| in_range(day, 1, 31) && in_range(month, 1, 12))
+        else {
+            return Some((tdrc, used));
+        };
+        tdrc.extend(["-", &month, "-", &day]);
+        used.push("TDAT");
+        if let Some((hour, minute)) = digits(&self.time)
+            .filter(|(hour, minute)| in_range(hour, 0, 23) && in_range(minute, 0, 59))
+        {
+            tdrc.extend(["T", &hour, ":", &minute]);
+            used.push("TIME");
+        }
+        Some((tdrc, used))
+    }
 }
 
 /// HitIt ADR 0080 task 004: a failed write never changes the file. The writer
-/// encodes the tag into memory first. It then writes the tag into a staged
-/// copy in the same directory and renames the copy over the file. The copy
-/// keeps the file mode. The id3 crate writes the copy, so the bytes after
-/// the tag stay equal to the bytes of the original file.
-fn write_id3_tag_safely(path: &Path, tag: &Tag) -> Result<()> {
-    tag.write_to(std::io::sink(), Version::Id3v24)
+/// encodes the tag into memory first. It then writes the new tag and the
+/// bytes after the old tag into a staged copy in the same directory, and
+/// renames the copy over the file. The copy keeps the file mode.
+///
+/// `old_tag_len` is the length of the old ID3v2 tag from the frame loop,
+/// with its extended header and its footer (musicindex ADR 0090 R-TAG-7).
+/// The writer does not find the end of the old tag again, so the bytes after
+/// the tag stay equal to the bytes of the original file. When `remove_id3v1`
+/// is true, the copy does not get the last 128 bytes, which are the ID3v1
+/// tag (R-TAG-8 item 5).
+fn write_id3_tag_safely(
+    path: &Path,
+    tag: &Tag,
+    old_tag_len: u64,
+    remove_id3v1: bool,
+) -> Result<()> {
+    let mut bytes = Vec::new();
+    tag.write_to(&mut bytes, Version::Id3v24)
         .with_context(|| format!("encode ID3v2.4 tags for {}", path.display()))?;
     let target = fs::canonicalize(path)
         .with_context(|| format!("resolve the tag write target {}", path.display()))?;
+    let original = fs::read(&target).with_context(|| format!("read {}", target.display()))?;
+    let start = usize::try_from(old_tag_len)
+        .ok()
+        .filter(|start| *start <= original.len())
+        .with_context(|| format!("the old tag of {} is past its end", target.display()))?;
+    let end = if remove_id3v1 && original.len() - start >= ID3V1_LEN {
+        original.len() - ID3V1_LEN
+    } else {
+        original.len()
+    };
+    bytes.extend_from_slice(&original[start..end]);
+    let permissions = fs::metadata(&target)
+        .with_context(|| format!("read the mode of {}", target.display()))?
+        .permissions();
+
     let staged = staged_tag_path(&target)?;
-    let written = fs::copy(&target, &staged)
-        .with_context(|| format!("copy {} to {}", target.display(), staged.display()))
-        .and_then(|_| {
-            tag.write_to_path(&staged, Version::Id3v24)
-                .with_context(|| format!("write ID3v2.4 tags to {}", staged.display()))
+    let written = fs::write(&staged, &bytes)
+        .with_context(|| format!("write {}", staged.display()))
+        .and_then(|()| {
+            fs::set_permissions(&staged, permissions)
+                .with_context(|| format!("set the mode of {}", staged.display()))
         })
         .and_then(|()| {
             fs::rename(&staged, &target)
@@ -619,6 +832,9 @@ fn write_id3_tag_safely(path: &Path, tag: &Tag) -> Result<()> {
     }
     written.with_context(|| format!("write ID3v2.4 tags to {}", path.display()))
 }
+
+/// The length of an ID3v1 tag at the end of a file.
+const ID3V1_LEN: usize = 128;
 
 /// A path for the staged copy of `target`, in the directory of `target`.
 fn staged_tag_path(target: &Path) -> Result<std::path::PathBuf> {
@@ -712,7 +928,11 @@ fn write_lofty_edits(
         .remove(tag_type)
         .unwrap_or_else(|| LoftyTag::new(tag_type));
     let removed_old_frames = remove_old_lofty_items(&mut tag, tag_type);
-    if is_empty_write(edits, chapters, &removed_old_frames) {
+    let repairs = Repairs {
+        old_frames: !removed_old_frames.is_empty(),
+        ..Repairs::default()
+    };
+    if is_empty_write(edits, chapters, repairs) {
         return Ok(TagWriteResult::default());
     }
     // Musicindex ADR 0086 R-TAG-1 item 5: no chapter frames in this format.
@@ -832,6 +1052,8 @@ fn write_lofty_edits(
         removed_frames: Vec::new(),
         removed_old_frames,
         skipped,
+        bad_frames: Vec::new(),
+        removed_id3v1: false,
     })
 }
 
@@ -1119,12 +1341,9 @@ fn lofty_website_item_keys(tag_type: lofty::tag::TagType) -> [String; 2] {
     }
 }
 
-fn read_mp3_tags(path: &Path) -> Result<AudioTags> {
-    let tag = no_tag_ok(Tag::read_from_path(path))
-        .with_context(|| format!("read embedded MP3 tags from {}", path.display()))?
-        .unwrap_or_default();
-
-    Ok(audio_tags_from_id3(&tag))
+fn read_mp3_tags(path: &Path) -> Result<(AudioTags, TagProblems)> {
+    let read = read_id3v2(path)?;
+    Ok((audio_tags_from_id3(&read.tag), read.problems))
 }
 
 pub(crate) fn audio_tags_from_id3(tag: &Tag) -> AudioTags {
@@ -2804,5 +3023,105 @@ mod tests {
 
         let none = resolve_license_edits(&[license_edit("TLAN", "eng")]);
         assert!(!none.replaces_license);
+    }
+
+    /// Musicindex ADR 0090 R-TAG-8 item 2: a test covers each row of the
+    /// conversion table. Each converted tag encodes as ID3v2.4, so the content
+    /// is valid for its new ID.
+    #[test]
+    fn adr_0090_each_row_of_the_old_frame_table_converts() {
+        use id3::Content;
+        use id3::frame::{InvolvedPeopleList, InvolvedPeopleListItem};
+
+        use super::{OLD_FRAME_IDS, OldFrame, convert_old_frames};
+
+        for (old_id, row) in OLD_FRAME_IDS {
+            let mut tag = Tag::with_version(id3::Version::Id3v23);
+            // A date row gets the date frames before it in the table, so its
+            // part of the date is in the merged `TDRC`.
+            let date = [("TYER", "2001"), ("TDAT", "2412"), ("TIME", "1305")];
+            let date_row = date.iter().position(|(id, _)| *id == old_id);
+            for (id, text) in date.iter().take(date_row.map_or(0, |row| row + 1)) {
+                tag.add_frame(Frame::text(*id, *text));
+            }
+            // A file gives `IPLS` the content of a people list.
+            let content = if old_id == "IPLS" {
+                Content::InvolvedPeopleList(InvolvedPeopleList {
+                    items: vec![InvolvedPeopleListItem {
+                        involvement: "producer".into(),
+                        involvee: "Name".into(),
+                    }],
+                })
+            } else {
+                Content::Text("value".into())
+            };
+            if date_row.is_none() {
+                tag.add_frame(Frame::with_content(old_id, content.clone()));
+            }
+
+            let changes = convert_old_frames(&mut tag, Some(3));
+            assert!(tag.get(old_id).is_none(), "{old_id}");
+            match row {
+                OldFrame::Rename(new_id) => {
+                    assert!(
+                        changes.removed.is_empty(),
+                        "{old_id}: {:?}",
+                        changes.removed
+                    );
+                    assert_eq!(changes.converted, [old_id], "{old_id}");
+                    assert_eq!(
+                        tag.get(new_id).map(Frame::content),
+                        Some(&content),
+                        "{old_id}"
+                    );
+                }
+                OldFrame::MergeIntoTdrc => {
+                    let row = date_row.expect("a date row");
+                    let expected = ["2001", "2001-12-24", "2001-12-24T13:05"][row];
+                    assert!(
+                        changes.removed.is_empty(),
+                        "{old_id}: {:?}",
+                        changes.removed
+                    );
+                    assert_eq!(changes.converted.len(), row + 1, "{old_id}");
+                    assert_eq!(
+                        tag.get("TDRC").and_then(|frame| frame.content().text()),
+                        Some(expected),
+                        "{old_id}"
+                    );
+                }
+                OldFrame::Remove => assert_eq!(changes.removed, [old_id], "{old_id}"),
+            }
+            assert_eq!(
+                tag.frames().count(),
+                usize::from(!matches!(row, OldFrame::Remove))
+            );
+            tag.write_to(std::io::sink(), id3::Version::Id3v24)
+                .unwrap_or_else(|error| panic!("{old_id}: {error}"));
+        }
+    }
+
+    /// R-TAG-9 item 1: a date part that is not a valid date or time stops
+    /// the merge, and the write removes the frame of that part.
+    #[test]
+    fn adr_0090_a_date_part_that_is_not_valid_stops_the_merge() {
+        use super::convert_old_frames;
+
+        for (day_month, time, expected, removed) in [
+            ("3213", "1305", "2001", vec!["TDAT", "TIME"]),
+            ("ab12", "1305", "2001", vec!["TDAT", "TIME"]),
+            ("2412", "2599", "2001-12-24", vec!["TIME"]),
+        ] {
+            let mut tag = Tag::with_version(id3::Version::Id3v23);
+            tag.add_frame(Frame::text("TYER", "2001"));
+            tag.add_frame(Frame::text("TDAT", day_month));
+            tag.add_frame(Frame::text("TIME", time));
+            let changes = convert_old_frames(&mut tag, Some(3));
+            assert_eq!(
+                tag.get("TDRC").and_then(|frame| frame.content().text()),
+                Some(expected)
+            );
+            assert_eq!(changes.removed, removed, "{day_month} {time}");
+        }
     }
 }

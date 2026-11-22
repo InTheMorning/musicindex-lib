@@ -2,13 +2,13 @@
 
 use std::path::Path;
 
-use anyhow::{Context, Result, anyhow};
-use id3::{Tag, no_tag_ok};
+use anyhow::{Result, anyhow};
 
 use crate::audio::{self, AudioTags, Id3v24Edit, TagWriteResult};
 use crate::chapters::{self, ChapterEntry, ChapterFrame, ChapterFrames, Split};
 use crate::format::AudioFormat;
 use crate::frames;
+use crate::id3v2::{TagProblems, read_id3v2};
 use crate::source::ReferenceSource;
 
 /// The GUIDs of a song file (R-TAG-3).
@@ -64,6 +64,9 @@ pub struct PodcastTags {
     pub toc: Vec<String>,
     /// Each tag of the file, as [`audio::read_audio_tags`] gives it.
     pub audio: AudioTags,
+    /// The problems of the ID3v2 tag of an MP3 file (musicindex ADR 0090
+    /// R-TAG-7 item 2).
+    pub problems: TagProblems,
 }
 
 impl PodcastTags {
@@ -155,12 +158,11 @@ pub fn read_podcast_tags(path: &Path) -> Result<PodcastTags> {
     if !is_mp3 {
         return Ok(podcast_tags(audio::read_audio_tags(path)?));
     }
-    let tag = no_tag_ok(Tag::read_from_path(path))
-        .with_context(|| format!("read embedded MP3 tags from {}", path.display()))?
-        .unwrap_or_default();
-    let mut tags = podcast_tags(audio::audio_tags_from_id3(&tag));
-    tags.chapter_frames = chapters::read_chapter_frames(&tag);
-    tags.toc = chapters::read_toc(&tag);
+    let read = read_id3v2(path)?;
+    let mut tags = podcast_tags(audio::audio_tags_from_id3(&read.tag));
+    tags.chapter_frames = chapters::read_chapter_frames(&read.tag);
+    tags.toc = chapters::read_toc(&read.tag);
+    tags.problems = read.problems;
     Ok(tags)
 }
 
@@ -180,6 +182,7 @@ fn podcast_tags(audio: AudioTags) -> PodcastTags {
         chapter_frames: Vec::new(),
         toc: Vec::new(),
         audio,
+        problems: TagProblems::default(),
     }
 }
 

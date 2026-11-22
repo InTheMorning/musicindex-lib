@@ -1,3 +1,4 @@
+use std::io::Cursor;
 use std::path::Path;
 use std::time::Duration;
 
@@ -5,8 +6,12 @@ use anyhow::{Context, Result};
 use lofty::file::TaggedFile;
 use lofty::picture::{Picture, PictureType};
 use lofty::prelude::*;
-use lofty::tag::{ItemKey, ItemValue, Tag};
+use lofty::probe::Probe;
+use lofty::tag::{ItemKey, ItemValue, Tag, TagType};
 use serde::Serialize;
+
+use crate::audio::convert_old_frames;
+use crate::id3v2::{TagProblems, read_id3v2};
 
 pub const MUSICINDEX_VOCABULARY: &[MusicIndexFrame] = &[
     MusicIndexFrame::new("Publisher", "TXXX:V4V_PUBLISHER"),
@@ -99,9 +104,25 @@ impl TrackTags {
 ///
 /// Returns an error when the file cannot be read or its tag cannot be parsed.
 pub fn read_tags(path: &Path) -> Result<TrackTags> {
-    let tagged_file = lofty::read_from_path(path)
-        .with_context(|| format!("read tags from {}", path.display()))?;
-    Ok(track_tags(&tagged_file))
+    read_tags_checked(path).map(|(tags, _)| tags)
+}
+
+/// Reads the tags of `path` as [`read_tags`] does, and gives the problems of
+/// its ID3v2 tag (musicindex ADR 0090 R-TAG-7 item 3).
+///
+/// The display read of an ID3v2 tag uses the frame loop of
+/// [`crate::id3v2::read_id3v2`]. It keeps each good frame before and after a
+/// bad frame, and it shows a frame of an older version as its ID3v2.4
+/// equivalent. When the file has an ID3v2 tag, the read does not show the
+/// ID3v1 tag, because a write removes it (R-TAG-8 item 5). When the tag
+/// header is bad, the read shows no ID3v2 frame and no ID3v1 data.
+///
+/// # Errors
+///
+/// Returns an error when the file cannot be read or `lofty` cannot parse it.
+pub fn read_tags_checked(path: &Path) -> Result<(TrackTags, TagProblems)> {
+    let (tagged_file, problems) = read_tagged_file(path)?;
+    Ok((track_tags(&tagged_file), problems))
 }
 
 /// Reads the tags and the display picture of `path` in one read of the
@@ -114,12 +135,67 @@ pub fn read_tags(path: &Path) -> Result<TrackTags> {
 ///
 /// Returns an error when `lofty` cannot read the file.
 pub fn read_tags_with_picture(path: &Path) -> Result<(TrackTags, Option<Vec<u8>>)> {
-    let mut tagged_file = lofty::read_from_path(path)
-        .with_context(|| format!("read tags from {}", path.display()))?;
+    let (mut tagged_file, _) = read_tagged_file(path)?;
     let tags = track_tags(&tagged_file);
     let picture = take_picture(&mut tagged_file);
     Ok((tags, picture))
 }
+
+/// Reads `path` with `lofty` after the frame loop of R-TAG-7.
+///
+/// A file with no ID3v2 tag, or with a correct ID3v2.4 tag and no ID3v1 tag,
+/// goes to `lofty` without a change. A correct tag has no bad frame, no plain
+/// frame size and no frame of an older version. For each other file with an ID3v2 tag,
+/// `lofty` reads a copy in memory: an ID3v2.4 tag of the good frames, then
+/// the bytes after the old tag, with no ID3v1 tag.
+fn read_tagged_file(path: &Path) -> Result<(TaggedFile, TagProblems)> {
+    let read = read_id3v2(path)?;
+    let context = || format!("read tags from {}", path.display());
+    if read.problems.bad_tag.is_some() {
+        let mut tagged_file = lofty::read_from_path(path).with_context(context)?;
+        tagged_file.remove(TagType::Id3v2);
+        tagged_file.remove(TagType::Id3v1);
+        return Ok((tagged_file, read.problems));
+    }
+    let mut tag = read.tag.clone();
+    let old_frames = convert_old_frames(&mut tag, read.version);
+    let correct = read.version.is_none()
+        || (read.version == Some(4)
+            && !read.has_id3v1
+            && !read.plain_frame_sizes
+            && read.problems.bad_frames.is_empty()
+            && old_frames.is_empty());
+    if correct {
+        let tagged_file = lofty::read_from_path(path).with_context(context)?;
+        return Ok((tagged_file, read.problems));
+    }
+
+    let bytes = std::fs::read(path).with_context(context)?;
+    let start = usize::try_from(read.tag_len)
+        .ok()
+        .filter(|start| *start <= bytes.len())
+        .with_context(context)?;
+    let end = if read.has_id3v1 && bytes.len() >= start + ID3V1_LEN {
+        bytes.len() - ID3V1_LEN
+    } else {
+        bytes.len()
+    };
+    let mut copy = Vec::with_capacity(bytes.len());
+    if tag.frames().next().is_some() {
+        tag.write_to(&mut copy, id3::Version::Id3v24)
+            .with_context(context)?;
+    }
+    copy.extend_from_slice(&bytes[start..end]);
+    let tagged_file = Probe::new(Cursor::new(copy))
+        .guess_file_type()
+        .with_context(context)?
+        .read()
+        .with_context(context)?;
+    Ok((tagged_file, read.problems))
+}
+
+/// The length in bytes of an ID3v1 tag at the end of a file.
+const ID3V1_LEN: usize = 128;
 
 /// Selects the display picture: the front cover, else the first picture
 /// (ADR 0008 §The Embedded Image). The tags are examined in their order.
