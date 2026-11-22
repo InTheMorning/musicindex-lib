@@ -141,6 +141,14 @@ pub fn read_tags_with_picture(path: &Path) -> Result<(TrackTags, Option<Vec<u8>>
     Ok((tags, picture))
 }
 
+/// The length of the audio of `path` that `lofty` measures, the same length
+/// as [`TrackTags::duration`]. `None` when `lofty` cannot read the file or
+/// measures no length (musicindex ADR 0091 R-TAG-11 item 3).
+pub(crate) fn measured_length(path: &Path) -> Option<Duration> {
+    let (tagged_file, _) = read_tagged_file(path).ok()?;
+    nonzero_duration(tagged_file.properties().duration())
+}
+
 /// Reads `path` with `lofty` after the frame loop of R-TAG-7.
 ///
 /// A file with no ID3v2 tag, or with a correct ID3v2.4 tag and no ID3v1 tag,

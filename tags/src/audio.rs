@@ -436,6 +436,41 @@ pub(crate) fn write_tags(
     chapters: Option<&ChapterFrames>,
     source: &dyn ReferenceSource,
 ) -> Result<TagWriteResult> {
+    let (edits, skipped) = without_length_edits(edits);
+    let mut result = write_format_tags(path, &edits, chapters, source)?;
+    result.skipped.extend(skipped);
+    Ok(result)
+}
+
+/// Musicindex ADR 0091 R-TAG-11 items 1 and 2: a write does not use the
+/// value of a `TLEN` edit. It gives the edits without `TLEN`, and the reason
+/// for each `TLEN` edit for [`TagWriteResult::skipped`]. Vorbis comments and
+/// MP4 have no length field, so the rule also drops the edit there.
+fn without_length_edits(edits: &[Id3v24Edit]) -> (Vec<Id3v24Edit>, Vec<String>) {
+    let (length, kept): (Vec<_>, Vec<_>) = edits
+        .iter()
+        .cloned()
+        .partition(|edit| edit.frame_label == "TLEN");
+    let skipped = length
+        .iter()
+        .map(|edit| {
+            format!(
+                "TLEN {}: a write keeps the TLEN of the file or measures the length \
+                 (musicindex ADR 0091 R-TAG-11)",
+                edit.value
+            )
+        })
+        .collect();
+    (kept, skipped)
+}
+
+/// The writer of [`write_tags`] for the format of `path`.
+fn write_format_tags(
+    path: &Path,
+    edits: &[Id3v24Edit],
+    chapters: Option<&ChapterFrames>,
+    source: &dyn ReferenceSource,
+) -> Result<TagWriteResult> {
     match AudioFormat::detect_from_file(path) {
         Ok(AudioFormat::Mp3) | Err(_) => write_mp3_edits(path, edits, chapters, source),
         Ok(AudioFormat::Flac | AudioFormat::OggVorbis | AudioFormat::OggOpus) => write_lofty_edits(
@@ -523,6 +558,18 @@ fn write_mp3_edits(
     }
     if let Some(chapters) = chapters {
         chapters.replace_id3_frames(&mut tag);
+    }
+
+    // Musicindex ADR 0091 R-TAG-11: the frame loop removed a TLEN that is
+    // not a positive whole number, so a TLEN here is good and stays. The
+    // TLEN frame is always the last frame, so a second write of the same
+    // tags gives the same bytes.
+    let length = tag.remove("TLEN").into_iter().next().or_else(|| {
+        crate::track::measured_length(path)
+            .map(|length| Frame::text("TLEN", length.as_millis().to_string()))
+    });
+    if let Some(length) = length {
+        tag.add_frame(length);
     }
 
     write_id3_tag_safely(path, &tag, read.tag_len, read.has_id3v1)?;

@@ -77,6 +77,10 @@ A write removes a bad frame, and writes a bad frame of the suite again from the 
 app (R-TAG-9). `KnownBadFrame` is the list of known bad frames. Each entry needs a test file in
 `tags/tests/id3v2.rs`.
 
+A write keeps the `TLEN` of the file and ignores a `TLEN` edit (musicindex ADR 0091
+R-TAG-11). When the file has no good `TLEN`, the MP3 write gives the length that lofty
+measures, and else no `TLEN`.
+
 `read_podcast_tags` and `track::read_tags` read only the new names.
 `write_id3v24_edits` writes the field edits of HitIt, and the trait `ReferenceSource` gives it
 the pictures and the transcripts, because the app owns the network.

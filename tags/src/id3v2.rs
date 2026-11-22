@@ -65,6 +65,10 @@ pub enum KnownBadFrame {
     /// A frame with a size of 0. It holds no data, so a repair is not
     /// possible (R-TAG-9 item 5).
     ZeroSize,
+    /// A `TLEN` frame whose text is not a positive whole number of
+    /// milliseconds (musicindex ADR 0091 R-TAG-11 item 4). The write removes
+    /// it and writes the measured length.
+    LengthNotAWholeNumber,
 }
 
 /// What a write does with a known bad frame.
@@ -78,13 +82,13 @@ pub enum BadFrameAction {
 
 impl KnownBadFrame {
     /// Each entry of the list.
-    pub const ALL: [Self; 1] = [Self::ZeroSize];
+    pub const ALL: [Self; 2] = [Self::ZeroSize, Self::LengthNotAWholeNumber];
 
     /// The action of a write for this entry.
     #[must_use]
     pub const fn action(self) -> BadFrameAction {
         match self {
-            Self::ZeroSize => BadFrameAction::Remove,
+            Self::ZeroSize | Self::LengthNotAWholeNumber => BadFrameAction::Remove,
         }
     }
 }
@@ -354,6 +358,17 @@ fn parse_frames(header: &TagHeader, mut body: Vec<u8>) -> Result<Frames, String>
                 })
             }
         };
+        let result = result.and_then(|frame| {
+            if frame.id() == "TLEN" && length_ms(&frame).is_none() {
+                Err(bad(
+                    "the TLEN text is not a positive whole number".to_owned(),
+                    Some(KnownBadFrame::LengthNotAWholeNumber),
+                    None,
+                ))
+            } else {
+                Ok(frame)
+            }
+        });
         match result {
             Ok(frame) => frames.push(frame),
             Err(bad_frame) => bad_frames.push(bad_frame),
@@ -361,6 +376,16 @@ fn parse_frames(header: &TagHeader, mut body: Vec<u8>) -> Result<Frames, String>
         pos = end;
     }
     Ok((frames, bad_frames, plain_sizes))
+}
+
+/// The length in milliseconds of a `TLEN` frame, when its text is a positive
+/// whole number (musicindex ADR 0091 R-TAG-11 item 4).
+pub(crate) fn length_ms(frame: &Frame) -> Option<u64> {
+    let text = frame.content().text()?;
+    if text.is_empty() || !text.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    text.parse::<u64>().ok().filter(|length| *length > 0)
 }
 
 /// The frame header layout of one tag version.

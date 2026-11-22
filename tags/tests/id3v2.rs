@@ -364,7 +364,6 @@ fn a_write_with_no_edit_removes_id3v1() -> Result<()> {
     let dir = TempDir::new()?;
     let body = frame24("TIT2", &latin1("Current"));
     let path = mp3(&dir, "id3v1.mp3", &tag(4, 0, &body), true);
-    let before = std::fs::metadata(&path)?.len();
     assert!(read_id3v2(&path)?.has_id3v1);
 
     let (display, _) = read_tags_checked(&path)?;
@@ -373,7 +372,7 @@ fn a_write_with_no_edit_removes_id3v1() -> Result<()> {
     let result = write_id3v24_edits(&path, &[], &NoReferences)?;
     assert!(result.removed_id3v1);
     assert!(!read_id3v2(&path)?.has_id3v1);
-    assert_eq!(std::fs::metadata(&path)?.len(), before - 128);
+    assert_eq!(after_tag(&path), audio());
     assert_eq!(strict(&path).title(), Some("Current"));
     Ok(())
 }
@@ -467,14 +466,19 @@ fn strange_love_tag() -> Vec<u8> {
 }
 
 /// The test file of each entry of the list of known bad frames (R-TAG-9
-/// item 4), with the ID of the bad frame. A new entry does not compile until
-/// it has a test file here.
-fn known_entry_file(dir: &TempDir, entry: KnownBadFrame) -> (PathBuf, &'static str) {
+/// item 4), with the ID of the bad frame and its text (`None` when the frame
+/// has no text). A new entry does not compile until it has a test file here.
+fn known_entry_file(
+    dir: &TempDir,
+    entry: KnownBadFrame,
+) -> (PathBuf, &'static str, Option<&'static str>) {
     match entry {
         KnownBadFrame::ZeroSize => (
             mp3(dir, "strange-love.mp3", &strange_love_tag(), false),
             "PRIV",
+            None,
         ),
+        KnownBadFrame::LengthNotAWholeNumber => (bad_length_file(dir), "TLEN", Some("abc")),
     }
 }
 
@@ -482,7 +486,7 @@ fn known_entry_file(dir: &TempDir, entry: KnownBadFrame) -> (PathBuf, &'static s
 fn each_known_bad_frame_has_a_test_file() -> Result<()> {
     for entry in KnownBadFrame::ALL {
         let dir = TempDir::new()?;
-        let (path, id) = known_entry_file(&dir, entry);
+        let (path, id, bad_text) = known_entry_file(&dir, entry);
         let read = read_id3v2(&path)?;
         assert!(
             read.problems
@@ -493,10 +497,17 @@ fn each_known_bad_frame_has_a_test_file() -> Result<()> {
             read.problems
         );
         write_id3v24_edits(&path, &[], &NoReferences)?;
-        let kept = strict(&path).get(id).is_some();
+        // A removed frame can come back with new data, for example the
+        // measured TLEN (musicindex ADR 0091 R-TAG-11 item 4). The bad
+        // content does not come back.
+        let tag = strict(&path);
+        let frame = tag.get(id);
         match entry.action() {
-            BadFrameAction::Remove => assert!(!kept, "{entry:?}"),
-            BadFrameAction::Repair => assert!(kept, "{entry:?}"),
+            BadFrameAction::Remove => assert!(
+                frame.is_none_or(|frame| frame.content().text() != bad_text),
+                "{entry:?}"
+            ),
+            BadFrameAction::Repair => assert!(frame.is_some(), "{entry:?}"),
         }
     }
     Ok(())
@@ -717,5 +728,127 @@ fn a_slash_in_a_v22_artist_stays_one_value() -> Result<()> {
     body.extend(data);
     let path = mp3(&dir, "slash-v22.mp3", &tag(2, 0, &body), false);
     assert_eq!(read_id3v2(&path)?.tag.artist(), Some("AC/DC"));
+    Ok(())
+}
+
+/// A file with a `TLEN` of "abc" (musicindex ADR 0091 R-TAG-11 item 4).
+fn bad_length_file(dir: &TempDir) -> PathBuf {
+    let mut body = frame24("TIT2", &latin1("Song"));
+    body.extend(frame24("TLEN", &latin1("abc")));
+    mp3(dir, "bad-length.mp3", &tag(4, 0, &body), false)
+}
+
+/// The `TLEN` text of `path` after a write, from a strict read.
+fn length_text(path: &Path) -> Option<String> {
+    strict(path)
+        .get("TLEN")
+        .and_then(|frame| frame.content().text())
+        .map(str::to_owned)
+}
+
+/// The length in whole milliseconds that the display read measures.
+fn measured_ms(path: &Path) -> String {
+    let (display, _) = read_tags_checked(path).expect("read the display tags");
+    display
+        .duration
+        .expect("the test audio has a length")
+        .as_millis()
+        .to_string()
+}
+
+fn album_edit() -> Id3v24Edit {
+    Id3v24Edit {
+        frame_label: "TALB".into(),
+        value: "Edit".into(),
+    }
+}
+
+#[test]
+fn a_write_keeps_the_tlen_of_the_file() -> Result<()> {
+    let dir = TempDir::new()?;
+    let mut body = frame24("TIT2", &latin1("Song"));
+    body.extend(frame24("TLEN", &latin1("209484")));
+    let path = mp3(&dir, "length.mp3", &tag(4, 0, &body), false);
+    let edit = Id3v24Edit {
+        frame_label: "TLEN".into(),
+        value: "208000".into(),
+    };
+    let result = write_id3v24_edits(&path, &[edit, album_edit()], &NoReferences)?;
+    assert_eq!(
+        length_text(&path).as_deref(),
+        Some("209484"),
+        "musicindex ADR 0091 R-TAG-11 item 1: a write keeps the TLEN of the file"
+    );
+    assert!(
+        result
+            .skipped
+            .iter()
+            .any(|reason| reason.contains("R-TAG-11")),
+        "musicindex ADR 0091 R-TAG-11 item 1: the write reports the ignored TLEN edit: {:?}",
+        result.skipped
+    );
+    Ok(())
+}
+
+#[test]
+fn a_write_gives_the_measured_length_when_the_file_has_no_tlen() -> Result<()> {
+    let dir = TempDir::new()?;
+    let path = mp3(
+        &dir,
+        "no-length.mp3",
+        &tag(4, 0, &frame24("TIT2", &latin1("Song"))),
+        false,
+    );
+    let measured = measured_ms(&path);
+    let edit = Id3v24Edit {
+        frame_label: "TLEN".into(),
+        value: "208000".into(),
+    };
+    write_id3v24_edits(&path, &[edit, album_edit()], &NoReferences)?;
+    assert_eq!(
+        length_text(&path),
+        Some(measured),
+        "musicindex ADR 0091 R-TAG-11 item 2: a write gives the measured length, not the edit"
+    );
+    Ok(())
+}
+
+#[test]
+fn a_write_gives_no_tlen_when_the_length_cannot_be_measured() -> Result<()> {
+    let dir = TempDir::new()?;
+    let mut bytes = tag(4, 0, &frame24("TIT2", &latin1("Song")));
+    bytes.extend(vec![0x55; 4096]);
+    let path = dir.path().join("no-audio.mp3");
+    std::fs::write(&path, bytes)?;
+    write_id3v24_edits(&path, &[album_edit()], &NoReferences)?;
+    assert_eq!(strict(&path).album(), Some("Edit"));
+    assert_eq!(
+        length_text(&path),
+        None,
+        "musicindex ADR 0091 R-TAG-11 item 3: a write gives no TLEN when it cannot measure a length"
+    );
+    Ok(())
+}
+
+#[test]
+fn a_tlen_that_is_not_a_whole_number_gets_the_measured_length() -> Result<()> {
+    let dir = TempDir::new()?;
+    let path = bad_length_file(&dir);
+    let read = read_id3v2(&path)?;
+    assert!(
+        read.problems
+            .bad_frames
+            .iter()
+            .any(|bad| bad.known == Some(KnownBadFrame::LengthNotAWholeNumber)),
+        "musicindex ADR 0091 R-TAG-11 item 4: a TLEN of abc is a bad frame: {:?}",
+        read.problems
+    );
+    let measured = measured_ms(&path);
+    write_id3v24_edits(&path, &[], &NoReferences)?;
+    assert_eq!(
+        length_text(&path),
+        Some(measured),
+        "musicindex ADR 0091 R-TAG-11 item 4: a TLEN of abc gets the measured length"
+    );
     Ok(())
 }
