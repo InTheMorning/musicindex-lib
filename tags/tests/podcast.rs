@@ -7,7 +7,8 @@ use id3::frame::{Comment, Lyrics, SynchronisedLyrics, SynchronisedLyricsType, Ti
 use id3::{Content, Frame, Tag, TagLike, Version};
 use musicindex_tags::{
     ChapterEntry, EpisodeTags, Id3v24Edit, NoReferences, SongTags, Split, SplitTarget,
-    TooManyChapters, frames, read_podcast_tags, write_episode_tags, write_song_tags,
+    TooManyChapters, frames, read_podcast_tags, write_episode_tags, write_id3v24_edits,
+    write_song_tags,
 };
 use serde_json::json;
 use tempfile::TempDir;
@@ -521,5 +522,60 @@ fn empty_guid_is_an_error() -> Result<()> {
     empty.item_guid = " ".into();
     assert!(write_song_tags(&path, &empty, &[], &NoReferences).is_err());
     assert_eq!(std::fs::read(&path)?, before);
+    Ok(())
+}
+
+/// R-TAG-2 item 5: a write with no edit still removes the old frames, for
+/// example when an old route frame has no new value. A second such write
+/// does not change the file.
+#[test]
+fn write_with_no_edit_removes_the_old_frames() -> Result<()> {
+    let dir = TempDir::new()?;
+    let mp3 = mp3_with_each_old_frame(&dir);
+    let flac = copy_fixture(&dir, "old-frames.flac");
+    for (path, count) in [(mp3, 8), (flac, 5)] {
+        let result = write_id3v24_edits(&path, &[], &NoReferences)?;
+        assert_eq!(result.removed_old_frames.len(), count, "{}", path.display());
+        assert_eq!(result.applied, 0);
+        let tags = read_podcast_tags(&path)?;
+        assert!(
+            !tags
+                .audio
+                .fields
+                .iter()
+                .any(|field| frames::is_old_description(frames::descriptor(&field.frame_id))),
+            "{:?}",
+            tags.audio.fields
+        );
+
+        let bytes = std::fs::read(&path)?;
+        let second = write_id3v24_edits(&path, &[], &NoReferences)?;
+        assert!(second.removed_old_frames.is_empty());
+        assert_eq!(std::fs::read(&path)?, bytes, "{}", path.display());
+    }
+    Ok(())
+}
+
+/// A file with no old frame and no edit does not change: the writer does not
+/// write it.
+#[test]
+fn write_with_no_edit_and_no_old_frame_does_not_write() -> Result<()> {
+    let dir = TempDir::new()?;
+    let flac = copy_fixture(&dir, "untagged.flac");
+    let mp3 = copy_fixture(&dir, "old-frames.mp3");
+    write_song_tags(&mp3, &song(), &[], &NoReferences)?;
+    for path in [mp3, flac] {
+        let bytes = std::fs::read(&path)?;
+        let modified = std::fs::metadata(&path)?.modified()?;
+        let result = write_id3v24_edits(&path, &[], &NoReferences)?;
+        assert!(result.removed_old_frames.is_empty(), "{}", path.display());
+        assert_eq!(std::fs::read(&path)?, bytes, "{}", path.display());
+        assert_eq!(
+            std::fs::metadata(&path)?.modified()?,
+            modified,
+            "{}",
+            path.display()
+        );
+    }
     Ok(())
 }

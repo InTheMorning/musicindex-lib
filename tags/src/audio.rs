@@ -392,12 +392,15 @@ pub struct TagWriteResult {
 /// edit.
 ///
 /// Each write also removes the old frames of musicindex ADR 0086 R-TAG-2
-/// item 5. A second write of the same edits gives the same tag.
+/// item 5. A second write of the same edits gives the same tag. An empty
+/// `edits` removes only the old frames. When the file has no old frame, an
+/// empty `edits` does not write the file.
 ///
 /// # Errors
 ///
 /// Returns an error when the file cannot be read or written, when an edit
-/// label cannot be written, or when the format is raw WAV. A failed MP3 write
+/// label cannot be written, or when the format is raw WAV and `edits` is not
+/// empty. A failed MP3 write
 /// does not change the file.
 pub fn write_id3v24_edits(
     path: &Path,
@@ -415,9 +418,6 @@ pub(crate) fn write_tags(
     chapters: Option<&ChapterFrames>,
     source: &dyn ReferenceSource,
 ) -> Result<TagWriteResult> {
-    if edits.is_empty() && chapters.is_none() {
-        return Ok(TagWriteResult::default());
-    }
     match AudioFormat::detect_from_file(path) {
         Ok(AudioFormat::Mp3) | Err(_) => write_mp3_edits(path, edits, chapters, source),
         Ok(AudioFormat::Flac | AudioFormat::OggVorbis | AudioFormat::OggOpus) => write_lofty_edits(
@@ -430,6 +430,9 @@ pub(crate) fn write_tags(
         Ok(AudioFormat::Mp4) => {
             let edits = mp4_single_date_edits(edits);
             write_lofty_edits(path, &edits, chapters, lofty::tag::TagType::Mp4Ilst, source)
+        }
+        Ok(AudioFormat::Wav) if edits.is_empty() && chapters.is_none() => {
+            Ok(TagWriteResult::default())
         }
         Ok(AudioFormat::Wav) => Err(anyhow!(
             "cannot tag raw WAV ({}); re-subscribe with `flac` installed to upgrade",
@@ -472,6 +475,9 @@ fn write_mp3_edits(
         .unwrap_or_default();
     let removed_frames = convert_old_v22_frames(&mut tag);
     let removed_old_frames = remove_old_id3_frames(&mut tag);
+    if is_empty_write(edits, chapters, &removed_old_frames) {
+        return Ok(TagWriteResult::default());
+    }
     remove_stale_id3_website_frames(&mut tag, edits);
     remove_stale_id3_description_frames(&mut tag, edits);
     let license = resolve_id3_license_edits(&mut tag, edits);
@@ -494,6 +500,16 @@ fn write_mp3_edits(
         removed_old_frames,
         skipped: Vec::new(),
     })
+}
+
+/// True when a write has no edit, no chapters and no old frame to remove.
+/// Then the file does not change, so the writer does not write it.
+fn is_empty_write(
+    edits: &[Id3v24Edit],
+    chapters: Option<&ChapterFrames>,
+    removed_old_frames: &[String],
+) -> bool {
+    edits.is_empty() && chapters.is_none() && removed_old_frames.is_empty()
 }
 
 /// Musicindex ADR 0086 R-TAG-2 item 5: removes each `TXXX`, `COMM`, `USLT`
@@ -696,6 +712,9 @@ fn write_lofty_edits(
         .remove(tag_type)
         .unwrap_or_else(|| LoftyTag::new(tag_type));
     let removed_old_frames = remove_old_lofty_items(&mut tag, tag_type);
+    if is_empty_write(edits, chapters, &removed_old_frames) {
+        return Ok(TagWriteResult::default());
+    }
     // Musicindex ADR 0086 R-TAG-1 item 5: no chapter frames in this format.
     // The chapter JSON is a keyed item, so it is one more edit.
     let mut edits = edits.to_vec();
