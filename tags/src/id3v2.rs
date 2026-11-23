@@ -1,4 +1,4 @@
-//! The ID3v2 frame loop of musicindex ADR 0090 R-TAG-7.
+//! The ID3v2 frame loop of musicindex ADR 0093 R-TAG-7.
 //!
 //! The `id3` crate stops at the first bad frame. This loop finds the bounds
 //! of each frame itself. It gives each frame to `id3` alone, so a bad frame
@@ -58,7 +58,7 @@ pub struct BadFrame {
     pub known: Option<KnownBadFrame>,
 }
 
-/// The list of known bad frames of musicindex ADR 0090 R-TAG-9 item 4. Each
+/// The list of known bad frames of musicindex ADR 0093 R-TAG-9 item 4. Each
 /// entry has a test file with the bad frame in `tests/id3v2.rs`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum KnownBadFrame {
@@ -66,7 +66,7 @@ pub enum KnownBadFrame {
     /// possible (R-TAG-9 item 5).
     ZeroSize,
     /// A `TLEN` frame whose text is not a positive whole number of
-    /// milliseconds (musicindex ADR 0091 R-TAG-11 item 4). The write removes
+    /// milliseconds (musicindex ADR 0093 R-TAG-11 item 4). The write removes
     /// it and writes the measured length.
     LengthNotAWholeNumber,
 }
@@ -379,7 +379,7 @@ fn parse_frames(header: &TagHeader, mut body: Vec<u8>) -> Result<Frames, String>
 }
 
 /// The length in milliseconds of a `TLEN` frame, when its text is a positive
-/// whole number (musicindex ADR 0091 R-TAG-11 item 4).
+/// whole number (musicindex ADR 0093 R-TAG-11 item 4).
 pub(crate) fn length_ms(frame: &Frame) -> Option<u64> {
     let text = frame.content().text()?;
     if text.is_empty() || !text.bytes().all(|byte| byte.is_ascii_digit()) {
@@ -538,7 +538,7 @@ const SLASH_VALUE_FRAMES: [&str; 5] = ["TCOM", "TEXT", "TOLY", "TOPE", "TPE1"];
 
 /// Gives the text of a frame of [`SLASH_VALUE_FRAMES`] its "/" again.
 ///
-/// Orchestrator choice of 2026-11-22 under musicindex ADR 0090 R-TAG-9 item
+/// Orchestrator choice of 2026-11-22 under musicindex ADR 0093 R-TAG-9 item
 /// 1: a "/" can be a separator or a part of a name, for example "AC/DC". The
 /// division of the value is thus not sure, so the read keeps one value with
 /// each byte of the text. In ID3v2.2 and ID3v2.3, the `id3` crate stops the

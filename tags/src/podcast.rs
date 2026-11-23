@@ -1,4 +1,4 @@
-//! The song and episode tags of musicindex ADR 0086 R-TAG-3 and R-TAG-4.
+//! The song and episode tags of musicindex ADR 0093 R-TAG-3 and R-TAG-4.
 
 use std::path::Path;
 
@@ -64,7 +64,7 @@ pub struct PodcastTags {
     pub toc: Vec<String>,
     /// Each tag of the file, as [`audio::read_audio_tags`] gives it.
     pub audio: AudioTags,
-    /// The problems of the ID3v2 tag of an MP3 file (musicindex ADR 0090
+    /// The problems of the ID3v2 tag of an MP3 file (musicindex ADR 0093
     /// R-TAG-7 item 2).
     pub problems: TagProblems,
 }

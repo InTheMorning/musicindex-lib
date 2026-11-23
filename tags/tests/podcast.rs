@@ -1,4 +1,4 @@
-//! The checks of musicindex ADR 0086 for `musicindex-tags` (section Checks).
+//! The checks of musicindex ADR 0093 for `musicindex-tags` (section Checks).
 
 use std::path::{Path, PathBuf};
 
@@ -296,7 +296,7 @@ fn episode_chapter_json_has_author_only_when_given() -> Result<()> {
     Ok(())
 }
 
-/// Musicindex ADR 0089 R-TAG-6: a remote entry holds the routes of its song,
+/// Musicindex ADR 0093 R-TAG-6: a remote entry holds the routes of its song,
 /// or JSON `null` when the writer has no routes. A local entry holds its own
 /// recipients. The reader gives back the same entries in MP3 and FLAC.
 #[test]

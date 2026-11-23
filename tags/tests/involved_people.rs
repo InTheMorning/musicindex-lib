@@ -1,4 +1,4 @@
-//! The edit value of a `TIPL` or `TMCL` frame (musicindex ADR 0086 R-TAG-1
+//! The edit value of a `TIPL` or `TMCL` frame (musicindex ADR 0093 R-TAG-1
 //! item 4): the crate owns the text, and a pair that does not read back the
 //! same is an error.
 

@@ -15,7 +15,7 @@ fn fixture(name: &str) -> PathBuf {
 }
 
 /// A copy of the fixture `name` in `dir`, tagged again with the frame names of
-/// musicindex ADR 0086 R-TAG-2. The fixture holds the old names. The write
+/// musicindex ADR 0093 R-TAG-2. The fixture holds the old names. The write
 /// gives each old field its new name and keeps the other fields.
 fn retagged(dir: &Path, name: &str) -> Result<PathBuf> {
     let copy = dir.join(name);
@@ -224,7 +224,7 @@ fn tags_image_tag_absent_gives_none() -> Result<()> {
     Ok(())
 }
 
-/// Musicindex ADR 0086 R-TAG-2 item 2: the old names give no field.
+/// Musicindex ADR 0093 R-TAG-2 item 2: the old names give no field.
 #[test]
 fn tags_old_names_give_no_field() -> Result<()> {
     for name in ["old-frames.mp3", "old-frames.flac"] {

@@ -1,4 +1,4 @@
-//! The chapter songs of an episode file (musicindex ADR 0086 R-TAG-4).
+//! The chapter songs of an episode file (musicindex ADR 0093 R-TAG-4).
 
 use std::fmt;
 
@@ -50,7 +50,7 @@ pub enum SplitTarget {
         item_guid: Option<String>,
         /// The value block of the song item, or of the song feed channel when
         /// the item has none, in the value form of `TXXX:Podcast Value
-        /// Routes` (musicindex ADR 0089 R-TAG-6 item 1). `None` when the
+        /// Routes` (musicindex ADR 0093 R-TAG-6 item 1). `None` when the
         /// writer cannot get the block (R-TAG-6 item 2). The app reads the
         /// song feed. This crate does not read a feed or make routes
         /// (R-TAG-6 item 4).
@@ -85,7 +85,7 @@ pub struct ChapterEntry {
     /// The attribute `remotePercentage`. It is 100 when the attribute is missing.
     pub remote_percentage: u32,
     /// The recipients of a local split, or the routes of the song of a remote
-    /// split (musicindex ADR 0089 R-TAG-6). `None` gives JSON `null`.
+    /// split (musicindex ADR 0093 R-TAG-6). `None` gives JSON `null`.
     pub value_routes: Option<serde_json::Value>,
 }
 
@@ -119,7 +119,7 @@ impl fmt::Display for TooManyChapters {
         write!(
             f,
             "the episode has {} splits, and one CTOC frame can list {MAX_CHAPTERS} \
-             (musicindex ADR 0086 R-TAG-4 item 3)",
+             (musicindex ADR 0093 R-TAG-4 item 3)",
             self.count
         )
     }

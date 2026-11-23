@@ -1,8 +1,8 @@
 //! Reads and writes the tags of song files and episode files for the suite
-//! (musicindex ADR 0086 R-TAG-1).
+//! (musicindex ADR 0093 R-TAG-1).
 //!
 //! The crate uses `id3` for MP3 and `lofty` for other formats (HitIt ADR 0004
-//! and HitIt ADR 0008). It writes only the frame names of musicindex ADR 0086
+//! and HitIt ADR 0008). It writes only the frame names of musicindex ADR 0093
 //! R-TAG-2, and each write removes the old frames of R-TAG-2 item 5.
 //!
 //! - [`write_song_tags`] writes the GUIDs of a song (R-TAG-3).
