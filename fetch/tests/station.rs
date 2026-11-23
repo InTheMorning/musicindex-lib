@@ -28,6 +28,8 @@ struct Answer {
     length: Option<usize>,
     /// The `Content-Encoding` to send. `None` sends no header.
     encoding: Option<&'static str>,
+    /// The `Location` to send. `None` sends no header.
+    location: Option<String>,
 }
 
 fn ok(body: impl Into<Vec<u8>>) -> Answer {
@@ -36,6 +38,7 @@ fn ok(body: impl Into<Vec<u8>>) -> Answer {
         body: body.into(),
         length: None,
         encoding: None,
+        location: None,
     }
 }
 
@@ -77,6 +80,7 @@ fn status(status: u16) -> Answer {
         body: Vec::new(),
         length: None,
         encoding: None,
+        location: None,
     }
 }
 
@@ -227,18 +231,31 @@ fn lookup_b(base: &str) -> Answer {
 /// B. The feeds hold URLs of the server, so the test finds a free port
 /// before the start.
 fn song_server() -> Server {
-    let probe = TcpListener::bind("127.0.0.1:0").expect("bind");
-    let port = probe.local_addr().expect("address").port();
-    drop(probe);
-    let base = format!("http://127.0.0.1:{port}");
-    let answers = HashMap::from([
-        ("/feeds/a.xml", ok(song_feed_a(&base))),
-        ("/feeds/b.xml", ok(song_feed_b(&base))),
-        ("/feeds/c.xml", ok(song_feed_c())),
-        ("/v1/feeds/feed-b", lookup_b(&base)),
-    ]);
-    let listener = TcpListener::bind(("127.0.0.1", port)).expect("bind the song server");
+    start_with(|base| {
+        HashMap::from([
+            ("/feeds/a.xml", ok(song_feed_a(base))),
+            ("/feeds/b.xml", ok(song_feed_b(base))),
+            ("/feeds/c.xml", ok(song_feed_c())),
+            ("/v1/feeds/feed-b", lookup_b(base)),
+        ])
+    })
+}
+
+/// Starts a server with the answers that `answers` makes from the base URL
+/// of the server.
+fn start_with(answers: impl FnOnce(&str) -> HashMap<&'static str, Answer>) -> Server {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind the test server");
+    let base = format!("http://{}", listener.local_addr().expect("server address"));
+    let answers = answers(&base);
     start_on(listener, answers)
+}
+
+/// An HTTP 301 answer to `location`.
+fn redirect(location: impl Into<String>) -> Answer {
+    Answer {
+        location: Some(location.into()),
+        ..status(301)
+    }
 }
 
 /// Answers each request on `listener` from `answers`, and records the path.
@@ -267,8 +284,13 @@ fn start_on(listener: TcpListener, answers: HashMap<&'static str, Answer>) -> Se
                 .encoding
                 .map(|encoding| format!("Content-Encoding: {encoding}\r\n"))
                 .unwrap_or_default();
+            let location = answer
+                .location
+                .as_ref()
+                .map(|location| format!("Location: {location}\r\n"))
+                .unwrap_or_default();
             let head = format!(
-                "HTTP/1.1 {} X\r\nContent-Length: {}\r\n{encoding}Connection: close\r\n\r\n",
+                "HTTP/1.1 {} X\r\nContent-Length: {}\r\n{encoding}{location}Connection: close\r\n\r\n",
                 answer.status,
                 answer.length.unwrap_or(answer.body.len())
             );
@@ -659,4 +681,26 @@ fn a_download_keeps_the_bytes_of_the_answer() {
         download_enclosure(&server.url("/audio/gzip.mp3"), &path, "test").expect("download");
     assert_eq!(std::fs::read(&path).expect("read the file"), body);
     assert_eq!(download.bytes, body.len() as u64);
+}
+
+/// R-STATION-1 item 4: a download follows a redirect with a raw space in
+/// its `Location`. Real feeds have such values (HitIt musicindex ADR 0056).
+#[test]
+fn a_download_follows_a_location_with_a_space() {
+    let audio = b"ID3 redirected audio".to_vec();
+    let server = start_with(|base| {
+        HashMap::from([
+            (
+                "/audio/old.mp3",
+                redirect(format!("{base}/Music/song file.mp3")),
+            ),
+            ("/Music/song%20file.mp3", ok(audio.clone())),
+        ])
+    });
+    let folder = tempfile::TempDir::new().expect("temporary folder");
+    let path = folder.path().join("song.mp3");
+    let download = download_enclosure(&server.url("/audio/old.mp3"), &path, "test")
+        .expect("musicindex ADR 0092 R-STATION-1 item 4: follow the redirect");
+    assert_eq!(std::fs::read(&path).expect("read the file"), audio);
+    assert_eq!(download.bytes, audio.len() as u64);
 }
