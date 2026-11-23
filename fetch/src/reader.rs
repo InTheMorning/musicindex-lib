@@ -185,7 +185,9 @@ pub struct HttpFetch {
 
 impl HttpFetch {
     /// Makes the client with the `User-Agent` of `config`, a connect timeout
-    /// of 10 seconds and a timeout of 30 seconds.
+    /// of 10 seconds and a timeout of 30 seconds. The client decodes a body
+    /// that the server compresses with Brotli, deflate or gzip. Some servers
+    /// compress a feed also when the request has no `Accept-Encoding`.
     ///
     /// # Errors
     ///

@@ -26,6 +26,8 @@ struct Answer {
     body: Vec<u8>,
     /// The `Content-Length` to send. `None` sends the length of `body`.
     length: Option<usize>,
+    /// The `Content-Encoding` to send. `None` sends no header.
+    encoding: Option<&'static str>,
 }
 
 fn ok(body: impl Into<Vec<u8>>) -> Answer {
@@ -33,7 +35,31 @@ fn ok(body: impl Into<Vec<u8>>) -> Answer {
         status: 200,
         body: body.into(),
         length: None,
+        encoding: None,
     }
+}
+
+/// An answer with a body that the server compressed with `encoding`.
+fn compressed(body: Vec<u8>, encoding: &'static str) -> Answer {
+    Answer {
+        encoding: Some(encoding),
+        ..ok(body)
+    }
+}
+
+fn brotli_bytes(text: &str) -> Vec<u8> {
+    let mut output = Vec::new();
+    {
+        let mut writer = brotli::CompressorWriter::new(&mut output, 4096, 5, 22);
+        writer.write_all(text.as_bytes()).expect("compress");
+    }
+    output
+}
+
+fn gzip_bytes(text: &str) -> Vec<u8> {
+    let mut writer = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    writer.write_all(text.as_bytes()).expect("compress");
+    writer.finish().expect("compress")
 }
 
 /// An answer that stops before the end of the body that its
@@ -50,6 +76,7 @@ fn status(status: u16) -> Answer {
         status,
         body: Vec::new(),
         length: None,
+        encoding: None,
     }
 }
 
@@ -236,8 +263,12 @@ fn start_on(listener: TcpListener, answers: HashMap<&'static str, Answer>) -> Se
             }
             recorded.lock().expect("lock").push(path.clone());
             let answer = answers.get(path.as_str()).cloned().unwrap_or(status(404));
+            let encoding = answer
+                .encoding
+                .map(|encoding| format!("Content-Encoding: {encoding}\r\n"))
+                .unwrap_or_default();
             let head = format!(
-                "HTTP/1.1 {} X\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                "HTTP/1.1 {} X\r\nContent-Length: {}\r\n{encoding}Connection: close\r\n\r\n",
                 answer.status,
                 answer.length.unwrap_or(answer.body.len())
             );
@@ -583,4 +614,49 @@ fn a_split_with_a_feed_url_reads_that_feed() {
         0,
         "musicindex ADR 0092 R-STATION-2 item 1: the feedUrl of the split comes before the lookup"
     );
+}
+
+/// R-STATION-1 item 2: the reader decodes a feed body that the server
+/// compresses with Brotli or gzip, also when the request has no
+/// `Accept-Encoding`.
+#[test]
+fn a_compressed_feed_gives_the_feed() {
+    let feed = song_feed_c();
+    let server = Server::start(HashMap::from([
+        ("/feeds/br.xml", compressed(brotli_bytes(&feed), "br")),
+        ("/feeds/gzip.xml", compressed(gzip_bytes(&feed), "gzip")),
+    ]));
+    let mut reader = server.reader();
+    for path in ["/feeds/br.xml", "/feeds/gzip.xml"] {
+        let document = reader
+            .read(&server.url(path))
+            .unwrap_or_else(|error| panic!("{path}: {error}"));
+        assert_eq!(
+            document.body,
+            feed.as_bytes(),
+            "{path}: the reader keeps the decoded body"
+        );
+        assert_eq!(
+            document.values.tracks.len(),
+            1,
+            "{path}: the parser reads the feed"
+        );
+    }
+}
+
+/// R-STATION-1 item 4: a download keeps the bytes of the answer. The client
+/// does not decode a body with a `Content-Encoding`.
+#[test]
+fn a_download_keeps_the_bytes_of_the_answer() {
+    let body = gzip_bytes("ID3 test audio bytes");
+    let server = Server::start(HashMap::from([(
+        "/audio/gzip.mp3",
+        compressed(body.clone(), "gzip"),
+    )]));
+    let folder = tempfile::TempDir::new().expect("temporary folder");
+    let path = folder.path().join("gzip.mp3");
+    let download =
+        download_enclosure(&server.url("/audio/gzip.mp3"), &path, "test").expect("download");
+    assert_eq!(std::fs::read(&path).expect("read the file"), body);
+    assert_eq!(download.bytes, body.len() as u64);
 }

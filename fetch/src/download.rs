@@ -69,8 +69,8 @@ impl From<io::Error> for DownloadError {
 }
 
 /// Downloads `url` to `path` with a client of this crate: a connect timeout
-/// of 10 seconds, a read timeout of 30 seconds, and a maximum of 10 HTTP or
-/// HTTPS redirects. [`download_enclosure_with`] gives the steps.
+/// of 10 seconds, a read timeout of 30 seconds, a maximum of 10 HTTP or
+/// HTTPS redirects, and no decode of a compressed body. [`download_enclosure_with`] gives the steps.
 ///
 /// # Errors
 ///
@@ -85,6 +85,12 @@ pub fn download_enclosure(
         .user_agent(user_agent)
         .connect_timeout(CONNECT_TIMEOUT)
         .timeout(READ_TIMEOUT)
+        // The file keeps the bytes of the answer, so the hash is the hash of
+        // those bytes. The client asks for no compression and does not
+        // decode a body.
+        .no_brotli()
+        .no_deflate()
+        .no_gzip()
         .redirect(Policy::custom(|attempt| {
             if attempt.previous().len() >= MAX_REDIRECTS {
                 attempt.error("too many redirects")
