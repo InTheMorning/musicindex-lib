@@ -149,6 +149,29 @@ fn song_feed_b(base: &str) -> String {
     )
 }
 
+/// Song feed C: the item has a Lightning block with no recipient, and the
+/// channel has a block with a recipient.
+fn song_feed_c() -> String {
+    format!(
+        r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+<channel>
+  <title>Album C</title>
+  <podcast:guid>feed-c</podcast:guid>
+  <podcast:medium>music</podcast:medium>
+  <podcast:value type="lightning" method="keysend">
+    <podcast:valueRecipient name="Label C" type="node" address="{NODE_B}" split="100"/>
+  </podcast:value>
+  <item>
+    <title>Song C</title>
+    <guid>song-c-1</guid>
+    <podcast:value type="lightning" method="keysend"></podcast:value>
+  </item>
+</channel>
+</rss>"#
+    )
+}
+
 /// A `musicL` feed with two remote items: one with a feed URL, and one with
 /// only a feed GUID.
 fn music_list(base: &str) -> String {
@@ -184,6 +207,7 @@ fn song_server() -> Server {
     let answers = HashMap::from([
         ("/feeds/a.xml", ok(song_feed_a(&base))),
         ("/feeds/b.xml", ok(song_feed_b(&base))),
+        ("/feeds/c.xml", ok(song_feed_c())),
         ("/v1/feeds/feed-b", lookup_b(&base)),
     ]);
     let listener = TcpListener::bind(("127.0.0.1", port)).expect("bind the song server");
@@ -486,5 +510,77 @@ fn the_time_splits_of_an_episode_give_split_values() {
             ]),
         },
         "musicindex ADR 0092 R-STATION-2 item 1: a local split keeps its recipients"
+    );
+}
+
+/// musicindex ADR 0093 R-TAG-6 item 1: an item block with no recipient is a
+/// block. The channel block does not replace it.
+#[test]
+fn an_item_block_with_no_recipient_is_a_block() {
+    let server = song_server();
+    let mut reader = server.reader();
+    let song = reader
+        .resolve(&RemoteItemRef {
+            feed_guid: "feed-c".to_owned(),
+            feed_url: Some(server.url("/feeds/c.xml")),
+            item_guid: Some("song-c-1".to_owned()),
+            title: None,
+        })
+        .expect("resolve song C");
+    assert_eq!(
+        song.value_routes,
+        Some(json!([])),
+        "musicindex ADR 0093 R-TAG-6 item 1: the item has a block, so the channel block does not apply"
+    );
+}
+
+/// musicindex ADR 0092 R-STATION-2 item 1: a remote split with a `feedUrl`
+/// reads that feed and makes no MusicIndex lookup.
+#[test]
+fn a_split_with_a_feed_url_reads_that_feed() {
+    let server = song_server();
+    let episode = format!(
+        r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+<channel>
+  <title>Show</title>
+  <podcast:guid>show-1</podcast:guid>
+  <item>
+    <title>Episode 158</title>
+    <guid>episode-158</guid>
+    <podcast:value type="lightning" method="keysend">
+      <podcast:valueRecipient name="Host" type="node" address="{NODE_C}" split="100"/>
+      <podcast:valueTimeSplit startTime="0" duration="200">
+        <podcast:remoteItem feedGuid="feed-a" feedUrl="{}" itemGuid="song-a-1"/>
+      </podcast:valueTimeSplit>
+    </podcast:value>
+  </item>
+</channel>
+</rss>"#,
+        server.url("/feeds/a.xml")
+    );
+    let episode =
+        FeedDocument::parse("episode.xml", episode.into_bytes()).expect("parse the episode feed");
+    let mut reader = server.reader();
+    let result = reader
+        .episode_splits(&episode.values.tracks[0])
+        .expect("the split is good");
+    assert!(result.unresolved.is_empty(), "{:?}", result.unresolved);
+    assert_eq!(result.splits[0].title.as_deref(), Some("Song A"));
+    assert!(
+        matches!(
+            &result.splits[0].target,
+            SplitTarget::Remote {
+                value_routes: Some(_),
+                ..
+            }
+        ),
+        "musicindex ADR 0093 R-TAG-6 item 1: the split gets the routes of the song"
+    );
+    assert_eq!(server.count("/feeds/a.xml"), 1);
+    assert_eq!(
+        server.count("/v1/feeds/feed-a"),
+        0,
+        "musicindex ADR 0092 R-STATION-2 item 1: the feedUrl of the split comes before the lookup"
     );
 }

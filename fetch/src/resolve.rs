@@ -170,7 +170,7 @@ fn resolved_item(
         author: feed.author_name.clone(),
         enclosure_url: track.enclosure_url.clone(),
         enclosure_type: track.enclosure_type.clone(),
-        value_routes: value_routes(&track.payment_routes)
-            .or_else(|| value_routes(&feed.feed_payment_routes)),
+        value_routes: value_routes(&track.value_blocks, &track.payment_routes)
+            .or_else(|| value_routes(&feed.feed_value_blocks, &feed.feed_payment_routes)),
     })
 }

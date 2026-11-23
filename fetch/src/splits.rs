@@ -64,7 +64,8 @@ impl<F: FetchDocument> FeedReader<F> {
     /// [`Split`] values for `musicindex_tags::write_episode_tags`
     /// (musicindex ADR 0092 R-STATION-2 item 1).
     ///
-    /// For a remote split, the reader reads the song feed. The split gets the
+    /// For a remote split, the reader reads the song feed: the `feedUrl` of
+    /// the split, else the feed URL from MusicIndex. The split gets the
     /// song title, the artist, the `itunes:author` of the song feed and the
     /// routes of R-TAG-6. When the read fails, these are `None`, and
     /// [`EpisodeSplits::unresolved`] gives the cause.
@@ -114,9 +115,16 @@ impl<F: FetchDocument> FeedReader<F> {
                     .map(str::trim)
                     .filter(|guid| !guid.is_empty())
                     .map(str::to_owned);
+                // A split with a `feedUrl` reads that feed. A split with no
+                // `feedUrl` gets the feed URL from MusicIndex.
                 let item = RemoteItemRef {
                     feed_guid: feed_guid.to_owned(),
-                    feed_url: None,
+                    feed_url: split
+                        .remote_feed_url
+                        .as_deref()
+                        .map(str::trim)
+                        .filter(|url| !url.is_empty())
+                        .map(str::to_owned),
                     item_guid: item_guid.clone(),
                     title: None,
                 };

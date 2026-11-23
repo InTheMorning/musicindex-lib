@@ -2,11 +2,18 @@
 //! parser (musicindex ADR 0093 R-TAG-4 item 1 and R-TAG-6).
 
 use serde_json::{Map, Value, json};
-use stophammer_parser::IngestPaymentRoute;
+use stophammer_parser::{IngestPaymentRoute, IngestValueBlock};
 
-/// Gives the first Lightning `podcast:value` block of `routes` in the value
-/// form of `TXXX:Podcast Value Routes`: a JSON array with one object for each
-/// recipient. `None` when `routes` has no Lightning block.
+/// Gives the first Lightning `podcast:value` block of one parent (an item or
+/// a channel) in the value form of `TXXX:Podcast Value Routes`: a JSON array
+/// with one object for each recipient. `None` when the parent has no
+/// Lightning block.
+///
+/// `blocks` are the `podcast:value` blocks of the parent, and `routes` are
+/// their recipients. A Lightning block with no recipient gives an empty
+/// array, because the parent has a block (musicindex ADR 0093 R-TAG-6
+/// item 1). When `blocks` is empty, the function finds the blocks from
+/// `routes`, for values that a parser before `value_blocks` made.
 ///
 /// A block with no type or with the type `lightning` is a Lightning block.
 /// The function copies the recipients of that block in feed order. It does
@@ -17,12 +24,20 @@ use stophammer_parser::IngestPaymentRoute;
 /// text in lower case. `split` is the `split` text as a number, or `null`
 /// when the text is not a number.
 #[must_use]
-pub fn value_routes(routes: &[IngestPaymentRoute]) -> Option<Value> {
-    let block = routes
-        .iter()
-        .filter(|route| is_lightning_block(&route.value_type))
-        .map(|route| route.block_index)
-        .min()?;
+pub fn value_routes(blocks: &[IngestValueBlock], routes: &[IngestPaymentRoute]) -> Option<Value> {
+    let block = if blocks.is_empty() {
+        routes
+            .iter()
+            .filter(|route| is_lightning_block(&route.value_type))
+            .map(|route| route.block_index)
+            .min()?
+    } else {
+        blocks
+            .iter()
+            .filter(|block| is_lightning_block(&block.value_type))
+            .map(|block| block.block_index)
+            .min()?
+    };
     Some(recipients(routes.iter().filter(|route| {
         route.block_index == block && is_lightning_block(&route.value_type)
     })))
