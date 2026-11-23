@@ -488,7 +488,7 @@ fn write_format_tags(
             Ok(TagWriteResult::default())
         }
         Ok(AudioFormat::Wav) => Err(anyhow!(
-            "cannot tag raw WAV ({}); re-subscribe with `flac` installed to upgrade",
+            "cannot tag raw WAV ({}); convert the file to FLAC first",
             path.display()
         )),
     }

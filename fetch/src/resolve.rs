@@ -40,9 +40,23 @@ impl From<&IngestRemoteFeedRef> for RemoteItemRef {
 
 /// The song list of a `musicL` feed: each channel `podcast:remoteItem`, in
 /// feed order (musicindex ADR 0092 R-STATION-3 item 1).
+///
+/// The list does not contain a remote item with the medium `publisher`. Such
+/// an item points to the feed of the publisher, not to a song. The parser
+/// gives this medium to a `podcast:remoteItem` in `podcast:publisher` and to
+/// a `podcast:remoteItem` with `medium="publisher"`.
 #[must_use]
 pub fn song_list(feed: &FeedValues) -> Vec<RemoteItemRef> {
-    feed.remote_items.iter().map(RemoteItemRef::from).collect()
+    feed.remote_items
+        .iter()
+        .filter(|item| {
+            !item
+                .medium
+                .as_deref()
+                .is_some_and(|medium| medium.trim().eq_ignore_ascii_case("publisher"))
+        })
+        .map(RemoteItemRef::from)
+        .collect()
 }
 
 /// The data of one remote item after the read of its feed.

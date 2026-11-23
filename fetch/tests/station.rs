@@ -704,3 +704,33 @@ fn a_download_follows_a_location_with_a_space() {
     assert_eq!(std::fs::read(&path).expect("read the file"), audio);
     assert_eq!(download.bytes, audio.len() as u64);
 }
+
+/// R-STATION-3 item 1: the song list of a `musicL` feed does not contain the
+/// remote item of the publisher.
+#[test]
+fn a_music_list_skips_the_publisher() {
+    let feed = r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+<channel>
+  <title>Station list</title>
+  <podcast:guid>list-2</podcast:guid>
+  <podcast:medium>musicL</podcast:medium>
+  <podcast:publisher>
+    <podcast:remoteItem feedGuid="publisher-1" feedUrl="https://example.com/publisher.xml"/>
+  </podcast:publisher>
+  <podcast:remoteItem medium="publisher" feedGuid="publisher-2"/>
+  <podcast:remoteItem feedGuid="feed-a" itemGuid="song-a-1"/>
+  <podcast:remoteItem feedGuid="feed-b" itemGuid="song-b-1"/>
+</channel>
+</rss>"#;
+    let list = FeedDocument::parse("list.xml", feed.as_bytes().to_vec()).expect("parse the feed");
+    let guids: Vec<_> = song_list(&list.values)
+        .into_iter()
+        .map(|song| song.feed_guid)
+        .collect();
+    assert_eq!(
+        guids,
+        ["feed-a", "feed-b"],
+        "musicindex ADR 0092 R-STATION-3 item 1: a publisher remote item is not a song"
+    );
+}
