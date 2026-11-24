@@ -83,6 +83,7 @@ fn song() -> SongTags {
     SongTags {
         feed_guid: "song-feed-guid".into(),
         item_guid: "song-item-guid".into(),
+        image: None,
     }
 }
 
@@ -147,6 +148,7 @@ fn episode() -> EpisodeTags {
         item_guid: "episode-item-guid".into(),
         value_routes: Some(r#"[{"recipient_name":"Host","split":100}]"#.into()),
         splits: vec![local, third, first],
+        image: None,
     }
 }
 
@@ -575,6 +577,47 @@ fn write_with_no_edit_and_no_old_frame_does_not_write() -> Result<()> {
             modified,
             "{}",
             path.display()
+        );
+    }
+    Ok(())
+}
+
+/// musicindex ADR 0096 R-IMAGE-2: a song write and an episode write with an
+/// image URL give `TXXX:Podcast Image` with that URL, in MP3 and FLAC. A
+/// write with no image URL gives no frame.
+#[test]
+fn the_image_url_is_written_only_when_given() -> Result<()> {
+    const IMAGE: &str = "https://example.com/art/cover.jpg";
+    let dir = TempDir::new()?;
+    for name in ["old-frames.mp3", "old-frames.flac"] {
+        let path = copy_fixture(&dir, name);
+        write_song_tags(&path, &song(), &[], &NoReferences)?;
+        assert_eq!(read_podcast_tags(&path)?.image, None, "{name}: song");
+        write_episode_tags(&path, &episode(), &[], &NoReferences)?;
+        assert_eq!(read_podcast_tags(&path)?.image, None, "{name}: episode");
+
+        let path = copy_fixture(&dir, name);
+        let with_image = SongTags {
+            image: Some(IMAGE.into()),
+            ..song()
+        };
+        write_song_tags(&path, &with_image, &[], &NoReferences)?;
+        assert_eq!(
+            read_podcast_tags(&path)?.image.as_deref(),
+            Some(IMAGE),
+            "musicindex ADR 0096 R-IMAGE-2 item 2: {name}: song"
+        );
+
+        let path = copy_fixture(&dir, name);
+        let with_image = EpisodeTags {
+            image: Some(IMAGE.into()),
+            ..episode()
+        };
+        write_episode_tags(&path, &with_image, &[], &NoReferences)?;
+        assert_eq!(
+            read_podcast_tags(&path)?.image.as_deref(),
+            Some(IMAGE),
+            "musicindex ADR 0096 R-IMAGE-2 item 2: {name}: episode"
         );
     }
     Ok(())

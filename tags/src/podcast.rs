@@ -11,13 +11,17 @@ use crate::frames;
 use crate::id3v2::{TagProblems, read_id3v2};
 use crate::source::ReferenceSource;
 
-/// The GUIDs of a song file (R-TAG-3).
+/// The tags of a song file (R-TAG-3 and musicindex ADR 0096 R-IMAGE-2).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SongTags {
     /// The `podcast:guid` of the song feed.
     pub feed_guid: String,
     /// The item `guid` of the song.
     pub item_guid: String,
+    /// The image URL of the song for `TXXX:Podcast Image`. With `None`, the
+    /// crate writes no image. A frame of the file and an image edit of the
+    /// app stay.
+    pub image: Option<String>,
 }
 
 /// The tags of an episode file (R-TAG-4).
@@ -32,6 +36,10 @@ pub struct EpisodeTags {
     pub value_routes: Option<String>,
     /// The `podcast:valueTimeSplit` elements of the episode, in any order.
     pub splits: Vec<Split>,
+    /// The image URL of the episode for `TXXX:Podcast Image` (musicindex
+    /// ADR 0096 R-IMAGE-2). With `None`, the crate writes no image. A frame
+    /// of the file and an image edit of the app stay.
+    pub image: Option<String>,
 }
 
 /// The podcast frames of a file, read with the new names only (R-TAG-2
@@ -84,22 +92,28 @@ impl PodcastTags {
 }
 
 impl SongTags {
-    /// The edits of the two GUID frames.
+    /// The edits of the two GUID frames, and of `TXXX:Podcast Image` when
+    /// the song has an image URL.
     #[must_use]
     pub fn edits(&self) -> Vec<Id3v24Edit> {
-        vec![
+        let mut edits = vec![
             edit(frames::FEED_GUID, &self.feed_guid),
             edit(frames::ITEM_GUID, &self.item_guid),
-        ]
+        ];
+        if let Some(image) = &self.image {
+            edits.push(edit(frames::IMAGE, image));
+        }
+        edits
     }
 }
 
-/// Writes the GUIDs of `song` and `edits` into `path` in one write. A GUID
-/// of `song` replaces an edit of `edits` with the same frame.
+/// Writes the GUIDs and the image URL of `song` and `edits` into `path` in
+/// one write. A value of `song` replaces an edit of `edits` with the same
+/// frame.
 ///
 /// # Errors
 ///
-/// Returns an error when a GUID is empty, or for each error of
+/// Returns an error when a GUID or the image URL is empty, or for each error of
 /// [`audio::write_id3v24_edits`].
 pub fn write_song_tags(
     path: &Path,
@@ -136,6 +150,9 @@ pub fn write_episode_tags(
     ];
     if let Some(value_routes) = &episode.value_routes {
         own.push(edit(frames::VALUE_ROUTES, value_routes));
+    }
+    if let Some(image) = &episode.image {
+        own.push(edit(frames::IMAGE, image));
     }
     let edits = merged_edits(edits, own)?;
     audio::write_tags(path, &edits, Some(&chapters), source)

@@ -37,6 +37,7 @@ fn retagged(dir: &Path, name: &str) -> Result<PathBuf> {
     let song = SongTags {
         feed_guid: "feed-guid-fixture".into(),
         item_guid: "track-guid-fixture".into(),
+        image: None,
     };
     write_song_tags(&copy, &song, &edits, &InlineText)?;
     Ok(copy)

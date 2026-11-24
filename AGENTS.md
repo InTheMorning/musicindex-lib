@@ -64,8 +64,9 @@ pins the crate before ADR 0083 is accepted. If the ADR changes a name, the crate
 the podcast frames of an audio file with the names of R-TAG-2. `write_song_tags` writes the
 GUIDs of a song file (R-TAG-3). `write_episode_tags` writes the GUIDs, the value routes and
 the chapters of an episode file (R-TAG-4). A remote chapter entry holds the routes of its
-song when the app gives them (musicindex ADR 0093 R-TAG-6). Each write removes the frames with the
-"MusicIndex " names of R-TAG-2 item 5.
+song when the app gives them (musicindex ADR 0093 R-TAG-6). Each of the two writes also
+writes `TXXX:Podcast Image` when the app gives an image URL (musicindex ADR 0096 R-IMAGE-2).
+Each write removes the frames with the "MusicIndex " names of R-TAG-2 item 5.
 
 Each read of an ID3v2 tag uses the frame loop of `tags/src/id3v2.rs` (musicindex ADR 0093
 R-TAG-7). The loop keeps each good frame and returns the bad frames in `TagProblems`. Each

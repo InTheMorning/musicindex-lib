@@ -401,6 +401,7 @@ fn a_bad_suite_frame_gets_the_frame_of_the_app_data() -> Result<()> {
     let song = SongTags {
         feed_guid: "feed-guid".into(),
         item_guid: "item-guid".into(),
+        image: None,
     };
     write_song_tags(&path, &song, &[], &NoReferences)?;
     let tag = strict(&path);
