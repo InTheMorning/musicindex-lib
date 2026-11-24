@@ -1498,7 +1498,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 [[package]]
 name = "stophammer-parser"
 version = "0.22.0"
-source = "git+https://github.com/InTheMorning/stophammer-parser?rev=15f8e7d257fb3cb8a54f51f24580ddc8083ba23f#15f8e7d257fb3cb8a54f51f24580ddc8083ba23f"
+source = "git+https://github.com/InTheMorning/stophammer-parser?rev=72a823886de00afde17d759c031a3b305e343b8a#72a823886de00afde17d759c031a3b305e343b8a"
 dependencies = [
  "chrono",
  "regex",

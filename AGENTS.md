@@ -100,6 +100,9 @@ R-STATION-2. HitIt and musicindex-live-publisher use it. `FeedReader` reads a fe
 `ResolvedItem::mp3_url` and `track_mp3_url` select the MP3 file that the feed gives for an
 item: the `audio/mpeg` enclosure, else the first `audio/mpeg` alternate enclosure in feed
 order (musicindex ADR 0095 R-MP3-2 item 1).
+`ResolvedItem.image_url` and `image_url` give the image URL of an item from five sources in
+a fixed order, with only an `http` or `https` URL of a maximum of 2,048 characters
+(musicindex ADR 0096 R-IMAGE-1).
 `FeedReader::episode_splits` gives the `Split` values of an episode for `write_episode_tags`.
 `download_enclosure` writes one enclosure through a temporary file and gives the SHA-256
 hash.

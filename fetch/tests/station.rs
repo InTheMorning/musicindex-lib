@@ -13,8 +13,8 @@ use std::thread;
 use std::time::Duration;
 
 use musicindex_fetch::{
-    DownloadError, FeedDocument, FeedError, FeedReader, ReaderConfig, RemoteItemRef, ResolveError,
-    download_enclosure, song_list, track_mp3_url,
+    DownloadError, FeedDocument, FeedError, FeedReader, MAX_IMAGE_URL_CHARS, ReaderConfig,
+    RemoteItemRef, ResolveError, download_enclosure, image_url, song_list, track_mp3_url,
 };
 use musicindex_tags::SplitTarget;
 use serde_json::json;
@@ -840,5 +840,174 @@ fn a_resolved_item_gives_its_alternate_enclosures() {
         resolved.mp3_url(),
         Some(server.url("/audio/m2-first.mp3").as_str()),
         "musicindex ADR 0095 R-MP3-2 item 1"
+    );
+}
+
+/// A feed for the image selection. `channel` is the image XML of the
+/// channel, and `items` is the XML of the items.
+fn image_feed(channel: &str, items: &str) -> FeedDocument {
+    let feed = format!(
+        r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+<channel>
+  <title>Album I</title>
+  <podcast:guid>feed-i</podcast:guid>
+  <podcast:medium>music</podcast:medium>
+  {channel}
+  {items}
+</channel>
+</rss>"#
+    );
+    FeedDocument::parse("i.xml", feed.into_bytes()).expect("parse the feed")
+}
+
+fn image_item(guid: &str, images: &str) -> String {
+    format!("<item><title>{guid}</title><guid>{guid}</guid>{images}</item>")
+}
+
+/// The image URL of each item of `feed`, in feed order.
+fn image_urls(feed: &FeedDocument) -> Vec<Option<String>> {
+    feed.values
+        .tracks
+        .iter()
+        .map(|track| image_url(&feed.values, track))
+        .collect()
+}
+
+/// musicindex ADR 0096 R-IMAGE-1 item 2: the order of the five sources.
+#[test]
+fn the_image_url_follows_the_order_of_the_sources() {
+    let long = format!(
+        "https://example.com/{}",
+        "a".repeat(MAX_IMAGE_URL_CHARS + 1 - "https://example.com/".len())
+    );
+    assert_eq!(long.chars().count(), MAX_IMAGE_URL_CHARS + 1);
+    let items = [
+        image_item(
+            "item-itunes",
+            r#"<itunes:image href="https://example.com/item.jpg"/>
+               <podcast:image href="https://example.com/podcast-image.jpg"/>"#,
+        ),
+        image_item("no-image", ""),
+        image_item(
+            "purpose",
+            r#"<podcast:image href="https://example.com/social.jpg" purpose="social"/>
+               <podcast:image href="https://example.com/no-purpose.jpg"/>"#,
+        ),
+        image_item(
+            "artwork-word",
+            r#"<podcast:image href="https://example.com/artwork.jpg" purpose="Social ARTWORK"/>"#,
+        ),
+        image_item(
+            "bad-urls",
+            &format!(
+                r#"<itunes:image href="ftp://example.com/item.jpg"/>
+                   <podcast:image href="{long}"/>
+                   <podcast:images srcset="https://example.com/300.jpg 300w, https://example.com/1500.jpg 1500w, https://example.com/2x.jpg 2x"/>"#
+            ),
+        ),
+        image_item(
+            "bad-largest",
+            r#"<podcast:images srcset="https://example.com/1000.jpg 1000w, ftp://example.com/3000.jpg 3000w"/>"#,
+        ),
+        image_item(
+            "equal-widths",
+            r#"<podcast:images srcset="https://example.com/first-500.jpg 500w, https://example.com/second-500.jpg 500w, https://example.com/9x.jpg 9x"/>"#,
+        ),
+    ]
+    .concat();
+    let feed = image_feed(
+        r#"<itunes:image href="https://example.com/channel.jpg"/>
+           <image><url>https://example.com/rss.jpg</url><title>Album I</title><link>https://example.com</link></image>"#,
+        &items,
+    );
+    assert_eq!(
+        image_urls(&feed),
+        [
+            Some("https://example.com/item.jpg".to_owned()),
+            Some("https://example.com/channel.jpg".to_owned()),
+            Some("https://example.com/no-purpose.jpg".to_owned()),
+            Some("https://example.com/artwork.jpg".to_owned()),
+            Some("https://example.com/1500.jpg".to_owned()),
+            Some("https://example.com/channel.jpg".to_owned()),
+            Some("https://example.com/first-500.jpg".to_owned()),
+        ],
+        "musicindex ADR 0096 R-IMAGE-1 items 2 and 3"
+    );
+
+    // A channel with only an RSS image, and a channel `itunes:image` with no
+    // `href`, gives the RSS image.
+    let feed = image_feed(
+        r"<itunes:image/>
+           <image><url>https://example.com/rss.jpg</url><title>Album I</title><link>https://example.com</link></image>",
+        &image_item("rss-only", ""),
+    );
+    assert_eq!(
+        image_urls(&feed),
+        [Some("https://example.com/rss.jpg".to_owned())]
+    );
+
+    // A channel image that is not good gives the next source, and no good
+    // source gives no image.
+    let feed = image_feed(
+        &format!(
+            r#"<itunes:image href="{long}"/>
+               <image><url>https://example.com/rss.jpg</url><title>Album I</title><link>https://example.com</link></image>"#
+        ),
+        &image_item("long-channel", ""),
+    );
+    assert_eq!(
+        image_urls(&feed),
+        [Some("https://example.com/rss.jpg".to_owned())]
+    );
+    let feed = image_feed(
+        r#"<itunes:image href="javascript:alert(1)"/>"#,
+        &image_item(
+            "none",
+            r#"<podcast:image href="https://example.com/social.jpg" purpose="social"/>"#,
+        ),
+    );
+    assert_eq!(image_urls(&feed), [None], "no image is not an error");
+}
+
+/// musicindex ADR 0096 R-IMAGE-1 item 1: a resolved item has the image URL.
+#[test]
+fn a_resolved_item_gives_its_image_url() {
+    let server = song_server();
+    let mut reader = server.reader();
+    let item = RemoteItemRef {
+        feed_guid: "feed-a".into(),
+        feed_url: Some(server.url("/feeds/a.xml")),
+        item_guid: Some("song-a-1".into()),
+        title: None,
+    };
+    assert_eq!(
+        reader.resolve(&item).expect("resolve song A").image_url,
+        None
+    );
+    let server = start_with(|base| {
+        HashMap::from([(
+            "/feeds/m.xml",
+            ok(mp3_feed(base).replace(
+                "<podcast:medium>music</podcast:medium>",
+                r"<podcast:medium>music</podcast:medium><image><url>https://example.com/m.jpg</url><title>M</title><link>https://example.com</link></image>",
+            )),
+        )])
+    });
+    let mut reader = server.reader();
+    let item = RemoteItemRef {
+        feed_guid: "feed-m".into(),
+        feed_url: Some(server.url("/feeds/m.xml")),
+        item_guid: Some("m-wav".into()),
+        title: None,
+    };
+    assert_eq!(
+        reader
+            .resolve(&item)
+            .expect("resolve the WAV item")
+            .image_url
+            .as_deref(),
+        Some("https://example.com/m.jpg"),
+        "musicindex ADR 0096 R-IMAGE-1"
     );
 }

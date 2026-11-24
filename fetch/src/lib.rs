@@ -35,7 +35,10 @@ pub use reader::{
     DEFAULT_MUSICINDEX_BASE_URL, FeedDocument, FeedError, FeedReader, FetchDocument, HostThrottled,
     HttpFetch, RSS_HOST_INTERVAL, ReaderConfig, feed_host, parse_retry_after,
 };
-pub use resolve::{RemoteItemRef, ResolveError, ResolvedItem, song_list, track_mp3_url};
+pub use resolve::{
+    MAX_IMAGE_URL_CHARS, RemoteItemRef, ResolveError, ResolvedItem, image_url, song_list,
+    track_mp3_url,
+};
 pub use routes::value_routes;
 pub use splits::{BadSplit, BadSplitCause, EpisodeSplits};
 pub use stophammer_parser;
