@@ -107,7 +107,9 @@ item 2).
 FLAC converter for HitIt and musicindex-live-publisher (R-CONVERT-1). It starts `flac` first
 and then `ffmpeg`, and it probes each program with a time limit and an output limit. When no
 program passes its probe, it gives `ConvertError::NoConverter`, and the app decides. The
-crate operates only on Unix.
+crate also converts audio to MP3 with `ffmpeg` only, at 256 kbps CBR when the app sets no
+other bit rate (musicindex ADR 0095 R-MP3-3). With no `ffmpeg`, it gives
+`ConvertError::NoMp3Encoder`. The crate operates only on Unix.
 
 No ADR accepts `moodbar/`, and it has no folder.
 
@@ -118,7 +120,7 @@ No ADR accepts `moodbar/`, and it has no folder.
 | `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 (Proposed) for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
 | `tags/` | The tag crate of musicindex ADR 0093 for HitIt and musicindex-live-publisher | No research document |
 | `fetch/` | The remote item read and the enclosure download of musicindex ADR 0092 for HitIt and musicindex-live-publisher | `research_notes/music-feeds/station-import-request.md` in `../musicindex-research` |
-| `convert/` | The WAV to FLAC converter of musicindex ADR 0094 for HitIt and musicindex-live-publisher | No research document |
+| `convert/` | The WAV to FLAC converter of musicindex ADR 0094 and the MP3 converter of musicindex ADR 0095 for HitIt and musicindex-live-publisher | No research document |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |
 | `moodbar/` | The analysis crate for Studio and HitIt, the browser drawing code, and the test data | No research document |
 
