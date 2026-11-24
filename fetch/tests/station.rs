@@ -14,7 +14,7 @@ use std::time::Duration;
 
 use musicindex_fetch::{
     DownloadError, FeedDocument, FeedError, FeedReader, ReaderConfig, RemoteItemRef, ResolveError,
-    download_enclosure, song_list,
+    download_enclosure, song_list, track_mp3_url,
 };
 use musicindex_tags::SplitTarget;
 use serde_json::json;
@@ -732,5 +732,113 @@ fn a_music_list_skips_the_publisher() {
         guids,
         ["feed-a", "feed-b"],
         "musicindex ADR 0092 R-STATION-3 item 1: a publisher remote item is not a song"
+    );
+}
+
+/// A song feed for the MP3 selection. Each item has a different set of
+/// enclosures.
+fn mp3_feed(base: &str) -> String {
+    format!(
+        r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+<channel>
+  <title>Album M</title>
+  <podcast:guid>feed-m</podcast:guid>
+  <podcast:medium>music</podcast:medium>
+  <item>
+    <title>MP3 enclosure</title>
+    <guid>m-mp3</guid>
+    <enclosure url="{base}/audio/m1.mp3" type="audio/mpeg" length="5"/>
+    <podcast:alternateEnclosure type="audio/mpeg" length="5">
+      <podcast:source uri="{base}/audio/m1-alternate.mp3"/>
+    </podcast:alternateEnclosure>
+  </item>
+  <item>
+    <title>FLAC enclosure</title>
+    <guid>m-flac</guid>
+    <enclosure url="{base}/audio/m2.flac" type="audio/flac" length="5"/>
+    <podcast:alternateEnclosure type="audio/flac" length="5">
+      <podcast:source uri="{base}/audio/m2-alternate.flac"/>
+    </podcast:alternateEnclosure>
+    <podcast:alternateEnclosure type="audio/mpeg" length="5">
+      <podcast:source uri="ipfs://only-ipfs-mp3"/>
+    </podcast:alternateEnclosure>
+    <podcast:alternateEnclosure type="Audio/MPEG; codecs=mp3" length="5" bitrate="128000">
+      <podcast:source uri="ipfs://first-mp3"/>
+      <podcast:source uri="{base}/audio/m2-first.mp3"/>
+    </podcast:alternateEnclosure>
+    <podcast:alternateEnclosure type="audio/mpeg" length="5" bitrate="320000">
+      <podcast:source uri="{base}/audio/m2-second.mp3"/>
+    </podcast:alternateEnclosure>
+  </item>
+  <item>
+    <title>WAV enclosure</title>
+    <guid>m-wav</guid>
+    <enclosure url="{base}/audio/m3.wav" type="audio/wav" length="5"/>
+  </item>
+</channel>
+</rss>"#
+    )
+}
+
+/// musicindex ADR 0095 R-MP3-2 item 1: the MP3 selection gives the
+/// enclosure when its type is `audio/mpeg`, else the first `audio/mpeg`
+/// alternate enclosure in feed order, else none. A low bit rate does not
+/// change the selection (R-MP3-2 item 2). An alternate enclosure with only
+/// an `ipfs:` source has no HTTP URL, so it is not selected.
+#[test]
+fn the_mp3_file_of_an_item_follows_the_feed_order() {
+    let base = "https://example.com";
+    let feed = FeedDocument::parse("m.xml", mp3_feed(base).into_bytes()).expect("parse the feed");
+    let urls: Vec<_> = feed.values.tracks.iter().map(track_mp3_url).collect();
+    assert_eq!(
+        urls,
+        [
+            Some("https://example.com/audio/m1.mp3"),
+            Some("https://example.com/audio/m2-first.mp3"),
+            None,
+        ],
+        "musicindex ADR 0095 R-MP3-2 item 1"
+    );
+}
+
+/// musicindex ADR 0095 R-MP3-2 item 3: a resolved item keeps the alternate
+/// enclosures, and its MP3 selection is the same as for the parser item.
+#[test]
+fn a_resolved_item_gives_its_alternate_enclosures() {
+    let server = start_with(|base| HashMap::from([("/feeds/m.xml", ok(mp3_feed(base)))]));
+    let mut reader = server.reader();
+    let item = RemoteItemRef {
+        feed_guid: "feed-m".into(),
+        feed_url: Some(server.url("/feeds/m.xml")),
+        item_guid: Some("m-flac".into()),
+        title: None,
+    };
+    let resolved = reader.resolve(&item).expect("resolve the FLAC item");
+    let types: Vec<_> = resolved
+        .alternate_enclosures
+        .iter()
+        .map(|alternate| alternate.mime_type.as_deref())
+        .collect();
+    assert_eq!(
+        types,
+        [
+            Some("audio/flac"),
+            Some("Audio/MPEG; codecs=mp3"),
+            Some("audio/mpeg"),
+        ]
+    );
+    assert_eq!(
+        resolved.alternate_enclosures[1].sources,
+        [
+            "ipfs://first-mp3".to_owned(),
+            server.url("/audio/m2-first.mp3")
+        ],
+        "the URL of an alternate enclosure is in its podcast:source elements"
+    );
+    assert_eq!(
+        resolved.mp3_url(),
+        Some(server.url("/audio/m2-first.mp3").as_str()),
+        "musicindex ADR 0095 R-MP3-2 item 1"
     );
 }

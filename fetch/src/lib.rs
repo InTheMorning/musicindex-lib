@@ -12,6 +12,8 @@
 //!   enclosure URL and the value block of one `podcast:remoteItem`. When the
 //!   item has no feed URL, the reader gets it from MusicIndex by the feed
 //!   GUID.
+//! - [`ResolvedItem::mp3_url`] and [`track_mp3_url`] select the MP3 file
+//!   that the feed gives for an item (musicindex ADR 0095 R-MP3-2 item 1).
 //! - [`FeedReader::episode_splits`] changes the `podcast:valueTimeSplit`
 //!   elements of an episode into [`musicindex_tags::Split`] values, with the
 //!   routes of musicindex ADR 0093 R-TAG-6.
@@ -33,7 +35,7 @@ pub use reader::{
     DEFAULT_MUSICINDEX_BASE_URL, FeedDocument, FeedError, FeedReader, FetchDocument, HostThrottled,
     HttpFetch, RSS_HOST_INTERVAL, ReaderConfig, feed_host, parse_retry_after,
 };
-pub use resolve::{RemoteItemRef, ResolveError, ResolvedItem, song_list};
+pub use resolve::{RemoteItemRef, ResolveError, ResolvedItem, song_list, track_mp3_url};
 pub use routes::value_routes;
 pub use splits::{BadSplit, BadSplitCause, EpisodeSplits};
 pub use stophammer_parser;

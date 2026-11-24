@@ -4,7 +4,8 @@
 use std::fmt;
 
 use serde_json::Value;
-use stophammer_parser::{FeedValues, IngestRemoteFeedRef};
+use stophammer_parser::types::IngestAlternateEnclosure;
+use stophammer_parser::{FeedValues, IngestRemoteFeedRef, IngestTrackData};
 
 use crate::reader::{FeedDocument, FeedError, FeedReader, FetchDocument};
 use crate::routes::value_routes;
@@ -79,10 +80,74 @@ pub struct ResolvedItem {
     pub enclosure_url: Option<String>,
     /// The enclosure MIME type.
     pub enclosure_type: Option<String>,
+    /// The `podcast:alternateEnclosure` elements of the item, as the parser
+    /// gives them (musicindex ADR 0095 R-MP3-2 item 3).
+    pub alternate_enclosures: Vec<IngestAlternateEnclosure>,
     /// The value block of the item, else of the channel, in the value form of
     /// `TXXX:Podcast Value Routes` (musicindex ADR 0093 R-TAG-6 item 1).
     /// `None` when the feed has no Lightning block.
     pub value_routes: Option<Value>,
+}
+
+impl ResolvedItem {
+    /// The URL of the MP3 file that the feed gives for the item, or `None`
+    /// (musicindex ADR 0095 R-MP3-2 item 1). [`track_mp3_url`] gives the
+    /// selection.
+    #[must_use]
+    pub fn mp3_url(&self) -> Option<&str> {
+        mp3_url(
+            self.enclosure_url.as_deref(),
+            self.enclosure_type.as_deref(),
+            &self.alternate_enclosures,
+        )
+    }
+}
+
+/// The URL of the MP3 file that the feed gives for `track`, or `None`
+/// (musicindex ADR 0095 R-MP3-2 item 1).
+///
+/// The function selects the enclosure when its type is `audio/mpeg`. Else,
+/// it selects the first `podcast:alternateEnclosure` with the type
+/// `audio/mpeg`, in feed order. A type matches with any letter case, with
+/// spaces around it and with parameters after a `;`. An enclosure with no
+/// URL or an empty URL is not selected.
+#[must_use]
+pub fn track_mp3_url<R>(track: &IngestTrackData<R>) -> Option<&str> {
+    mp3_url(
+        track.enclosure_url.as_deref(),
+        track.enclosure_type.as_deref(),
+        &track.alternate_enclosures,
+    )
+}
+
+fn mp3_url<'a>(
+    url: Option<&'a str>,
+    mime_type: Option<&str>,
+    alternates: &'a [IngestAlternateEnclosure],
+) -> Option<&'a str> {
+    let usable = |url: &'a str| Some(url.trim()).filter(|url| !url.is_empty());
+    if is_mp3(mime_type)
+        && let Some(url) = url.and_then(usable)
+    {
+        return Some(url);
+    }
+    alternates
+        .iter()
+        .filter(|alternate| is_mp3(alternate.mime_type.as_deref()))
+        .filter_map(|alternate| usable(&alternate.url).map(|url| (alternate.position, url)))
+        .min_by_key(|(position, _)| *position)
+        .map(|(_, url)| url)
+}
+
+fn is_mp3(mime_type: Option<&str>) -> bool {
+    mime_type.is_some_and(|mime_type| {
+        mime_type
+            .split(';')
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .eq_ignore_ascii_case("audio/mpeg")
+    })
 }
 
 /// The error of [`FeedReader::resolve`].
@@ -184,6 +249,7 @@ fn resolved_item(
         author: feed.author_name.clone(),
         enclosure_url: track.enclosure_url.clone(),
         enclosure_type: track.enclosure_type.clone(),
+        alternate_enclosures: track.alternate_enclosures.clone(),
         value_routes: value_routes(&track.value_blocks, &track.payment_routes)
             .or_else(|| value_routes(&feed.feed_value_blocks, &feed.feed_payment_routes)),
     })
