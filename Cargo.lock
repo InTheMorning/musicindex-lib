@@ -946,6 +946,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "musicindex-convert"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "musicindex-tags",
+ "tempfile",
+]
+
+[[package]]
 name = "musicindex-fetch"
 version = "0.1.0"
 dependencies = [
