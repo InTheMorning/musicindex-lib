@@ -423,13 +423,31 @@ fn remove_failed_output(path: &Path) -> Result<(), ConvertError> {
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
 
     use super::*;
 
     /// Writes `script` as a shell program at `path`.
+    ///
+    /// A different process writes the file. When the test process opens the
+    /// file to write it, a child that a different test thread starts at that
+    /// time can get the open file. Then the start of the script fails with
+    /// `ExecutableFileBusy`.
     pub(crate) fn executable(path: &Path, script: &str) {
-        fs::write(path, format!("#!/bin/sh\n{script}\n")).unwrap();
+        let mut writer = Command::new("/bin/sh")
+            .args(["-c", "cat > \"$1\"", "sh"])
+            .arg(path)
+            .stdin(Stdio::piped())
+            .spawn()
+            .unwrap();
+        writer
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(format!("#!/bin/sh\n{script}\n").as_bytes())
+            .unwrap();
+        assert!(writer.wait().unwrap().success());
         fs::set_permissions(path, fs::Permissions::from_mode(0o700)).unwrap();
     }
 
