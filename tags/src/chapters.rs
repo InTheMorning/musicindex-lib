@@ -55,6 +55,11 @@ pub enum SplitTarget {
         /// song feed. This crate does not read a feed or make routes
         /// (R-TAG-6 item 4).
         value_routes: Option<serde_json::Value>,
+        /// The image URL of the song (musicindex ADR 0099 R-IMAGE-4). `None`
+        /// when the song has no image or the app cannot read its feed. The
+        /// app selects the URL, for example with
+        /// `musicindex_fetch::FeedReader::episode_splits`.
+        image_url: Option<String>,
     },
     /// A local split: its own `podcast:valueRecipient` elements, in the value
     /// form of `TXXX:Podcast Value Routes`.
@@ -87,6 +92,12 @@ pub struct ChapterEntry {
     /// The recipients of a local split, or the routes of the song of a remote
     /// split (musicindex ADR 0093 R-TAG-6). `None` gives JSON `null`.
     pub value_routes: Option<serde_json::Value>,
+    /// The image URL of the song of a remote split, or `None` (musicindex
+    /// ADR 0099 R-IMAGE-4). `None` gives JSON `null`. An entry with no such
+    /// field reads as `None` (R-IMAGE-5 item 1). The reader also accepts a
+    /// field that it does not know (R-IMAGE-5 item 3).
+    #[serde(default)]
+    pub image_url: Option<String>,
 }
 
 /// One `CHAP` frame that the reader found.
@@ -209,17 +220,19 @@ fn chapter_entry(split: &Split) -> Result<ChapterEntry> {
             split.duration
         ));
     }
-    let (feed_guid, item_guid, value_routes) = match &split.target {
+    let (feed_guid, item_guid, value_routes, image_url) = match &split.target {
         SplitTarget::Remote {
             feed_guid,
             item_guid,
             value_routes,
+            image_url,
         } => (
             Some(feed_guid.clone()),
             item_guid.clone(),
             value_routes.clone(),
+            image_url.clone(),
         ),
-        SplitTarget::Local { value_routes } => (None, None, Some(value_routes.clone())),
+        SplitTarget::Local { value_routes } => (None, None, Some(value_routes.clone()), None),
     };
     Ok(ChapterEntry {
         start_ms: seconds_to_ms(split.start_time)?,
@@ -231,6 +244,7 @@ fn chapter_entry(split: &Split) -> Result<ChapterEntry> {
         item_guid,
         remote_percentage: split.remote_percentage.unwrap_or(100),
         value_routes,
+        image_url,
     })
 }
 
@@ -342,6 +356,7 @@ mod tests {
                 feed_guid: "feed".into(),
                 item_guid: None,
                 value_routes: None,
+                image_url: None,
             },
         }
     }

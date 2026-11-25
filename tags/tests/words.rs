@@ -44,6 +44,7 @@ fn chapter_json_fields() -> Vec<String> {
         item_guid: Some(String::new()),
         remote_percentage: 100,
         value_routes: Some(json!([])),
+        image_url: Some(String::new()),
     };
     serde_json::to_value(entry)
         .expect("serialize entry")
@@ -65,7 +66,7 @@ fn no_frame_name_or_chapter_field_holds_a_music_word() {
             .into_iter()
             .filter(|field| !MUSIC_DATA_FIELDS.contains(&field.as_str())),
     );
-    assert_eq!(examined.len(), 11 + 7);
+    assert_eq!(examined.len(), 11 + 8);
 
     let failures = examined
         .iter()

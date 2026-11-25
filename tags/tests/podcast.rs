@@ -6,7 +6,7 @@ use anyhow::Result;
 use id3::frame::{Comment, Lyrics, SynchronisedLyrics, SynchronisedLyricsType, TimestampFormat};
 use id3::{Content, Frame, Tag, TagLike, Version};
 use musicindex_tags::{
-    ChapterEntry, EpisodeTags, Id3v24Edit, NoReferences, SongTags, Split, SplitTarget,
+    ChapterEntry, EpisodeTags, Id3v24Edit, NoReferences, PodcastTags, SongTags, Split, SplitTarget,
     TooManyChapters, frames, read_podcast_tags, write_episode_tags, write_id3v24_edits,
     write_song_tags,
 };
@@ -108,8 +108,12 @@ fn remote(
         feed_guid: feed_guid.into(),
         item_guid: item_guid.map(str::to_owned),
         value_routes,
+        image_url: None,
     }
 }
+
+/// The image URL of the song `item-a`.
+const SONG_IMAGE: &str = "https://example.com/song-a.jpg";
 
 /// The value block of the song `item-a`, in the value form of
 /// `TXXX:Podcast Value Routes`.
@@ -129,6 +133,9 @@ fn episode() -> EpisodeTags {
     );
     first.remote_percentage = Some(90);
     first.author = Some("Feed Author".into());
+    if let SplitTarget::Remote { image_url, .. } = &mut first.target {
+        *image_url = Some(SONG_IMAGE.into());
+    }
     let local = split(
         400.0,
         60.0,
@@ -164,6 +171,7 @@ fn expected_entries() -> Vec<ChapterEntry> {
             item_guid: Some("item-a".into()),
             remote_percentage: 90,
             value_routes: Some(song_routes()),
+            image_url: Some(SONG_IMAGE.into()),
         },
         ChapterEntry {
             start_ms: 200_250,
@@ -175,6 +183,7 @@ fn expected_entries() -> Vec<ChapterEntry> {
             item_guid: None,
             remote_percentage: 100,
             value_routes: None,
+            image_url: None,
         },
         ChapterEntry {
             start_ms: 400_000,
@@ -188,6 +197,7 @@ fn expected_entries() -> Vec<ChapterEntry> {
             value_routes: Some(
                 json!([{"address": "host@example.com", "split": 100, "type": "lnaddress"}]),
             ),
+            image_url: None,
         },
     ]
 }
@@ -327,6 +337,96 @@ fn remote_entry_holds_the_routes_of_its_song_or_null() -> Result<()> {
 
         assert_eq!(tags.chapters()?, expected_entries(), "{name}");
     }
+    Ok(())
+}
+
+/// Musicindex ADR 0099 R-IMAGE-4: a remote entry holds the image URL of its
+/// song. A remote split with no URL and a local split give JSON `null`. The
+/// `CHAP` frames get no image subframe (R-IMAGE-4 item 7).
+#[test]
+fn entry_holds_the_image_url_of_its_song_or_null() -> Result<()> {
+    let dir = TempDir::new()?;
+    for name in ["old-frames.mp3", "old-frames.flac"] {
+        let path = copy_fixture(&dir, name);
+        write_episode_tags(&path, &episode(), &[], &NoReferences)?;
+        let tags = read_podcast_tags(&path)?;
+        let json = tags.chapters_json.as_deref().expect("chapters frame");
+        let value: serde_json::Value = serde_json::from_str(json)?;
+        let entries = value.as_array().expect("array");
+        assert_eq!(entries[0]["image_url"], SONG_IMAGE, "{name}");
+        for entry in &entries[1..] {
+            let entry = entry.as_object().expect("object");
+            assert_eq!(
+                entry.get("image_url"),
+                Some(&serde_json::Value::Null),
+                "{name}"
+            );
+        }
+        let images = tags.chapters()?.into_iter().map(|entry| entry.image_url);
+        assert_eq!(
+            images.collect::<Vec<_>>(),
+            vec![Some(SONG_IMAGE.to_owned()), None, None],
+            "{name}"
+        );
+    }
+    let path = copy_fixture(&dir, "old-frames.mp3");
+    write_episode_tags(&path, &episode(), &[], &NoReferences)?;
+    let tag = Tag::read_from_path(&path)?;
+    assert_eq!(tag.chapters().count(), 3);
+    for chapter in tag.chapters() {
+        let subframes = chapter
+            .frames
+            .iter()
+            .map(|frame| {
+                let label = frame
+                    .content()
+                    .extended_text()
+                    .map(|text| text.description.clone());
+                (frame.id().to_owned(), label)
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            subframes.iter().all(|(id, label)| {
+                matches!(id.as_str(), "TIT2" | "TXXX")
+                    && !label
+                        .as_deref()
+                        .is_some_and(|label| label.contains("Image"))
+            }),
+            "musicindex ADR 0099 R-IMAGE-4 item 7: a CHAP frame gets no image subframe: {subframes:?}"
+        );
+    }
+    Ok(())
+}
+
+/// Musicindex ADR 0099 R-IMAGE-5: an entry from before ADR 0099 has no
+/// `image_url` and reads as `None` (item 1). An entry with a field that the
+/// reader does not know reads with no error (item 3).
+#[test]
+fn reader_accepts_a_missing_image_url_and_an_unknown_field() -> Result<()> {
+    let old = PodcastTags {
+        chapters_json: Some(
+            r#"[{"start_ms":0,"end_ms":1000,"title":"Song","artist":null,"feed_guid":"feed","item_guid":null,"remote_percentage":100,"value_routes":null}]"#
+                .into(),
+        ),
+        ..PodcastTags::default()
+    };
+    let entries = old.chapters()?;
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].image_url, None);
+    assert_eq!(entries[0].title.as_deref(), Some("Song"));
+
+    let later = PodcastTags {
+        chapters_json: Some(
+            r#"[{"start_ms":0,"end_ms":1000,"title":null,"artist":null,"feed_guid":"feed","item_guid":null,"remote_percentage":100,"value_routes":null,"image_url":"https://example.com/a.jpg","later_field":{"any":[1,2]}}]"#
+                .into(),
+        ),
+        ..PodcastTags::default()
+    };
+    let entries = later.chapters()?;
+    assert_eq!(
+        entries[0].image_url.as_deref(),
+        Some("https://example.com/a.jpg")
+    );
     Ok(())
 }
 

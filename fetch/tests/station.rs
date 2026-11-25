@@ -534,6 +534,7 @@ fn the_time_splits_of_an_episode_give_split_values() {
                 {"recipient_name": "Artist B", "route_type": "node", "split": 100.0, "fee": false,
                  "address": NODE_B, "custom_key": null, "custom_value": null},
             ])),
+            image_url: None,
         },
         "musicindex ADR 0092 R-STATION-2 item 1: the routes of the song (R-TAG-6 item 1)"
     );
@@ -544,6 +545,7 @@ fn the_time_splits_of_an_episode_give_split_values() {
             feed_guid: "feed-b".into(),
             item_guid: None,
             value_routes: None,
+            image_url: None,
         },
         "musicindex ADR 0093 R-TAG-6 item 2: no itemGuid gives no routes"
     );
@@ -563,6 +565,139 @@ fn the_time_splits_of_an_episode_give_split_values() {
             ]),
         },
         "musicindex ADR 0092 R-STATION-2 item 1: a local split keeps its recipients"
+    );
+}
+
+/// A song feed for the split image test. `channel` and `item` are the image
+/// XML of the channel and of the item `song-guid`.
+fn split_image_feed(feed_guid: &str, channel: &str, item: &str) -> String {
+    format!(
+        r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+<channel>
+  <title>Album {feed_guid}</title>
+  <podcast:guid>{feed_guid}</podcast:guid>
+  <podcast:medium>music</podcast:medium>
+  {channel}
+  <item><title>Song {feed_guid}</title><guid>song-guid</guid>{item}</item>
+</channel>
+</rss>"#
+    )
+}
+
+/// An episode with a remote split to each feed of
+/// [`a_remote_split_gets_the_image_url_of_its_song`], one remote split to a
+/// feed that the server does not have, and a local split.
+fn split_image_episode(server: &Server) -> String {
+    let split = |start: u32, feed: &str| {
+        format!(
+            r#"<podcast:valueTimeSplit startTime="{start}" duration="10">
+        <podcast:remoteItem feedGuid="{feed}" feedUrl="{}" itemGuid="song-guid"/>
+      </podcast:valueTimeSplit>"#,
+            server.url(&format!("/feeds/{}.xml", feed.trim_start_matches("feed-")))
+        )
+    };
+    format!(
+        r#"<?xml version="1.0"?>
+<rss version="2.0" xmlns:podcast="https://podcastindex.org/namespace/1.0">
+<channel>
+  <title>Show</title>
+  <podcast:guid>show-1</podcast:guid>
+  <item>
+    <title>Episode 159</title>
+    <guid>episode-159</guid>
+    <podcast:value type="lightning" method="keysend">
+      <podcast:valueRecipient name="Host" type="node" address="{NODE_C}" split="100"/>
+      {}
+      {}
+      {}
+      {}
+      <podcast:valueTimeSplit startTime="50" duration="10">
+        <podcast:valueRecipient name="Guest" type="node" address="{NODE_A}" split="100"/>
+      </podcast:valueTimeSplit>
+    </podcast:value>
+  </item>
+</channel>
+</rss>"#,
+        split(0, "feed-image"),
+        split(10, "feed-long"),
+        split(20, "feed-none"),
+        split(30, "feed-missing"),
+    )
+}
+
+/// musicindex ADR 0099 R-IMAGE-4: a remote split gets the image URL of its
+/// song from the song feed, with the sources and the URL limit of ADR 0096
+/// R-IMAGE-1 items 2 and 3. A song with no image, a song feed that the reader
+/// cannot read and a local split give `None`, and the other fields stay.
+#[test]
+fn a_remote_split_gets_the_image_url_of_its_song() {
+    let long = format!("https://example.com/{}.jpg", "a".repeat(2049 - 24));
+    assert_eq!(long.chars().count(), 2049);
+    let server = start_with(|_| {
+        HashMap::from([
+            (
+                "/feeds/image.xml",
+                ok(split_image_feed(
+                    "feed-image",
+                    r#"<itunes:image href="https://example.com/channel.jpg"/>"#,
+                    r#"<itunes:image href="https://example.com/song.jpg"/>"#,
+                )),
+            ),
+            (
+                "/feeds/long.xml",
+                ok(split_image_feed(
+                    "feed-long",
+                    r#"<itunes:image href="https://example.com/long-channel.jpg"/>"#,
+                    &format!(r#"<itunes:image href="{long}"/>"#),
+                )),
+            ),
+            ("/feeds/none.xml", ok(split_image_feed("feed-none", "", ""))),
+        ])
+    });
+    let episode = split_image_episode(&server);
+    let episode =
+        FeedDocument::parse("episode.xml", episode.into_bytes()).expect("parse the episode feed");
+    let mut reader = server.reader();
+    let result = reader
+        .episode_splits(&episode.values.tracks[0])
+        .expect("the splits are good");
+    let images = result
+        .splits
+        .iter()
+        .map(|split| match &split.target {
+            SplitTarget::Remote { image_url, .. } => image_url.clone(),
+            SplitTarget::Local { .. } => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        images,
+        vec![
+            Some("https://example.com/song.jpg".to_owned()),
+            Some("https://example.com/long-channel.jpg".to_owned()),
+            None,
+            None,
+            None,
+        ],
+        "musicindex ADR 0099 R-IMAGE-4 items 2 to 5"
+    );
+    assert!(matches!(result.splits[4].target, SplitTarget::Local { .. }));
+    assert_eq!(
+        result.splits[2].title.as_deref(),
+        Some("Song feed-none"),
+        "musicindex ADR 0099 R-IMAGE-4 item 5: a song with no image keeps its other fields"
+    );
+    assert!(
+        matches!(
+            &result.splits[3].target,
+            SplitTarget::Remote { feed_guid, item_guid: Some(_), .. } if feed_guid == "feed-missing"
+        ),
+        "musicindex ADR 0099 R-IMAGE-4 item 5: an unreadable song feed keeps the split"
+    );
+    assert!(
+        matches!(result.unresolved.as_slice(), [(3, _)]),
+        "{:?}",
+        result.unresolved
     );
 }
 

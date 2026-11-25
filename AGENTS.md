@@ -64,7 +64,10 @@ pins the crate before ADR 0083 is accepted. If the ADR changes a name, the crate
 the podcast frames of an audio file with the names of R-TAG-2. `write_song_tags` writes the
 GUIDs of a song file (R-TAG-3). `write_episode_tags` writes the GUIDs, the value routes and
 the chapters of an episode file (R-TAG-4). A remote chapter entry holds the routes of its
-song when the app gives them (musicindex ADR 0093 R-TAG-6). Each of the two writes also
+song when the app gives them (musicindex ADR 0093 R-TAG-6). Each chapter entry has the
+field `image_url`: the image URL of the song of a remote split, or null. A reader accepts an
+entry with no `image_url` or with a field that it does not know (musicindex ADR 0099
+R-IMAGE-4 and R-IMAGE-5). Each of the two writes also
 writes `TXXX:Podcast Image` when the app gives an image URL (musicindex ADR 0096 R-IMAGE-2).
 Each write removes the frames with the "MusicIndex " names of R-TAG-2 item 5.
 
@@ -104,6 +107,8 @@ order (musicindex ADR 0095 R-MP3-2 item 1).
 a fixed order, with only an `http` or `https` URL of a maximum of 2,048 characters
 (musicindex ADR 0096 R-IMAGE-1).
 `FeedReader::episode_splits` gives the `Split` values of an episode for `write_episode_tags`.
+Each remote split gets the `ResolvedItem.image_url` of its song, or `None` when the reader
+cannot read the song feed (musicindex ADR 0099 R-IMAGE-4).
 `download_enclosure` writes one enclosure through a temporary file and gives the SHA-256
 hash.
 

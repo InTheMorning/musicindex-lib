@@ -66,8 +66,10 @@ impl<F: FetchDocument> FeedReader<F> {
     ///
     /// For a remote split, the reader reads the song feed: the `feedUrl` of
     /// the split, else the feed URL from MusicIndex. The split gets the
-    /// song title, the artist, the `itunes:author` of the song feed and the
-    /// routes of R-TAG-6. When the read fails, these are `None`, and
+    /// song title, the artist, the `itunes:author` of the song feed, the
+    /// routes of R-TAG-6 and the image URL of musicindex ADR 0099 R-IMAGE-4.
+    /// The image URL is [`crate::ResolvedItem::image_url`] of the song
+    /// (musicindex ADR 0096 R-IMAGE-1). When the read fails, these are `None`, and
     /// [`EpisodeSplits::unresolved`] gives the cause.
     ///
     /// # Errors
@@ -129,12 +131,14 @@ impl<F: FetchDocument> FeedReader<F> {
                     title: None,
                 };
                 let mut value_routes = None;
+                let mut image_url = None;
                 match self.resolve(&item) {
                     Ok(song) => {
                         chapter.title = song.title;
                         chapter.artist = song.artist;
                         chapter.author = song.author;
                         value_routes = song.value_routes;
+                        image_url = song.image_url;
                     }
                     Err(error) => unresolved.push((index, error)),
                 }
@@ -142,6 +146,7 @@ impl<F: FetchDocument> FeedReader<F> {
                     feed_guid: feed_guid.to_owned(),
                     item_guid,
                     value_routes,
+                    image_url,
                 };
             }
             splits.push(chapter);
