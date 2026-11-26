@@ -18,13 +18,16 @@ repository that owns the subject. musicindex owns the shared interface rules.
 
 `search/` holds the crate `musicindex-search`, the JavaScript module
 `web/query-text.mjs` and the case file. musicindex ADR 0049 accepts `search/`. HitIt and
-Studio pin the crate at commit `634e4cc`. The website keeps a copy of the module, and its
-toolbar field uses that copy. The [search move plan](docs/plans/search-move-phase-plan.md)
-gives the state of each phase. The crate and the module also give the field list rows and
-the note words of musicindex ADR 0052. The three apps use them.
+Studio pin the crate. The website keeps a copy of the module, and its toolbar field uses
+that copy. Each phase of the [search move plan](docs/plans/search-move-phase-plan.md) is
+complete.
+
+The crate and the module also give the field list rows and the note words of
+musicindex ADR 0052. The three apps use them.
 
 The crate and the module also read the field `host:` of musicindex ADR 0062. They give the
-host match function of its rule R-QUERY-16. No app pins or copies that change at this time.
+host match function of its rule R-QUERY-16. HitIt pins a commit with this change, and the
+copy of the website has it. Studio pins a commit from before this change.
 
 The module `name_order` of the crate is the client side of the name sort of Stophammer
 ADR 0090. Stophammer keeps its own copy of the two functions. Its file
@@ -36,15 +39,16 @@ No JavaScript port exists, because the website holds no list that merges rows by
 `fit/` holds the JavaScript module `web/fit-check.mjs` of musicindex ADR 0065 R-FIT-5 and its
 browser test. Its four helpers of R-FIT-3 find an edge cut, an overflow, an overlap of two
 controls and a break inside a word. The fifth helper `unsizedIcons` of R-FIT-7 finds an `svg`
-element with no author width or height. A text that must break inside a word has the attribute `data-fit-allow-break`. The website and Studio keep a copy
-of the module from one commit. No app copies it at this time.
+element with no author width or height. A text that must break inside a word has the
+attribute `data-fit-allow-break`. The website and Studio keep a copy of the module from one
+commit (musicindex ADR 0065 R-FIT-5 item 3).
 
 `value/` holds the crate `musicindex-value` of musicindex ADR 0075 R-VALUE-4. Its function
 `percentages` gives the percentage of each recipient of a value block with the shares method
 of musicindex ADR 0075 R-VALUE-5. A fee share is in the total, and the fee flag does not change the
-arithmetic. Its function `parse_share` reads the text of a split as Studio reads it. No app
-pins the crate at this time. Studio removes its own copy when it pins the crate. The
-JavaScript copy in Studio stays open in ADR 0075, and `value/` has no JavaScript module.
+arithmetic. Its function `parse_share` reads the text of a split as Studio reads it. HitIt,
+Studio and musicindex-live-publisher pin the crate. The JavaScript copy in Studio stays open
+in ADR 0075, and `value/` has no JavaScript module.
 
 The function `short_address` of the same crate gives the short form of a node address or a
 Nostr public key (musicindex ADR 0076 R-ADDRESS-2). The file
@@ -55,21 +59,19 @@ app tests against a copy of that file.
 the build time of a Rust app. The build script of the app calls `build::emit`, and the app
 code calls the macro `build_info!`. `BuildInfo::version_line` gives the line for
 `--version`, and the serde form of `BuildInfo` is the JSON object of the info route.
-
-The request is [the build info request](docs/plans/research-build-info-request.md). The
-operator agreed to the design on 2026-11-18. musicindex ADR 0083 has the status Proposed. No app
-pins the crate before ADR 0083 is accepted. If the ADR changes a name, the crate follows the ADR.
+stophammer, Studio, HitIt, musicindex-live-relay and musicindex-live-publisher pin the crate.
 
 `tags/` holds the crate `musicindex-tags` of musicindex ADR 0093 R-TAG-1. It writes and reads
 the podcast frames of an audio file with the names of R-TAG-2. `write_song_tags` writes the
 GUIDs of a song file (R-TAG-3). `write_episode_tags` writes the GUIDs, the value routes and
 the chapters of an episode file (R-TAG-4). A remote chapter entry holds the routes of its
-song when the app gives them (musicindex ADR 0093 R-TAG-6). Each chapter entry has the
-field `image_url`: the image URL of the song of a remote split, or null. A reader accepts an
-entry with no `image_url` or with a field that it does not know (musicindex ADR 0099
-R-IMAGE-4 and R-IMAGE-5). Each of the two writes also
-writes `TXXX:Podcast Image` when the app gives an image URL (musicindex ADR 0096 R-IMAGE-2).
-Each write removes the frames with the "MusicIndex " names of R-TAG-2 item 5.
+song when the app gives them (musicindex ADR 0093 R-TAG-6).
+
+Each chapter entry has the field `image_url`: the image URL of the song of a remote split,
+or null. A reader accepts an entry with no `image_url` or with a field that it does not know
+(musicindex ADR 0099 R-IMAGE-4 and R-IMAGE-5). `write_song_tags` and `write_episode_tags`
+also write `TXXX:Podcast Image` when the app gives an image URL (musicindex ADR 0096
+R-IMAGE-2). Each write removes the frames with the "MusicIndex " names of R-TAG-2 item 5.
 
 Each read of an ID3v2 tag uses the frame loop of `tags/src/id3v2.rs` (musicindex ADR 0093
 R-TAG-7). The loop keeps each good frame and returns the bad frames in `TagProblems`. Each
@@ -92,9 +94,8 @@ pairs. The crate owns the separators of that value (musicindex ADR 0093 R-TAG-1 
 `write_id3v24_edits` writes the field edits of HitIt, and the trait `ReferenceSource` gives it
 the pictures and the transcripts, because the app owns the network.
 
-The test `tests/words.rs` is the check of musicindex ADR 0087 R-WORD-14. No app pins the
-crate at this time. HitIt and musicindex-live-publisher remove their own copies when they
-pin it.
+The test `tests/words.rs` is the check of musicindex ADR 0087 R-WORD-14. HitIt and
+musicindex-live-publisher pin the crate.
 
 `fetch/` holds the crate `musicindex-fetch` of musicindex ADR 0092 R-STATION-1 and
 R-STATION-2. HitIt and musicindex-live-publisher use it. `FeedReader` reads a feed with
@@ -128,8 +129,8 @@ No ADR accepts `moodbar/`, and it has no folder.
 | Subject | Content | Research |
 | --- | --- | --- |
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
-| `value/` | The split crate for Studio and HitIt | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
-| `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 (Proposed) for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
+| `value/` | The split crate for Studio, HitIt and musicindex-live-publisher | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
+| `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
 | `tags/` | The tag crate of musicindex ADR 0093 for HitIt and musicindex-live-publisher | No research document |
 | `fetch/` | The remote item read and the enclosure download of musicindex ADR 0092 for HitIt and musicindex-live-publisher | `research_notes/music-feeds/station-import-request.md` in `../musicindex-research` |
 | `convert/` | The WAV to FLAC converter of musicindex ADR 0094 and the MP3 converter of musicindex ADR 0095 for HitIt and musicindex-live-publisher | No research document |

@@ -2,10 +2,11 @@
 
 ## Status
 
-Received - 2026-11-18. This request comes from the orchestrator session in
-`~/build/musicindex-research`.
+Complete. `build-info/` holds the crate. The operator accepted musicindex ADR 0083 on
+2026-11-18, and ADR 0083 R-VERSION-8 owns the rule. This request came from the orchestrator
+session in `~/build/musicindex-research`.
 
-This document binds nothing. The owning rule is the ADR that answers
+This document binds nothing. ADR 0083 answers
 `../musicindex/docs/plans/research-app-version-request.md`. That request gives
 the facts and the operator choice of 2026-11-18.
 

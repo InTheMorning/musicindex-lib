@@ -2,7 +2,7 @@
 
 ## Status
 
-Active - 2026-11-07. This plan binds nothing. musicindex ADR 0049 owns the rules of the
+Complete. Each phase is complete. This plan binds nothing. musicindex ADR 0049 owns the rules of the
 query text. The research is
 `research_notes/search/shared-query-text.md` in `../musicindex-research`.
 
@@ -21,7 +21,8 @@ They also use one kind rule for the label and for the filter.
 
 ## Current State
 
-These facts come from the repositories and the live node on 2026-11-07.
+These facts come from the repositories and the live node on 2026-11-07. The pins of the apps
+changed after that date. `AGENTS.md` gives the apps that pin the crate at this time.
 
 | Repository | Search state |
 | --- | --- |
