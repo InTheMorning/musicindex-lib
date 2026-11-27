@@ -1,4 +1,4 @@
-//! The frame names of musicindex ADR 0093 R-TAG-2.
+//! The frame names of musicindex ADR 0101 R-TAG-2.
 //!
 //! A writer writes only these names. A reader reads only these names. The
 //! value form of each frame is the value form of its old name.

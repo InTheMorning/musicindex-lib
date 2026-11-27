@@ -5,7 +5,7 @@
 //! copy of the feed read or of the download (R-STATION-1 item 5).
 //!
 //! - [`FeedReader`] reads each feed URL one time in a run with
-//!   `stophammer-parser` (musicindex ADR 0093 R-FEED-1). It keeps a minimum
+//!   `stophammer-parser` (musicindex ADR 0101 R-FEED-1). It keeps a minimum
 //!   time between two requests to one host, and it stops a host that answers
 //!   HTTP 429.
 //! - [`FeedReader::resolve`] gives the feed GUID, the item GUID, the
@@ -16,7 +16,7 @@
 //!   that the feed gives for an item (musicindex ADR 0095 R-MP3-2 item 1).
 //! - [`FeedReader::episode_splits`] changes the `podcast:valueTimeSplit`
 //!   elements of an episode into [`musicindex_tags::Split`] values, with the
-//!   routes of musicindex ADR 0093 R-TAG-6.
+//!   routes of musicindex ADR 0101 R-TAG-6.
 //! - [`download_enclosure`] writes one URL to one path through a temporary
 //!   file, and gives the SHA-256 hash.
 //!

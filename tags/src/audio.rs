@@ -168,7 +168,7 @@ pub struct Id3v24Edit {
 
 /// Reads the tags of `path`: with the ID3v2 frame loop for MP3, with `lofty`
 /// for other formats (HitIt ADR 0004). An MP3 file gives each good frame
-/// (musicindex ADR 0093 R-TAG-7).
+/// (musicindex ADR 0101 R-TAG-7).
 ///
 /// # Errors
 ///
@@ -178,7 +178,7 @@ pub fn read_audio_tags(path: &Path) -> Result<AudioTags> {
 }
 
 /// Reads the tags of `path` as [`read_audio_tags`] does, and also gives the
-/// problems of the ID3v2 tag (musicindex ADR 0093 R-TAG-7 item 2). A format
+/// problems of the ID3v2 tag (musicindex ADR 0101 R-TAG-7 item 2). A format
 /// other than MP3 gives no problem.
 ///
 /// # Errors
@@ -390,16 +390,16 @@ pub struct TagWriteResult {
     /// The ID of each old frame that the write removed, because an ID3v2.4
     /// tag cannot hold its ID.
     pub removed_frames: Vec<String>,
-    /// The label of each old frame of musicindex ADR 0093 R-TAG-2 item 5 that
+    /// The label of each old frame of musicindex ADR 0101 R-TAG-2 item 5 that
     /// the write removed, for example `TXXX:MusicIndex Feed Guid`. A Vorbis
     /// comment or an MP4 atom gives its stored key.
     pub removed_old_frames: Vec<String>,
     /// Each edit that the write did not apply, with the reason. A picture
     /// that the reference source cannot give is an example.
     pub skipped: Vec<String>,
-    /// Each bad frame that the write removed (musicindex ADR 0093 R-TAG-9).
+    /// Each bad frame that the write removed (musicindex ADR 0101 R-TAG-9).
     pub bad_frames: Vec<BadFrame>,
-    /// True when the write removed an ID3v1 tag (musicindex ADR 0093 R-TAG-8
+    /// True when the write removed an ID3v1 tag (musicindex ADR 0101 R-TAG-8
     /// item 5).
     pub removed_id3v1: bool,
 }
@@ -409,7 +409,7 @@ pub struct TagWriteResult {
 /// of a picture and the text of a transcript for an `APIC`, `USLT` or `SYLT`
 /// edit.
 ///
-/// Each write also removes the old frames of musicindex ADR 0093 R-TAG-2
+/// Each write also removes the old frames of musicindex ADR 0101 R-TAG-2
 /// item 5. A second write of the same edits gives the same tag. An empty
 /// `edits` removes only the old frames. When the file has no old frame, an
 /// empty `edits` does not write the file.
@@ -442,7 +442,7 @@ pub(crate) fn write_tags(
     Ok(result)
 }
 
-/// Musicindex ADR 0093 R-TAG-11 items 1 and 2: a write does not use the
+/// Musicindex ADR 0101 R-TAG-11 items 1 and 2: a write does not use the
 /// value of a `TLEN` edit. It gives the edits without `TLEN`, and the reason
 /// for each `TLEN` edit for [`TagWriteResult::skipped`]. Vorbis comments and
 /// MP4 have no length field, so the rule also drops the edit there.
@@ -456,7 +456,7 @@ fn without_length_edits(edits: &[Id3v24Edit]) -> (Vec<Id3v24Edit>, Vec<String>) 
         .map(|edit| {
             format!(
                 "TLEN {}: a write keeps the TLEN of the file or measures the length \
-                 (musicindex ADR 0093 R-TAG-11)",
+                 (musicindex ADR 0101 R-TAG-11)",
                 edit.value
             )
         })
@@ -501,7 +501,7 @@ fn write_format_tags(
 /// stores a lone `TYER` edit under the `TDRC` atom.
 ///
 /// An MP3 write uses the same edits, because an ID3v2.4 tag has no `TYER`
-/// frame (musicindex ADR 0093 R-TAG-8 item 1).
+/// frame (musicindex ADR 0101 R-TAG-8 item 1).
 fn single_date_edits(edits: &[Id3v24Edit]) -> Vec<Id3v24Edit> {
     let has_full_date = edits.iter().any(|edit| edit.frame_label == "TDRC");
     edits
@@ -560,7 +560,7 @@ fn write_mp3_edits(
         chapters.replace_id3_frames(&mut tag);
     }
 
-    // Musicindex ADR 0093 R-TAG-11: the frame loop removed a TLEN that is
+    // Musicindex ADR 0101 R-TAG-11: the frame loop removed a TLEN that is
     // not a positive whole number, so a TLEN here is good and stays. The
     // TLEN frame is always the last frame, so a second write of the same
     // tags gives the same bytes.
@@ -583,10 +583,10 @@ fn write_mp3_edits(
     })
 }
 
-/// The changes of a write that are not edits. Musicindex ADR 0093 R-TAG-8
+/// The changes of a write that are not edits. Musicindex ADR 0101 R-TAG-8
 /// item 4: a bad frame, an old frame, an older tag version and an ID3v1 tag
 /// are each a change. An old frame is a frame of an older version or a
-/// frame of ADR 0093 R-TAG-2 item 5. A plain ID3v2.4 frame size counts as a
+/// frame of ADR 0101 R-TAG-2 item 5. A plain ID3v2.4 frame size counts as a
 /// bad frame (R-TAG-7 item 4).
 #[derive(Clone, Copy, Default)]
 #[allow(clippy::struct_excessive_bools)]
@@ -613,7 +613,7 @@ fn is_empty_write(
     edits.is_empty() && chapters.is_none() && !(bad_frames || old_frames || old_version || id3v1)
 }
 
-/// Musicindex ADR 0093 R-TAG-2 item 5: removes each `TXXX`, `COMM`, `USLT`
+/// Musicindex ADR 0101 R-TAG-2 item 5: removes each `TXXX`, `COMM`, `USLT`
 /// and `SYLT` frame with a description that starts with `MusicIndex `. It
 /// returns the label of each removed frame.
 fn remove_old_id3_frames(tag: &mut Tag) -> Vec<String> {
@@ -654,7 +654,7 @@ fn resolve_id3_license_edits(tag: &mut Tag, edits: &[Id3v24Edit]) -> LicenseReso
     resolution
 }
 
-/// What a write does with a frame of ID3v2.2 or ID3v2.3 (musicindex ADR 0093
+/// What a write does with a frame of ID3v2.2 or ID3v2.3 (musicindex ADR 0101
 /// R-TAG-8 item 2).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum OldFrame {
@@ -689,7 +689,7 @@ const OLD_FRAME_IDS: [(&str, OldFrame); 15] = [
     ("RVAD", OldFrame::Remove),
 ];
 
-/// Musicindex ADR 0093 R-TAG-8 items 2 and 3: gives each old frame its
+/// Musicindex ADR 0101 R-TAG-8 items 2 and 3: gives each old frame its
 /// ID3v2.4 equivalent, or removes it. A frame of ID3v2.2 whose ID is not 4
 /// bytes long has no equivalent. The `id3` crate gives the ID3v2.2 `RVA`
 /// frame the ID `RVA2`, but the content of `RVA2` is different, so the write
@@ -832,7 +832,7 @@ impl OldDate {
 /// renames the copy over the file. The copy keeps the file mode.
 ///
 /// `old_tag_len` is the length of the old ID3v2 tag from the frame loop,
-/// with its extended header and its footer (musicindex ADR 0093 R-TAG-7).
+/// with its extended header and its footer (musicindex ADR 0101 R-TAG-7).
 /// The writer does not find the end of the old tag again, so the bytes after
 /// the tag stay equal to the bytes of the original file. When `remove_id3v1`
 /// is true, the copy does not get the last 128 bytes, which are the ID3v1
@@ -982,7 +982,7 @@ fn write_lofty_edits(
     if is_empty_write(edits, chapters, repairs) {
         return Ok(TagWriteResult::default());
     }
-    // Musicindex ADR 0093 R-TAG-1 item 5: no chapter frames in this format.
+    // Musicindex ADR 0101 R-TAG-1 item 5: no chapter frames in this format.
     // The chapter JSON is a keyed item, so it is one more edit.
     let mut edits = edits.to_vec();
     if let Some(chapters) = chapters {
@@ -1104,7 +1104,7 @@ fn write_lofty_edits(
     })
 }
 
-/// Musicindex ADR 0093 R-TAG-2 item 5, for Vorbis comments and MP4 freeform
+/// Musicindex ADR 0101 R-TAG-2 item 5, for Vorbis comments and MP4 freeform
 /// atoms: removes each item with a key that starts with `MusicIndex `. An MP4
 /// key starts with `----:com.apple.iTunes:`. It returns each removed key.
 fn remove_old_lofty_items(tag: &mut lofty::tag::Tag, tag_type: lofty::tag::TagType) -> Vec<String> {
@@ -1565,7 +1565,7 @@ impl std::error::Error for BadInvolvedPerson {}
 
 /// Gives the edit value of a `TIPL` or `TMCL` frame from (role, name) pairs,
 /// for example `"bass: Josh Moroz / vocals: Josh Moroz / vocals: Alex Nicol"`.
-/// The crate owns the text of this value (musicindex ADR 0093 R-TAG-1 item 4),
+/// The crate owns the text of this value (musicindex ADR 0101 R-TAG-1 item 4),
 /// so an app does not join the pairs itself.
 ///
 /// The function trims each role and each name. Two people with the same role
@@ -3019,7 +3019,7 @@ mod tests {
         assert!(!none.replaces_license);
     }
 
-    /// Musicindex ADR 0093 R-TAG-8 item 2: a test covers each row of the
+    /// Musicindex ADR 0101 R-TAG-8 item 2: a test covers each row of the
     /// conversion table. Each converted tag encodes as ID3v2.4, so the content
     /// is valid for its new ID.
     #[test]

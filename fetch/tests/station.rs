@@ -157,7 +157,7 @@ fn song_feed_a(base: &str) -> String {
 }
 
 /// Song feed B: the item has no value block, so the channel block applies
-/// (musicindex ADR 0093 R-TAG-6 item 1).
+/// (musicindex ADR 0101 R-TAG-6 item 1).
 fn song_feed_b(base: &str) -> String {
     format!(
         r#"<?xml version="1.0"?>
@@ -341,7 +341,7 @@ fn a_music_list_gives_each_song() {
     assert_eq!(
         (b.artist.as_deref(), b.author.as_deref()),
         (None, Some("Artist B")),
-        "musicindex ADR 0093 R-TAG-4 item 4: the feed author never replaces the artist"
+        "musicindex ADR 0101 R-TAG-4 item 4: the feed author never replaces the artist"
     );
     assert_eq!(b.enclosure_url, Some(server.url("/audio/b.mp3")));
     assert_eq!(
@@ -350,7 +350,7 @@ fn a_music_list_gives_each_song() {
             {"recipient_name": "Artist B", "route_type": "node", "split": 100.0, "fee": false,
              "address": NODE_B, "custom_key": null, "custom_value": null},
         ])),
-        "musicindex ADR 0093 R-TAG-6 item 1: the channel block when the item has none"
+        "musicindex ADR 0101 R-TAG-6 item 1: the channel block when the item has none"
     );
 }
 
@@ -547,7 +547,7 @@ fn the_time_splits_of_an_episode_give_split_values() {
             value_routes: None,
             image_url: None,
         },
-        "musicindex ADR 0093 R-TAG-6 item 2: no itemGuid gives no routes"
+        "musicindex ADR 0101 R-TAG-6 item 2: no itemGuid gives no routes"
     );
     assert!(matches!(
         result.unresolved.as_slice(),
@@ -701,7 +701,7 @@ fn a_remote_split_gets_the_image_url_of_its_song() {
     );
 }
 
-/// musicindex ADR 0093 R-TAG-6 item 1: an item block with no recipient is a
+/// musicindex ADR 0101 R-TAG-6 item 1: an item block with no recipient is a
 /// block. The channel block does not replace it.
 #[test]
 fn an_item_block_with_no_recipient_is_a_block() {
@@ -718,7 +718,7 @@ fn an_item_block_with_no_recipient_is_a_block() {
     assert_eq!(
         song.value_routes,
         Some(json!([])),
-        "musicindex ADR 0093 R-TAG-6 item 1: the item has a block, so the channel block does not apply"
+        "musicindex ADR 0101 R-TAG-6 item 1: the item has a block, so the channel block does not apply"
     );
 }
 
@@ -763,7 +763,7 @@ fn a_split_with_a_feed_url_reads_that_feed() {
                 ..
             }
         ),
-        "musicindex ADR 0093 R-TAG-6 item 1: the split gets the routes of the song"
+        "musicindex ADR 0101 R-TAG-6 item 1: the split gets the routes of the song"
     );
     assert_eq!(server.count("/feeds/a.xml"), 1);
     assert_eq!(

@@ -108,7 +108,7 @@ pub fn read_tags(path: &Path) -> Result<TrackTags> {
 }
 
 /// Reads the tags of `path` as [`read_tags`] does, and gives the problems of
-/// its ID3v2 tag (musicindex ADR 0093 R-TAG-7 item 3).
+/// its ID3v2 tag (musicindex ADR 0101 R-TAG-7 item 3).
 ///
 /// The display read of an ID3v2 tag uses the frame loop of
 /// [`crate::id3v2::read_id3v2`]. It keeps each good frame before and after a
@@ -143,7 +143,7 @@ pub fn read_tags_with_picture(path: &Path) -> Result<(TrackTags, Option<Vec<u8>>
 
 /// The length of the audio of `path` that `lofty` measures, the same length
 /// as [`TrackTags::duration`]. `None` when `lofty` cannot read the file or
-/// measures no length (musicindex ADR 0093 R-TAG-11 item 3).
+/// measures no length (musicindex ADR 0101 R-TAG-11 item 3).
 pub(crate) fn measured_length(path: &Path) -> Option<Duration> {
     let (tagged_file, _) = read_tagged_file(path).ok()?;
     nonzero_duration(tagged_file.properties().duration())
@@ -391,7 +391,7 @@ mod tests {
         );
     }
 
-    /// Musicindex ADR 0093 R-TAG-2 item 2: the reader does not accept an old
+    /// Musicindex ADR 0101 R-TAG-2 item 2: the reader does not accept an old
     /// name.
     #[test]
     fn tags_does_not_read_old_names() {

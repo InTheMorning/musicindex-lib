@@ -1,4 +1,4 @@
-//! The checks of musicindex ADR 0093 for `musicindex-tags` (section Checks).
+//! The checks of musicindex ADR 0101 for `musicindex-tags` (section Checks).
 //!
 //! The `id3` crate and `lofty` cannot write a bad frame, so each test makes
 //! its test file from raw bytes.
@@ -499,7 +499,7 @@ fn each_known_bad_frame_has_a_test_file() -> Result<()> {
         );
         write_id3v24_edits(&path, &[], &NoReferences)?;
         // A removed frame can come back with new data, for example the
-        // measured TLEN (musicindex ADR 0093 R-TAG-11 item 4). The bad
+        // measured TLEN (musicindex ADR 0101 R-TAG-11 item 4). The bad
         // content does not come back.
         let tag = strict(&path);
         let frame = tag.get(id);
@@ -732,7 +732,7 @@ fn a_slash_in_a_v22_artist_stays_one_value() -> Result<()> {
     Ok(())
 }
 
-/// A file with a `TLEN` of "abc" (musicindex ADR 0093 R-TAG-11 item 4).
+/// A file with a `TLEN` of "abc" (musicindex ADR 0101 R-TAG-11 item 4).
 fn bad_length_file(dir: &TempDir) -> PathBuf {
     let mut body = frame24("TIT2", &latin1("Song"));
     body.extend(frame24("TLEN", &latin1("abc")));
@@ -778,14 +778,14 @@ fn a_write_keeps_the_tlen_of_the_file() -> Result<()> {
     assert_eq!(
         length_text(&path).as_deref(),
         Some("209484"),
-        "musicindex ADR 0093 R-TAG-11 item 1: a write keeps the TLEN of the file"
+        "musicindex ADR 0101 R-TAG-11 item 1: a write keeps the TLEN of the file"
     );
     assert!(
         result
             .skipped
             .iter()
             .any(|reason| reason.contains("R-TAG-11")),
-        "musicindex ADR 0093 R-TAG-11 item 1: the write reports the ignored TLEN edit: {:?}",
+        "musicindex ADR 0101 R-TAG-11 item 1: the write reports the ignored TLEN edit: {:?}",
         result.skipped
     );
     Ok(())
@@ -809,7 +809,7 @@ fn a_write_gives_the_measured_length_when_the_file_has_no_tlen() -> Result<()> {
     assert_eq!(
         length_text(&path),
         Some(measured),
-        "musicindex ADR 0093 R-TAG-11 item 2: a write gives the measured length, not the edit"
+        "musicindex ADR 0101 R-TAG-11 item 2: a write gives the measured length, not the edit"
     );
     Ok(())
 }
@@ -826,7 +826,7 @@ fn a_write_gives_no_tlen_when_the_length_cannot_be_measured() -> Result<()> {
     assert_eq!(
         length_text(&path),
         None,
-        "musicindex ADR 0093 R-TAG-11 item 3: a write gives no TLEN when it cannot measure a length"
+        "musicindex ADR 0101 R-TAG-11 item 3: a write gives no TLEN when it cannot measure a length"
     );
     Ok(())
 }
@@ -841,7 +841,7 @@ fn a_tlen_that_is_not_a_whole_number_gets_the_measured_length() -> Result<()> {
             .bad_frames
             .iter()
             .any(|bad| bad.known == Some(KnownBadFrame::LengthNotAWholeNumber)),
-        "musicindex ADR 0093 R-TAG-11 item 4: a TLEN of abc is a bad frame: {:?}",
+        "musicindex ADR 0101 R-TAG-11 item 4: a TLEN of abc is a bad frame: {:?}",
         read.problems
     );
     let measured = measured_ms(&path);
@@ -849,7 +849,7 @@ fn a_tlen_that_is_not_a_whole_number_gets_the_measured_length() -> Result<()> {
     assert_eq!(
         length_text(&path),
         Some(measured),
-        "musicindex ADR 0093 R-TAG-11 item 4: a TLEN of abc gets the measured length"
+        "musicindex ADR 0101 R-TAG-11 item 4: a TLEN of abc gets the measured length"
     );
     Ok(())
 }

@@ -55,7 +55,7 @@ pub struct EpisodeSplits {
     pub splits: Vec<Split>,
     /// The remote splits whose song the reader could not read, with the
     /// position of the split. Such a split has no title and no routes
-    /// (musicindex ADR 0093 R-TAG-6 item 2).
+    /// (musicindex ADR 0101 R-TAG-6 item 2).
     pub unresolved: Vec<(usize, ResolveError)>,
 }
 

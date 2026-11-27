@@ -1,5 +1,5 @@
 //! The value form of `TXXX:Podcast Value Routes` from the routes of the
-//! parser (musicindex ADR 0093 R-TAG-4 item 1 and R-TAG-6).
+//! parser (musicindex ADR 0101 R-TAG-4 item 1 and R-TAG-6).
 
 use serde_json::{Map, Value, json};
 use stophammer_parser::{IngestPaymentRoute, IngestValueBlock};
@@ -11,7 +11,7 @@ use stophammer_parser::{IngestPaymentRoute, IngestValueBlock};
 ///
 /// `blocks` are the `podcast:value` blocks of the parent, and `routes` are
 /// their recipients. A Lightning block with no recipient gives an empty
-/// array, because the parent has a block (musicindex ADR 0093 R-TAG-6
+/// array, because the parent has a block (musicindex ADR 0101 R-TAG-6
 /// item 1). When `blocks` is empty, the function finds the blocks from
 /// `routes`, for values that a parser before `value_blocks` made.
 ///

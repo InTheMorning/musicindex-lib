@@ -74,7 +74,7 @@ pub struct ResolvedItem {
     /// The item title.
     pub title: Option<String>,
     /// The `itunes:author` of the item. The channel author never replaces it
-    /// (musicindex ADR 0093 R-TAG-4 item 4).
+    /// (musicindex ADR 0101 R-TAG-4 item 4).
     pub artist: Option<String>,
     /// The `itunes:author` of the channel.
     pub author: Option<String>,
@@ -90,7 +90,7 @@ pub struct ResolvedItem {
     /// gives the selection.
     pub image_url: Option<String>,
     /// The value block of the item, else of the channel, in the value form of
-    /// `TXXX:Podcast Value Routes` (musicindex ADR 0093 R-TAG-6 item 1).
+    /// `TXXX:Podcast Value Routes` (musicindex ADR 0101 R-TAG-6 item 1).
     /// `None` when the feed has no Lightning block.
     pub value_routes: Option<Value>,
 }

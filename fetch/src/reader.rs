@@ -242,7 +242,7 @@ pub struct FeedDocument {
     /// The body of the answer. An app can store it.
     pub body: Vec<u8>,
     /// The values of `stophammer-parser`, with no required-field check
-    /// (musicindex ADR 0093 R-FEED-2).
+    /// (musicindex ADR 0101 R-FEED-2).
     pub values: FeedValues,
 }
 

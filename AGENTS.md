@@ -61,11 +61,11 @@ code calls the macro `build_info!`. `BuildInfo::version_line` gives the line for
 `--version`, and the serde form of `BuildInfo` is the JSON object of the info route.
 stophammer, Studio, HitIt, musicindex-live-relay and musicindex-live-publisher pin the crate.
 
-`tags/` holds the crate `musicindex-tags` of musicindex ADR 0093 R-TAG-1. It writes and reads
+`tags/` holds the crate `musicindex-tags` of musicindex ADR 0101 R-TAG-1. It writes and reads
 the podcast frames of an audio file with the names of R-TAG-2. `write_song_tags` writes the
 GUIDs of a song file (R-TAG-3). `write_episode_tags` writes the GUIDs, the value routes and
 the chapters of an episode file (R-TAG-4). A remote chapter entry holds the routes of its
-song when the app gives them (musicindex ADR 0093 R-TAG-6).
+song when the app gives them (musicindex ADR 0101 R-TAG-6).
 
 Each chapter entry has the field `image_url`: the image URL of the song of a remote split,
 or null. A reader accepts an entry with no `image_url` or with a field that it does not know
@@ -73,7 +73,7 @@ or null. A reader accepts an entry with no `image_url` or with a field that it d
 also write `TXXX:Podcast Image` when the app gives an image URL (musicindex ADR 0096
 R-IMAGE-2). Each write removes the frames with the "MusicIndex " names of R-TAG-2 item 5.
 
-Each read of an ID3v2 tag uses the frame loop of `tags/src/id3v2.rs` (musicindex ADR 0093
+Each read of an ID3v2 tag uses the frame loop of `tags/src/id3v2.rs` (musicindex ADR 0101
 R-TAG-7). The loop keeps each good frame and returns the bad frames in `TagProblems`. Each
 MP3 write gives an ID3v2.4 tag with ID3v2.4 frames only, and removes the ID3v1 tag (R-TAG-8).
 The table `OLD_FRAME_IDS` in `tags/src/audio.rs` converts or removes the frames of an older
@@ -83,12 +83,12 @@ A write removes a bad frame, and writes a bad frame of the suite again from the 
 app (R-TAG-9). `KnownBadFrame` is the list of known bad frames. Each entry needs a test file in
 `tags/tests/id3v2.rs`.
 
-A write keeps the `TLEN` of the file and ignores a `TLEN` edit (musicindex ADR 0093
+A write keeps the `TLEN` of the file and ignores a `TLEN` edit (musicindex ADR 0101
 R-TAG-11). When the file has no good `TLEN`, the MP3 write gives the length that lofty
 measures, and else no `TLEN`.
 
 `involved_people_value` gives the edit value of a `TIPL` or `TMCL` frame from (role, name)
-pairs. The crate owns the separators of that value (musicindex ADR 0093 R-TAG-1 item 4).
+pairs. The crate owns the separators of that value (musicindex ADR 0101 R-TAG-1 item 4).
 
 `read_podcast_tags` and `track::read_tags` read only the new names.
 `write_id3v24_edits` writes the field edits of HitIt, and the trait `ReferenceSource` gives it
@@ -152,7 +152,7 @@ No ADR accepts `moodbar/`, and it has no folder.
 | `search/` | The query crate for HitIt and Studio, the JavaScript module for the website, and the case file that both must pass | `research_notes/search/shared-query-text.md` in `../musicindex-research` |
 | `value/` | The split crate for Studio, HitIt and musicindex-live-publisher | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
 | `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
-| `tags/` | The tag crate of musicindex ADR 0093 for HitIt and musicindex-live-publisher | No research document |
+| `tags/` | The tag crate of musicindex ADR 0101 for HitIt and musicindex-live-publisher | No research document |
 | `transcript/` | The transcript parser of musicindex ADR 0103 for the tag crate and the lyrics index of musicindex ADR 0104 | `research_notes/music-feeds/timed-lyrics.md` in `../musicindex-research` |
 | `fetch-guard/` | The address test and the guarded fetch of musicindex ADR 0104 for stophammer and the lyrics index | `research_notes/music-feeds/timed-lyrics.md` in `../musicindex-research` |
 | `fetch/` | The remote item read and the enclosure download of musicindex ADR 0092 for HitIt and musicindex-live-publisher | `research_notes/music-feeds/station-import-request.md` in `../musicindex-research` |
