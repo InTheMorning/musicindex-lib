@@ -986,9 +986,18 @@ dependencies = [
  "anyhow",
  "id3",
  "lofty",
+ "musicindex-transcript",
  "serde",
  "serde_json",
  "tempfile",
+]
+
+[[package]]
+name = "musicindex-transcript"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

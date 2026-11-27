@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["build-info", "convert", "fetch", "search", "tags", "value"]
+members = ["build-info", "convert", "fetch", "search", "tags", "transcript", "value"]

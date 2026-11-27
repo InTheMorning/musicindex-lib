@@ -1831,10 +1831,14 @@ fn sylt_frame_from_reference(
 ) -> Result<Frame> {
     let description = required_frame_descriptor("SYLT", descriptor)?;
     let transcript = parse_transcript_reference(reference, source)?;
-    let content = if transcript.timed_lines.is_empty() {
+    let content = if transcript.cues.is_empty() {
         vec![(0, transcript.plain_text)]
     } else {
-        transcript.timed_lines
+        transcript
+            .cues
+            .into_iter()
+            .map(|cue| (cue.start_ms, cue.body))
+            .collect()
     };
     Ok(Frame::with_content(
         "SYLT",
@@ -1848,205 +1852,16 @@ fn sylt_frame_from_reference(
     ))
 }
 
-#[derive(Debug, Default)]
-struct ParsedTranscript {
-    timed_lines: Vec<(u32, String)>,
-    plain_text: String,
-}
-
+/// The cues of the transcript at `reference`, from the shared parser of
+/// musicindex ADR 0103 R-LYRIC-3.
 fn parse_transcript_reference(
     reference: &str,
     source: &dyn ReferenceSource,
-) -> Result<ParsedTranscript> {
+) -> Result<musicindex_transcript::Transcript> {
     let text = source
         .text(reference)
         .with_context(|| format!("read transcript {reference}"))?;
-    let mut parsed = parse_srt_or_vtt_transcript(&text);
-    if parsed.timed_lines.is_empty() {
-        parsed = parse_lrc_transcript(&text);
-    }
-    if parsed.timed_lines.is_empty() {
-        parsed = parse_microdvd_sub_transcript(&text);
-    }
-    if parsed.plain_text.trim().is_empty() {
-        parsed.plain_text = strip_timecode_data(&text);
-    }
-    if parsed.plain_text.trim().is_empty() {
-        return Err(anyhow!("transcript is empty"));
-    }
-    Ok(parsed)
-}
-
-fn parse_srt_or_vtt_transcript(text: &str) -> ParsedTranscript {
-    let mut timed_lines = Vec::new();
-    for block in text.replace("\r\n", "\n").split("\n\n") {
-        let lines = block
-            .lines()
-            .map(str::trim)
-            .filter(|line| !line.is_empty() && *line != "WEBVTT")
-            .collect::<Vec<_>>();
-        let Some(timestamp_index) = lines.iter().position(|line| line.contains("-->")) else {
-            continue;
-        };
-        let Some(start) = lines[timestamp_index]
-            .split("-->")
-            .next()
-            .and_then(parse_timecode_ms)
-        else {
-            continue;
-        };
-        let text = lines
-            .iter()
-            .skip(timestamp_index + 1)
-            .copied()
-            .collect::<Vec<_>>()
-            .join(" ");
-        if !text.is_empty() {
-            timed_lines.push((start, text));
-        }
-    }
-    transcript_from_timed_lines(timed_lines)
-}
-
-fn parse_lrc_transcript(text: &str) -> ParsedTranscript {
-    let mut timed_lines = Vec::new();
-    for line in text.lines() {
-        let mut rest = line.trim();
-        let mut starts = Vec::new();
-        while let Some(stripped) = rest.strip_prefix('[') {
-            let Some((stamp, remaining)) = stripped.split_once(']') else {
-                break;
-            };
-            let Some(ms) = parse_lrc_timecode_ms(stamp) else {
-                break;
-            };
-            starts.push(ms);
-            rest = remaining.trim_start();
-        }
-        if rest.is_empty() {
-            continue;
-        }
-        timed_lines.extend(starts.into_iter().map(|start| (start, rest.to_string())));
-    }
-    transcript_from_timed_lines(timed_lines)
-}
-
-fn parse_microdvd_sub_transcript(text: &str) -> ParsedTranscript {
-    let mut timed_lines = Vec::new();
-    for line in text.lines().map(str::trim) {
-        let Some(after_open) = line.strip_prefix('{') else {
-            continue;
-        };
-        let Some((start_frame, rest)) = after_open.split_once('}') else {
-            continue;
-        };
-        let Some(rest) = rest.strip_prefix('{') else {
-            continue;
-        };
-        let Some((_end_frame, text)) = rest.split_once('}') else {
-            continue;
-        };
-        let Ok(start_frame) = start_frame.parse::<u32>() else {
-            continue;
-        };
-        let text = text.replace('|', " ").trim().to_string();
-        if !text.is_empty() {
-            timed_lines.push((start_frame.saturating_mul(40), text));
-        }
-    }
-    transcript_from_timed_lines(timed_lines)
-}
-
-fn transcript_from_timed_lines(timed_lines: Vec<(u32, String)>) -> ParsedTranscript {
-    let plain_text = timed_lines
-        .iter()
-        .map(|(_, text)| text.as_str())
-        .collect::<Vec<_>>()
-        .join("\n");
-    ParsedTranscript {
-        timed_lines,
-        plain_text,
-    }
-}
-
-fn parse_timecode_ms(value: &str) -> Option<u32> {
-    let time = value
-        .split_whitespace()
-        .next()
-        .unwrap_or("")
-        .replace(',', ".");
-    let mut parts = time.split(':').collect::<Vec<_>>();
-    if parts.len() == 2 {
-        parts.insert(0, "0");
-    }
-    let [hours, minutes, seconds] = parts.as_slice() else {
-        return None;
-    };
-    let hours = hours.parse::<u32>().ok()?;
-    let minutes = minutes.parse::<u32>().ok()?;
-    let (seconds, millis) = seconds
-        .split_once('.')
-        .map_or((*seconds, "0"), |(seconds, millis)| (seconds, millis));
-    let seconds = seconds.parse::<u32>().ok()?;
-    let millis = parse_millis(millis)?;
-    hours
-        .checked_mul(3_600_000)?
-        .checked_add(minutes.checked_mul(60_000)?)?
-        .checked_add(seconds.checked_mul(1_000)?)?
-        .checked_add(millis)
-}
-
-fn parse_lrc_timecode_ms(value: &str) -> Option<u32> {
-    if !value.chars().next()?.is_ascii_digit() {
-        return None;
-    }
-    parse_timecode_ms(&format!("0:{value}"))
-}
-
-fn parse_millis(value: &str) -> Option<u32> {
-    let digits = value
-        .chars()
-        .take_while(char::is_ascii_digit)
-        .collect::<String>();
-    if digits.is_empty() {
-        return Some(0);
-    }
-    let mut padded = digits;
-    while padded.len() < 3 {
-        padded.push('0');
-    }
-    padded.get(..3)?.parse::<u32>().ok()
-}
-
-fn strip_timecode_data(text: &str) -> String {
-    text.lines()
-        .filter_map(|line| {
-            let trimmed = line.trim();
-            if trimmed.is_empty()
-                || trimmed == "WEBVTT"
-                || trimmed.chars().all(|ch| ch.is_ascii_digit())
-                || trimmed.contains("-->")
-            {
-                return None;
-            }
-            if trimmed.starts_with('[') && trimmed.contains(']') {
-                return trimmed
-                    .rsplit(']')
-                    .next()
-                    .map(str::trim)
-                    .filter(|text| !text.is_empty());
-            }
-            if trimmed.starts_with('{') && trimmed.contains('}') {
-                return trimmed
-                    .rsplit('}')
-                    .next()
-                    .map(str::trim)
-                    .filter(|text| !text.is_empty());
-            }
-            Some(trimmed)
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+    Ok(musicindex_transcript::parse(&text, None)?)
 }
 
 /// The MIME type and the bytes of the picture at `reference`. An empty
@@ -2385,6 +2200,8 @@ mod tests {
         assert!(tag.frames().any(|frame| {
             frame.id() == "USLT" && frame.content().to_string() == "Podcast Transcript: Hello world"
         }));
+        // musicindex ADR 0103 R-LYRIC-3 item 1: the shared parser gives the
+        // same `SYLT` frame as before for an SRT file with no defect.
         assert!(tag.frames().any(|frame| {
             matches!(
                 frame.content(),

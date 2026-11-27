@@ -97,6 +97,16 @@ the pictures and the transcripts, because the app owns the network.
 The test `tests/words.rs` is the check of musicindex ADR 0087 R-WORD-14. HitIt and
 musicindex-live-publisher pin the crate.
 
+`transcript/` holds the crate `musicindex-transcript` of musicindex ADR 0103 R-LYRIC-3. Its
+function `parse` reads an SRT, VTT, LRC, SUB, namespace JSON or plain text file. It gives the
+cues in sequence by start time. It removes a BOM, and the first of two cues that overlap stops
+at the start of the second.
+
+`Transcript::to_namespace` gives the namespace JSON of R-LYRIC-2
+with the field `line` of musicindex ADR 0104 R-LYRIC-2 item 3. The tag crate uses `parse` for
+its `SYLT` and `USLT` frames. The crate has no dependency on `id3` or `lofty` (musicindex
+ADR 0104 R-LYRIC-9 item 1). No app pins the crate at this time.
+
 `fetch/` holds the crate `musicindex-fetch` of musicindex ADR 0092 R-STATION-1 and
 R-STATION-2. HitIt and musicindex-live-publisher use it. `FeedReader` reads a feed with
 `stophammer-parser` and keeps the host limits. `FeedReader::resolve` gives the data of one
@@ -132,6 +142,7 @@ No ADR accepts `moodbar/`, and it has no folder.
 | `value/` | The split crate for Studio, HitIt and musicindex-live-publisher | `research_notes/podcast-apps/value-split-fee-2026-11-15.md` in `../musicindex-research` |
 | `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
 | `tags/` | The tag crate of musicindex ADR 0093 for HitIt and musicindex-live-publisher | No research document |
+| `transcript/` | The transcript parser of musicindex ADR 0103 for the tag crate and the lyrics index of musicindex ADR 0104 | `research_notes/music-feeds/timed-lyrics.md` in `../musicindex-research` |
 | `fetch/` | The remote item read and the enclosure download of musicindex ADR 0092 for HitIt and musicindex-live-publisher | `research_notes/music-feeds/station-import-request.md` in `../musicindex-research` |
 | `convert/` | The WAV to FLAC converter of musicindex ADR 0094 and the MP3 converter of musicindex ADR 0095 for HitIt and musicindex-live-publisher | No research document |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |

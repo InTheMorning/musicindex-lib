@@ -10,6 +10,7 @@ Each folder holds one subject:
 - `value`: the split crate.
 - `build-info`: the build values crate.
 - `tags`: the tag crate for audio files.
+- `transcript`: the parser for transcript and lyrics files.
 - `fetch`: the remote item read and the enclosure download.
 - `convert`: the WAV to FLAC converter and the MP3 converter.
 
