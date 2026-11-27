@@ -1,0 +1,29 @@
+[package]
+name = "musicindex-fetch-guard"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+license = "AGPL-3.0-only"
+publish = false
+
+[features]
+default = ["fetch"]
+# The async fetch with one address check and one DNS pin for each hop.
+fetch = ["dep:reqwest", "dep:tokio"]
+# `GuardedFetch::accept_address_for_tests`, only in a build with debug assertions.
+# Only a dev-dependency turns this on.
+test-support = ["fetch"]
+
+[dependencies]
+reqwest = { version = "0.13", optional = true }
+tokio = { version = "1", features = ["net", "time"], optional = true }
+url = "2"
+
+[dev-dependencies]
+# The tests of this crate use the test address rule.
+musicindex-fetch-guard = { path = ".", features = ["test-support"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+wiremock = "0.6"
+
+[lints.clippy]
+pedantic = "warn"

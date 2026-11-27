@@ -107,6 +107,17 @@ with the field `line` of musicindex ADR 0104 R-LYRIC-2 item 3. The tag crate use
 its `SYLT` and `USLT` frames. The crate has no dependency on `id3` or `lofty` (musicindex
 ADR 0104 R-LYRIC-9 item 1). No app pins the crate at this time.
 
+`fetch-guard/` holds the crate `musicindex-fetch-guard` of musicindex ADR 0104 R-LYRIC-9 item 2.
+`is_public_ip` is the address test of stophammer ADR 0054 §1. `check_url` refuses a URL if its
+scheme is not `http` or `https`. It also refuses a URL with a user name, a password or an
+address that is not public. With the feature `fetch` (on by default), `GuardedFetch::fetch` fetches a URL. It
+examines each hop of a redirect and connects only to the addresses that it examined.
+
+The feature `test-support` gives `GuardedFetch::accept_address_for_tests`. Only a
+dev-dependency turns on that feature. The crate has no dependency on a different crate of this
+repository. No app pins the crate at this time. stophammer keeps its own guard until it uses
+the crate.
+
 `fetch/` holds the crate `musicindex-fetch` of musicindex ADR 0092 R-STATION-1 and
 R-STATION-2. HitIt and musicindex-live-publisher use it. `FeedReader` reads a feed with
 `stophammer-parser` and keeps the host limits. `FeedReader::resolve` gives the data of one
@@ -143,6 +154,7 @@ No ADR accepts `moodbar/`, and it has no folder.
 | `build-info/` | The build values crate of musicindex ADR 0083 R-VERSION-8 for stophammer, Studio, HitIt, the relay and the publisher | `docs/plans/research-app-version-request.md` in `../musicindex` |
 | `tags/` | The tag crate of musicindex ADR 0093 for HitIt and musicindex-live-publisher | No research document |
 | `transcript/` | The transcript parser of musicindex ADR 0103 for the tag crate and the lyrics index of musicindex ADR 0104 | `research_notes/music-feeds/timed-lyrics.md` in `../musicindex-research` |
+| `fetch-guard/` | The address test and the guarded fetch of musicindex ADR 0104 for stophammer and the lyrics index | `research_notes/music-feeds/timed-lyrics.md` in `../musicindex-research` |
 | `fetch/` | The remote item read and the enclosure download of musicindex ADR 0092 for HitIt and musicindex-live-publisher | `research_notes/music-feeds/station-import-request.md` in `../musicindex-research` |
 | `convert/` | The WAV to FLAC converter of musicindex ADR 0094 and the MP3 converter of musicindex ADR 0095 for HitIt and musicindex-live-publisher | No research document |
 | `fit/` | The browser fit check for the website and Studio, and its test in headless Chromium | No research document |

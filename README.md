@@ -12,6 +12,7 @@ Each folder holds one subject:
 - `tags`: the tag crate for audio files.
 - `transcript`: the parser for transcript and lyrics files.
 - `fetch`: the remote item read and the enclosure download.
+- `fetch-guard`: the address test and the guarded fetch.
 - `convert`: the WAV to FLAC converter and the MP3 converter.
 
 `AGENTS.md` gives the decision record of each folder and the apps that use it. The shared
